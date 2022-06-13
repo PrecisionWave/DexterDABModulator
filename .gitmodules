@@ -1,0 +1,4 @@
+[submodule "hdl_adi"]
+	path = hdl_adi
+	url = https://github.com/analogdevicesinc/hdl.git
+	branch = hdl_2019_r2
