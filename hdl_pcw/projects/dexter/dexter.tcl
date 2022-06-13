@@ -54,13 +54,13 @@
 #*****************************************************************************************
 
 # Set the project details
-set pcw_proj_name "dexter"
-set pcw_fpga_part xc7z020clg400-2 
-set pcw_bd_script dexter_bd.tcl
-set pcw_xdc_file  system_constr.xdc
-set adi_library   ../../../hdl_adi/library
-set pcw_library   ../../library
-set pcw_hdl_files [list system_top.v]
+set pcw_proj_name   "dexter"
+set pcw_fpga_parts  [list xc7z020clg400-2 xc7z010clg400-2]
+set pcw_bd_script   dexter_bd.tcl
+set pcw_xdc_file    system_constr.xdc
+set adi_library     ../../../hdl_adi/library
+set pcw_library     ../../library
+set pcw_hdl_files   [list system_top.v]
 
 # Use script file location as working directory
 cd [file dirname [file normalize [info script]]]
