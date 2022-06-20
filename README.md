@@ -2,7 +2,7 @@
 
 ## Documentation
 
-## Hardware Documentation
+### Hardware Documentation
 [Schematics](documentation/schematic/Readme.md)  
 
 ### Build instructions
