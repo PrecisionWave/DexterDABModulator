@@ -46,10 +46,11 @@
 #   3. Navigate and select this tcl file
 #   4. Run and wait till project is created
 #
-# Module:
-#   Enclustra Mars ZX2, Zynq Z7020
-#   Module PN:  MA-ZX2-20-2I-D9
-#   FPGA PN:    xc7z020clg400-2 
+# Module: Enclustra Mars ZX2 with Zynq-7010/7020
+#
+#               Zynq Z7020          Zynq Z7010
+#   Module PN:  MA-ZX2-20-2I-D9     MA-ZX2-10-2I-D9
+#   FPGA PN:    xc7z020clg400-2     xc7z010clg400-2
 #
 #*****************************************************************************************
 
