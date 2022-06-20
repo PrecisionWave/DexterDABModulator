@@ -1,8 +1,16 @@
 # Dexter HDL
 
 ## Tools
-To build the Dexter HDL using the pre-built DSP, the standard edition of Vivado is sufficient.
-[Vivado ML Standard Edition 2021.1](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2021-1.html)
+The standard edition of Vivado ML is sufficient to build the HDL for both FPGA modules.  
+Download here: [Vivado ML Edition - 2021.1](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/2021-1.html)
+
+Tested combination (Linux):
+- Ubuntu 18.04.6 LTS
+- Vivado v2021.1.1 (64-bit)
+
+Tested combination (Windows):
+- Windows 11 Pro 21H2
+- Vivado v2021.1 (64-bit)
 
 ## One-time preparation
 ### PrecisionWave DSP

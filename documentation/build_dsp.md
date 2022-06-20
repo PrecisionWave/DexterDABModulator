@@ -1,9 +1,12 @@
 # Dexter DSP
 
 ## Tools
-| Matlab Version |  Vivado Version | Vivado Environment                                 | Sysgen Command   |
-|----------------|-----------------|----------------------------------------------------|------------------|
-| R2020a         | 2021.1          | `source /tools/Xilinx/Vivado/2021.1/settings64.sh` | `model_composer` |
+
+Tested combination:
+- Ubuntu 18.04.6 LTS
+- Vivado v2021.1.1 (64-bit)
+- Model Composer v2021.1.1
+- Matlab R2020a Update 7 9.8.0.1721703 64-bit
 
 ## DSP Generation
 Check Matlab version and change to correct version before trying this.
