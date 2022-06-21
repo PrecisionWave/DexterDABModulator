@@ -1,0 +1,375 @@
+/dts-v1/;
+
+#include "zynq-7000.dtsi"
+#include "zynq_enclustra_common.dtsi"
+#include "zynq_enclustra_mars_zx2.dtsi"
+#include <dt-bindings/interrupt-controller/irq.h>
+
+/*
+ *
+ * * * * * * * * * * *
+ * IRQ PL->PS
+ * * * * * * * * * * *
+ * 61  IRQ_F2P[0]
+ * 62  IRQ_F2P[1]
+ * 63  IRQ_F2P[2]
+ * 64  IRQ_F2P[3]
+ * 65  IRQ_F2P[4]
+ * 66  IRQ_F2P[5]
+ * 67  IRQ_F2P[6]
+ * 68  IRQ_F2P[7]
+ * 84  IRQ_F2P[8]
+ * 85  IRQ_F2P[9]
+ * 86  IRQ_F2P[10]
+ * 87  IRQ_F2P[11]
+ * 88  IRQ_F2P[12]
+ * 89  IRQ_F2P[13]
+ * 90  IRQ_F2P[14]
+ * 91  IRQ_F2P[15]
+ * * * * * * * * * * *
+ * The IRQ Number in the devicetree
+ * is determined as follows:
+ * for IRQ_F2P: IRQ_devicetree = IRQ - 32
+ */
+
+
+/ {
+	model = "Enclustra ZX2-20-2I-D9 SOM";
+
+	chosen {
+		bootargs = "console=ttyPS0,115200 earlycon earlyprintk root=/dev/mmcblk0p2 rw rootfstype=ext4 rootwait";
+		stdout-path = "serial0:115200n8";
+	};
+
+	aliases {
+		ethernet0 = &gem0;
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		serial0 = &uart0;
+		serial1 = &uart1;
+		spi0 = &qspi;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x20000000>;
+	};
+
+	usb_phy0: phy0 {
+		compatible = "usb-nop-xceiv";
+		#phy-cells = <0>;
+		reg = <0xe0002000 0x1000>;
+		view-port = <0x0170>;
+		drv-vbus;
+	};
+
+	fpga_axi: fpga-axi@0 {
+		compatible = "simple-bus";
+		#address-cells = <0x1>;
+		#size-cells = <0x1>;
+		ranges;
+
+
+
+		tx0_dma: tx0-dmac@43c00000 {
+			compatible = "adi,axi-dmac-1.00.a";
+			reg = <0x43c00000 0x10000>;
+			#dma-cells = <1>;
+			interrupts = <0 29 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-parent = <&intc>;
+			clocks = <&clkc 16>;
+
+			adi,channels {
+				#size-cells = <0>;
+				#address-cells = <1>;
+
+				dma-channel@0 {
+					reg = <0>;
+					adi,source-bus-width = <64>;
+					adi,source-bus-type = <0>;
+					adi,destination-bus-width = <32>;
+					adi,destination-bus-type = <2>;
+				};
+			};
+		};
+
+		tx1_dma: tx0-dmac@43c10000 {
+			compatible = "adi,axi-dmac-1.00.a";
+			reg = <0x43c10000 0x10000>;
+			#dma-cells = <1>;
+			interrupts = <0 30 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-parent = <&intc>;
+			clocks = <&clkc 16>;
+
+			adi,channels {
+				#size-cells = <0>;
+				#address-cells = <1>;
+
+				dma-channel@0 {
+					reg = <0>;
+					adi,source-bus-width = <64>;
+					adi,source-bus-type = <0>;
+					adi,destination-bus-width = <32>;
+					adi,destination-bus-type = <2>;
+				};
+			};
+		};
+
+		dexter_dsp_tx: dexter_dsp_tx@43D00000 {
+			compatible = "fpga,dexter-dsp-tx";
+			reg = <0x43D00000 0x10000>;
+			clocks = <&dac>;
+			clock-names = "dac_clk";
+		};
+	};
+
+	ocxo: ocxo_osc {
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
+		clock-frequency = <10000000>;
+	};
+
+	dac_vref: regulator-3v3 {
+		compatible = "regulator-fixed";
+		regulator-name = "3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+	};
+
+	pps: pps@gpio25 {
+		gpios = <&gpio0 79 0>;
+		assert-falling-edge;
+		compatible = "pps-gpio";
+	};
+};
+
+&uart1 {
+	status = "okay";
+};
+
+&usb0 {
+	status = "okay";
+	dr_mode = "host";
+	usb-phy = <&usb_phy0>;
+};
+
+&sdhci0 {
+	u-boot,dm-pre-reloc;
+	status = "okay";
+	disable-wp;
+	max-frequency = <26000000>;
+};
+
+&flash0 {
+	partition@qspi-bootimage {
+		label = "qspi-bootimage";
+		reg = <0x00000000 0x00600000>;
+	};
+	partition@qspi-kernel {
+		label = "qspi-kernel";
+		reg = <0x00600000 0x00500000>;
+	};
+	partition@qspi-device-tree {
+		label = "qspi-device-tree";
+		reg = <0x00B00000 0x00080000>;
+	};
+	partition@qspi-bootargs {
+		label = "qspi-bootargs";
+		reg = <0x03F80000 0x00080000>;
+	};
+	partition@qspi-bootscript {
+		label = "qspi-bootscript";
+		reg = <0x00B80000 0x00080000>;
+	};
+	partition@qspi-rootfs {
+		label = "qspi-rootfs";
+		reg = <0x00C00000 0x03380000>;
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <100000>;
+
+	ltc2606@10 {
+		reg = <0x10>;
+		compatible = "lltc,ltc2606";
+		vref-supply = <&dac_vref>;
+	};
+
+	eeprom@52 {				// TX Modules Sec.AT24MAC402 EEPROM
+		compatible = "atmel,24c02";
+		reg = <0x52>;
+		pagesize = <16>;
+	};
+
+	eeprom@53 { 				// Baseboard EEPROM
+		compatible = "atmel,24c64";
+		reg = <0x53>;
+		pagesize = <32>;
+	};
+
+	eeprom@5a {				// TX Modules Sec.AT24MAC402 EEPROM Serial
+		compatible = "atmel,24cs02";
+		reg = <0x5a>;
+		pagesize = <1>;
+		//read-only;
+	};
+
+	lm96080@2f {
+		compatible = "national,lm80";
+		reg = <0x2f>;
+	};
+};
+
+&spi0 {
+	status = "okay";
+
+	clk0_lmk04805: lmk04805@0 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		#clock-cells = <1>;
+		compatible = "lmk04805-1";
+		reg = <0>;
+		spi-max-frequency = <100000>;
+		clock-output-names = "lmk04805-lpc_out0", "lmk04805-lpc_out1", "lmk04805-lpc_out2", "lmk04805-lpc_out3", "lmk04805-lpc_out4", "lmk04805-lpc_out5", "lmk04805-lpc_out6", "lmk04805-lpc_out7", "lmk04805-lpc_out8", "lmk04805-lpc_out9", "lmk04805-lpc_out10", "lmk04805-lpc_out11";
+		lmk,pll1-r = <4>; // PDF1 = 3072kHz / 2 = 1536kHz
+		lmk,pll1-n = <160>;
+		lmk,pll1-cp-gain = <0>;
+		lmk,vcxo-freq = <122880000>;
+		lmk,pll2-r = <1>;
+		lmk,pll2-p = <2>;
+		lmk,pll2-n = <8>; // vco_freq = vcxfo_freq * p * n * / r * 2x(en) = 1966.08MHz
+		lmk,vco-mode = <0>; // Dual PLL, Int VCO
+
+		lmk04805_0_c0:channel@0 {
+			reg = <0>;
+			lmk,extended-name = "CLKout0";
+			lmk,clock-divider = <56>;
+			lmk,out-type = <0>; // 0: power down, 1: lvds, 2: LVPECL 700mV 3: LVPECL 1200mV, 4: LVPECL 1600mV, 5: LVPECL 2000mV, 6: LVCMOS (Norm/Inv), 7: Norm/Norm, 8: ...
+			lmk,powerdown;
+		};
+
+		lmk04805_0_c1:channel@1 {
+			reg = <1>;
+			lmk,extended-name = "CLKout1";
+			lmk,clock-divider = <56>;
+			lmk,out-type = <0>;
+			lmk,powerdown;
+		};
+
+		lmk04805_0_c2:channel@2 {
+			reg = <2>;
+			lmk,extended-name = "CLKout2";
+			lmk,clock-divider = <2>;
+			lmk,out-type = <0>;
+			lmk,powerdown;
+		};
+
+		lmk04805_0_c3:channel@3 {
+			reg = <3>;
+			lmk,extended-name = "CLKout3";
+			lmk,clock-divider = <2>;
+			lmk,out-type = <0>;
+			lmk,powerdown;
+		};
+
+		lmk04805_0_c4:channel@4 {
+			reg = <4>;
+			lmk,extended-name = "CLKout4";
+			lmk,clock-divider = <20>;
+			lmk,out-type = <0>;
+			lmk,powerdown;
+		};
+
+		lmk04805_0_c5:channel@5 {
+			reg = <5>;
+			lmk,extended-name = "CLKout5";
+			lmk,clock-divider = <20>;
+			lmk,out-type = <0>;
+			lmk,powerdown;
+		};
+
+		lmk04805_0_c6:channel@6 {
+			reg = <6>;
+			lmk,extended-name = "CLKout6";
+			lmk,clock-divider = <2>;
+			lmk,out-type = <0>;
+			lmk,powerdown;
+		};
+
+		lmk04805_0_c7:channel@7 {
+			reg = <7>;
+			lmk,extended-name = "DAC_CLK";
+			lmk,clock-divider = <2>;
+			lmk,out-type = <4>;
+		};
+
+		lmk04805_0_c8:channel@8 {
+			reg = <8>;
+			lmk,extended-name = "CLKout8";
+			lmk,clock-divider = <12>;
+			lmk,out-type = <0>;
+			lmk,powerdown;
+		};
+
+		lmk04805_0_c9:channel@9 {
+			reg = <9>;
+			lmk,extended-name = "FPGA_CLK";
+			lmk,clock-divider = <12>;
+			lmk,out-type = <1>;
+			lmk,powerdown;
+		};
+
+		lmk04805_0_c10:channel@10 {
+			reg = <10>;
+			lmk,extended-name = "CLKout10";
+			lmk,clock-divider = <12>;
+			lmk,out-type = <0>;
+			lmk,powerdown;
+		};
+
+		lmk04805_0_c11:channel@11 {
+			reg = <11>;
+			lmk,extended-name = "ADC_CLK";
+			lmk,clock-divider = <12>;
+			lmk,out-type = <4>;
+		};
+	};
+
+	ad9833@1{
+		#clock-cells = <0>;
+		compatible = "ad9833";
+		reg = <1>;
+		spi-max-frequency = <1000000>;
+		spi-cpol;
+		clocks = <&ocxo>;
+		dds,frequency0 = <3072000>;
+		dds,phase0 = <0>;
+		dds,frequency1 = <3072000>;
+		dds,phase1 = <4096>;
+		dds,output-enable;
+	};
+
+	dac: ad9957@2{
+		#address-cells = <1>;
+		#size-cells = <0>;
+		#clock-cells = <0>;
+		compatible = "ad9957";
+		reg = <2>;
+		spi-max-frequency = <1000000>;
+		clocks = <&clk0_lmk04805 7>;
+		clock-names = "clk";
+		dmas = <&tx0_dma 0>, <&tx1_dma 0>;
+		dma-names = "tx0", "tx1";
+	};
+
+	/* spidev@2{
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "spidev";
+		reg = <2>;
+		spi-max-frequency = <1000000>;
+	}; */
+};
