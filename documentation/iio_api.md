@@ -1,6 +1,10 @@
 # Linux IIO devices API description
 The Dexter platform supports interfacing with Linux IIO devices.
 
+# Read / write attribute example
+IIO attributes can be accessed e.g. with the iio_attr tool. The following sets the DUC0 to -500kHz:
+iio_attr -d dexter_dsp_tx -- frequency0 -500000
+
 # IIO Attributes
 ## dexter_dsp_tx
 The TX DSP FPGA core contains two digital upconverters (DUC) and a PPS/GPSDO controller. The DUC is responsible for interpolation input IQ sample streams. They are interpolated by factor 80 from 2.048MSPS to 81.92MSPS and can be frequency shifted by +-33MHz.
