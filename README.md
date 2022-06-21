@@ -15,7 +15,8 @@ Welcome to the Dexter DAB modulator firmware distribution! The firmware is free 
 ### Build instructions
 [FPGA/HDL Build instructions](documentation/build_hdl.md)  
 [FPGA/DSP Build instructions](documentation/build_dsp.md)  
-[BSP/Linux Build instructions](documentation/build_bsp.md)
+[BSP/Linux Build instructions](documentation/build_bsp.md)  
+[Kuiper Linux SD-card creation](documentation/kuiper_sdcard.md)  
 
 ### Misc
-[GNUradio examples](documentation/gnuradio_samples.md)
+[GNUradio examples](documentation/gnuradio_samples.md)  
