@@ -1,5 +1,5 @@
 # DexterDABModulator
-Welcome to the Dexter DAB modulator firmware distribution! The firmware is free & open-source, the platform is created and sold by PrecisionWave AG.
+Welcome to the Dexter DAB modulator firmware distribution! The firmware is free & open-source, the Dexter DAB modulator platform is created and sold by PrecisionWave AG.
 
 ## Documentation
 
