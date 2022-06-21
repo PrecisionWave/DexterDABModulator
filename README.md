@@ -3,6 +3,9 @@ Welcome to the Dexter DAB modulator firmware distribution! The firmware is free 
 
 ## Documentation
 
+### Linux IIO devices API description
+[IIO API description](documentation/iio_api.md)  
+
 ### Hardware Documentation
 [Schematics](documentation/schematic/Readme.md)  
 
