@@ -97,3 +97,7 @@ make
 4. Select dexter.tcl and wait until finished
 5. Check for errors
 6. Generate Bitstream
+
+This will generate the following files:  
+- for impl_1: `<dexter git repo>/hdl_pcw/projects/dexter/dexter/dexter.runs/impl_1/system_top.bit`  
+- for impl_2: `<dexter git repo>/hdl_pcw/projects/dexter/dexter/dexter.runs/impl_2/system_top.bit`  
