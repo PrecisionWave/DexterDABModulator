@@ -3,7 +3,7 @@ The Dexter platform supports interfacing with Linux IIO devices.
 
 # Read / write attribute example
 IIO attributes can be accessed e.g. with the iio_attr tool. The following sets the DUC0 to -500kHz:
-`iio_attr -d dexter_dsp_tx -- frequency0 -500000
+`iio_attr -d dexter_dsp_tx -- frequency0 -500000`
 
 # IIO Attributes
 ## dexter_dsp_tx
