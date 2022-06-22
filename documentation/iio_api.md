@@ -24,7 +24,7 @@ The DSP is clocked by 163.84MHz and the clock cycles counter values are reffered
 | frequency1 | DUC1 frequency shift in Herz | -33000000 .. 33000000 |
 | gain0 | DUC0 IQ input gain scaling, 65535 is 0dB | 0 .. 65535 |
 | gain1 | DUC1 IQ input gain scaling, 65535 is 0dB | 0 .. 65535 |
-| gpsdo_locked | READ ONLY, shows the status locked or unlocked of the GPSDO, the status will get unlocked once the frequency error measured by the PPS pulse is too big, but not on GPS signal losses (see pps_loss_of_signal attribute), the attribute is written by the gpsdo.sh control script | bool |
+| gpsdo_locked | READ ONLY, shows the status locked or unlocked of the GPSDO, the status will get unlocked when the frequency error measured by the PPS pulse is too big, but not on GPS signal losses (see pps_loss_of_signal attribute), this typically occurs after the PPS is coming back after some hours of signal loss, but not on shorter interruptions. The attribute is written by the gpsdo.sh control script | bool |
 | pps_clk_error | READ ONLY,c lock cycles error of the OCXO clock within the last PPS period, used by the gpsdo.sh control script | int32_t |
 | pps_clk_error_hz | READ ONLY, clock cycles frequency error in Herz of the OCXO clock within the last PPS period, written by the gpsdo.sh control script | int32_t |
 | pps_clk_error_ns | READ ONLY, clock cycles time error in nanoseconds of the OCXO clock within the last PPS period, written by the gpsdo.sh control script  | int32_t |
