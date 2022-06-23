@@ -2,5 +2,5 @@
 
 | Assembly variant   | PCB      | Revision | Schematic Version  | Schematic                 
 | ------------------ | -------- | -------- | ------------------ | ------------------------------------------------------
-| Dexter Min         | Dexter   | A        | 1                  | [SCH_Dexter_RevA_Ver2.PDF](./SCH_Dexter_RevA_Ver2.PDF)
-| Dexter Max         | Dexter   | A        | 2                  | [SCH_Dexter_RevA_Ver1.PDF](./SCH_Dexter_RevA_Ver1.PDF)
+| Dexter Min         | Dexter   | A        | 1                  | [Dexter Min](./Schematic_Dexter-Min_RevA.PDF)
+| Dexter Max         | Dexter   | A        | 2                  | [Dexter Max](./Schematic_Dexter-Max_RevA.PDF)
