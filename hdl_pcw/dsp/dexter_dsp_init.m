@@ -28,4 +28,4 @@ Hd_fir = design(d_fir,'equiripple','SystemObject',true);
 fir_coef = Hd_fir.Numerator;
 
 f_stimulus = [100000 700000 768000];
-a_stimulus = [0.5 0.00 0.000];
+a_stimulus = [0.2 0.2 0.2];
