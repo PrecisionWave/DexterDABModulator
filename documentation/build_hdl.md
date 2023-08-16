@@ -81,7 +81,7 @@ cd hdl_adi/library/axi_dmac
 
 4. Setup environment to skip version check  
 ```
-set ADI_IGNORE_VERSION_CHECK=1
+export ADI_IGNORE_VERSION_CHECK=1
 ```
 
 5. Build axi_dmac  
