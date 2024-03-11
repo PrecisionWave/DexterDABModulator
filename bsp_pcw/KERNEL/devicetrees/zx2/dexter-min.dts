@@ -121,6 +121,51 @@
 			clocks = <&dac>;
 			clock-names = "dac_clk";
 		};
+
+		fft_dma_in: dmac@43c20000 {
+			compatible = "adi,axi-dmac-1.00.a";
+			reg = <0x43c20000 0x10000>;
+			#dma-cells = <1>;
+			interrupts = <0 31 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-parent = <&intc>;
+			clocks = <&clkc 16>;
+
+			adi,channels {
+				#size-cells = <0>;
+				#address-cells = <1>;
+
+				dma-channel@0 {
+					reg = <0>;
+					adi,source-bus-width = <64>;
+					adi,source-bus-type = <0>;
+					adi,destination-bus-width = <32>;
+					adi,destination-bus-type = <1>;
+				};
+			};
+		};
+
+		fft_dma_out: dmac@43c30000 {
+			compatible = "adi,axi-dmac-1.00.a";
+			reg = <0x43c10000 0x10000>;
+			#dma-cells = <1>;
+			interrupts = <0 32 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-parent = <&intc>;
+			clocks = <&clkc 16>;
+
+			adi,channels {
+				#size-cells = <0>;
+				#address-cells = <1>;
+
+				dma-channel@0 {
+					reg = <0>;
+					adi,source-bus-width = <32>;
+					adi,source-bus-type = <1>;
+					adi,destination-bus-width = <64>;
+					adi,destination-bus-type = <0>;
+				};
+			};
+		};
+
 	};
 
 	dac_vref: regulator-3v3 {
@@ -647,6 +692,7 @@
 		dmas = <&tx0_dma 0>, <&tx1_dma 0>;
 		dma-names = "tx0", "tx1";
 	};
+
 
 	/* spidev@2{
 		#address-cells = <1>;
