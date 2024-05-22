@@ -93,17 +93,12 @@ cp ${TARG}/u-boot.elf ${OUT}
 ######################
 # generate uboot.src #
 ######################
-echo "setenv kernel_size 0x1e80000" > ${TARG}/bscripts/mmcboot-pcw
+echo "setenv kernel_size 0x3000000" > ${TARG}/bscripts/mmcboot-pcw
 echo "setenv devicetree_loadaddr 0x8000000" >> ${TARG}/bscripts/mmcboot-pcw
 echo "" >> ${TARG}/bscripts/mmcboot-pcw
 cat ${TARG}/bscripts/mmcboot-rootfs >> ${TARG}/bscripts/mmcboot-pcw
 mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n "Uboot mmc start script" -d ${TARG}/bscripts/mmcboot-pcw ${OUT}/uboot.scr
 
-
-##############################
-# generate uboot_ramdisk.scr #
-##############################
-mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n "Uboot mmc ramdisk start script" -d ${TARG}/bscripts/mmcboot-ramdisk ${OUT}/uboot_ramdisk.scr
 
 cd ${ORG}
 exit
