@@ -1,0 +1,58 @@
+/* power amps on i2c-1 */
+#define I2CBUS			i2c1
+
+#define PA				PA0
+#define MUXBASE         20
+#define MUXDEV          21
+#define I2C_MUX_BASE    0x20
+#define I2C_MUX_DEVICE  0x21
+#include "pcw-pa-generic.dtsi"
+
+#define PA				PA1
+#define MUXBASE         40
+#define MUXDEV          41
+#define I2C_MUX_BASE    0x40
+#define I2C_MUX_DEVICE  0x41
+#include "pcw-pa-generic.dtsi"
+
+#define PA				PA2
+#define MUXBASE         8
+#define MUXDEV          9
+#define I2C_MUX_BASE    0x8
+#define I2C_MUX_DEVICE  0x9
+#include "pcw-pa-generic.dtsi"
+
+#define PA				PA3
+#define MUXBASE         44
+#define MUXDEV          45
+#define I2C_MUX_BASE    0x44
+#define I2C_MUX_DEVICE  0x45
+#include "pcw-pa-generic.dtsi"
+
+#define PA				PA4
+#define MUXBASE         46
+#define MUXDEV          47
+#define I2C_MUX_BASE    0x46
+#define I2C_MUX_DEVICE  0x47
+#include "pcw-pa-generic.dtsi"
+
+#define PA				PA5
+#define MUXBASE         62
+#define MUXDEV          63
+#define I2C_MUX_BASE    0x62
+#define I2C_MUX_DEVICE  0x63
+#include "pcw-pa-generic.dtsi"
+
+#define PA				PA6
+#define MUXBASE         66
+#define MUXDEV          67
+#define I2C_MUX_BASE    0x66
+#define I2C_MUX_DEVICE  0x67
+#include "pcw-pa-generic.dtsi"
+
+#define PA				PA7
+#define MUXBASE         28
+#define MUXDEV          29
+#define I2C_MUX_BASE    0x28
+#define I2C_MUX_DEVICE  0x29
+#include "pcw-pa-generic.dtsi"

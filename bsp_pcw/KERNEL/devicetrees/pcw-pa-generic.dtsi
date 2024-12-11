@@ -1,0 +1,213 @@
+
+#ifndef PA
+#error "Error: PA undefined!"
+#endif
+
+#ifndef MUXBASE
+#error "Error: MUXBASE undefined!"
+#endif
+
+#ifndef MUXDEV
+#error "Error: MUXDEV undefined!"
+#endif
+
+#ifndef I2C_MUX_BASE
+#error "Error: I2C_MUX_BASE undefined!"
+#endif
+
+#ifndef I2C_MUX_DEVICE
+#error "Error: I2C_MUX_DEVICE undefined!"
+#endif
+
+&I2CBUS {
+	i2c-mux@MUXBASE {
+		reg = <I2C_MUX_BASE>;
+		compatible = "nxp,pca9547";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		// Multiplexer port #0: Secure EEPROM
+		i2c@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eeprom-PA-1@MUXDEV {
+				compatible = "atmel,24cs02";
+				reg = <I2C_MUX_DEVICE>;
+			};
+		};
+
+		// Multiplexer port #1: Emulated 32kBit EEPROM (Flash based)
+		i2c@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eeprom-PA-2@MUXDEV {
+				compatible = "atmel,24c32";
+				reg = <I2C_MUX_DEVICE>;
+			};
+		};
+
+		// Multiplexer port #2: Debug device
+		i2c@2 {
+			reg = <2>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eeprom-PA-3@MUXDEV {
+				compatible = "atmel,24c02";
+				reg = <I2C_MUX_DEVICE>;
+			};
+		};
+
+		// Multiplexer port #3: AD5593r #1
+		i2c@3 {
+			reg = <3>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ad5593r-PA-1@MUXDEV {
+				#size-cells = <0>;
+				#address-cells = <1>;
+				#gpio-cells = <2>;
+				compatible = "adi,ad5593r";
+				reg = <I2C_MUX_DEVICE>;
+				gpio-controller;
+
+				/*
+				 * CH_MODE_UNUSED             0
+				 * CH_MODE_ADC                1
+				 * CH_MODE_DAC                2
+				 * CH_MODE_DAC_AND_ADC        3
+				 * CH_MODE_GPIO               8
+				 *
+				 * CH_OFFSTATE_PULLDOWN       0
+				 * CH_OFFSTATE_OUT_LOW        1
+				 * CH_OFFSTATE_OUT_HIGH       2
+				 * CH_OFFSTATE_OUT_TRISTATE   3
+				 */
+				channel@0 {
+				  reg = <0>;
+				  adi,mode = <8>;
+				  adi,off-state = <0>;
+				  label = "GPO_EN_BIAS";
+				};
+				channel@1 {
+				  reg = <1>;
+				  adi,mode = <8>;
+				  adi,off-state = <0>;
+				  label = "GPO_EN_Drain";
+				};
+				channel@2 {
+				  reg = <2>;
+				  adi,mode = <1>;
+				  adi,off-state = <0>;
+				  label = "VTemp";
+				};
+				channel@3 {
+				  reg = <3>;
+				  adi,mode = <1>;
+				  adi,off-state = <0>;
+				  label = "IDrain";
+				};
+				channel@4 {
+				  reg = <4>;
+				  adi,mode = <1>;
+				  adi,off-state = <0>;
+				  label = "Vdrain";
+				};
+				channel@5 {
+				  reg = <5>;
+				  adi,mode = <2>;
+				  adi,off-state = <0>;
+				  label = "PWM_Gate";
+				};
+				channel@6 {
+				  reg = <6>;
+				  adi,mode = <1>;
+				  adi,off-state = <0>;
+				  label = "Ibias";
+				};
+			};
+		};
+
+		// Multiplexer port #4: AD5593r #2
+		i2c@4 {
+			reg = <4>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ad5593r-PA-2@MUXDEV {
+				#size-cells = <0>;
+				#address-cells = <1>;
+				#gpio-cells = <2>;
+				compatible = "adi,ad5593r";
+				reg = <I2C_MUX_DEVICE>;
+				gpio-controller;
+
+				/*
+				 * CH_MODE_UNUSED             0
+				 * CH_MODE_ADC                1
+				 * CH_MODE_DAC                2
+				 * CH_MODE_DAC_AND_ADC        3
+				 * CH_MODE_GPIO               8
+				 *
+				 * CH_OFFSTATE_PULLDOWN       0
+				 * CH_OFFSTATE_OUT_LOW        1
+				 * CH_OFFSTATE_OUT_HIGH       2
+				 * CH_OFFSTATE_OUT_TRISTATE   3
+				 */
+				channel@0 {
+				  reg = <0>;
+				  adi,mode = <8>;
+				  adi,off-state = <0>;
+				  label = "GPO_SEL0_FWD_nREF";
+				};
+				channel@1 {
+				  reg = <1>;
+				  adi,mode = <1>;
+				  adi,off-state = <0>;
+				  label = "P_FWD";
+				};
+				channel@2 {
+				  reg = <2>;
+				  adi,mode = <1>;
+				  adi,off-state = <0>;
+				  label = "P_REV";
+				};
+				channel@3 {
+				  reg = <3>;
+				  adi,mode = <1>;
+				  adi,off-state = <0>;
+				  label = "P_VSWR";
+				};
+				channel@4 {
+				  reg = <4>;
+				  adi,mode = <8>;
+				  adi,off-state = <0>;
+				  label = "GPO_SEL1_FWD_nREF";
+				};
+			};
+		};
+
+		// Multiplexer port #5: Emulated 2kBit EEPROM (Flash based) > PA Version
+		i2c@5 {
+			reg = <5>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eeprom-PA-4@MUXDEV {
+				compatible = "atmel,24c02";
+				reg = <I2C_MUX_DEVICE>;
+			};
+		};
+	};
+};
+
+#undef PA
+#undef MUXBASE
+#undef MUXDEV
+#undef I2C_MUX_BASE
+#undef I2C_MUX_DEVICE

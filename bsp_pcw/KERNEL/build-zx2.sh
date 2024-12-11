@@ -99,6 +99,7 @@ for dts in "${DTS[@]}"; do
 done
 cp ${DIR}/enclustra-linux/arch/arm/boot/dts/zynq_enclustra_* ${TARG}/arch/arm/boot/dts/
 cp ${DIR}/enclustra-linux/arch/arm/boot/dts/zynq-enclustra-* ${TARG}/arch/arm/boot/dts/
+cp ${DIR}/devicetrees/*.dtsi ${TARG}/arch/arm/boot/dts/
 
 
 ################################
