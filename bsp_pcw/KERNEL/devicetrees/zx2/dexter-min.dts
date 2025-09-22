@@ -56,14 +56,6 @@
 		reg = <0x0 0x20000000>;
 	};
 
-	usb_phy0: phy0 {
-		compatible = "usb-nop-xceiv";
-		#phy-cells = <0>;
-		reg = <0xe0002000 0x1000>;
-		view-port = <0x0170>;
-		drv-vbus;
-	};
-
 	fpga_axi: fpga-axi@0 {
 		compatible = "simple-bus";
 		#address-cells = <0x1>;
@@ -155,7 +147,6 @@
 &usb0 {
 	status = "okay";
 	dr_mode = "host";
-	usb-phy = <&usb_phy0>;
 };
 
 &sdhci0 {
