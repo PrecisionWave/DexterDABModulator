@@ -323,10 +323,37 @@ module system_top (
   assign ADC_SPI_SCLK = gpio_o[31];
   assign ADC_SPI_SDIO = gpio_t[32] ? 1'bz : gpio_o[32];
   assign gpio_i[32] = ADC_SPI_SDIO;
-					
+
+    // ***************************************************************************
+    // FPGA Bitstream generation Date / time
+    // Requires that BITSTREAM.CONFIG. USR_ACCESS is set to TIMESTAMP	 
+    // Format: UG570
+    //            ddddd_MMMM_yyyyyy_hhhhh_mmmmmm_ssssss
+    //   (bit 31)                                       (bit 0)
+    // Where:
+    //   ddddd  = 5 bits to represent days 1-31 in a month
+    //   MMMM   = 4 bits to represent months 1-12 in a year
+    //   yyyyyy = 6 bits to represent years 0-63 (2000 to 2063)
+    //   hhhhh  = 5 bits to represent hours 0-23 in a day
+    //   mmmmmm = 6 bits to represent minutes 0-59 in an hour
+    //   ssssss = 6 bits to represent seconds 0-59 in a minute
+    // ***************************************************************************
+    wire [31:0] AXSS_REG;
+    USR_ACCESSE2 USR_ACCESSE2_inst (
+        .CFGCLK(),  // 1-bit output: Configuration Clock
+        .DATA(AXSS_REG),    // 32-bit output: Configuration Data reflecting the contents of the AXSS register
+        .DATAVALID()  // 1-bit output: Active-High Data Valid
+    );
 
   // System /////////////////////////////////////////////////////////////////////
   system_wrapper i_system_wrapper (
+    .sys_cpu_clk        (sys_cpu_clk),
+    .sys_cpu_resetn     (sys_cpu_resetn),
+  
+     // FPGA build date
+    .axss_reg(AXSS_REG),
+
+    // DDR Memory
     .ddr_addr           (DDR_ADDR),
     .ddr_ba             (DDR_BA),
     .ddr_cas_n          (DDR_CAS_N),
@@ -342,9 +369,6 @@ module system_top (
     .ddr_ras_n          (DDR_RAS_N),
     .ddr_reset_n        (DDR_RESET_N),
     .ddr_we_n           (DDR_WE_N),
-    
-    .sys_cpu_clk        (sys_cpu_clk),
-    .sys_cpu_resetn     (sys_cpu_resetn),
     
     .fixed_io_ddr_vrn   (FIXED_IO_DDR_VRN),
     .fixed_io_ddr_vrp   (FIXED_IO_DDR_VRP),

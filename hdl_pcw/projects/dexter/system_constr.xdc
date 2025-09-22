@@ -13,6 +13,11 @@ set_property BITSTREAM.CONFIG.OVERTEMPPOWERDOWN ENABLE [current_design]
 set_property BITSTREAM.CONFIG.UNUSEDPIN PULLNONE [current_design]
 # ----------------------------------------------------------------------------------
 
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
+
+# Set usr_access to output timestamp
+set_property BITSTREAM.CONFIG.USR_ACCESS TIMESTAMP [current_design]
+
 # DAC AD9957
 set_property -dict {PACKAGE_PIN U18 IOSTANDARD LVCMOS33} [get_ports DAC_PDCLK]
 set_property -dict {PACKAGE_PIN U14 IOSTANDARD LVCMOS33} [get_ports {DAC_D[0]}]

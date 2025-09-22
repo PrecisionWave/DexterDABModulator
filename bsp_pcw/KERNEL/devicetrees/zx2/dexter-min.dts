@@ -76,6 +76,11 @@
 			reg = <0x55550000 0x1000>;
 		};
 
+		axss_ver: axss_ver@50120000 {
+			compatible = "pcw,axss-ver";
+			reg = <0x50120000 0x10000>;
+		};
+
 		tx0_dma: tx0-dmac@43c00000 {
 			compatible = "adi,axi-dmac-1.00.a";
 			reg = <0x43c00000 0x10000>;
