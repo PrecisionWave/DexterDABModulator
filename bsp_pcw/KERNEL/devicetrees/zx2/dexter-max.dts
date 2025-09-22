@@ -94,7 +94,7 @@
 			};
 		};
 
-		tx1_dma: tx0-dmac@43c10000 {
+		tx1_dma: tx1-dmac@43c10000 {
 			compatible = "adi,axi-dmac-1.00.a";
 			reg = <0x43c10000 0x10000>;
 			#dma-cells = <1>;
