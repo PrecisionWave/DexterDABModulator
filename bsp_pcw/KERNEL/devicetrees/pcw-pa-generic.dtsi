@@ -189,6 +189,12 @@
 				  adi,off-state = <0>;
 				  label = "GPO_SEL1_FWD_nREF";
 				};
+				channel@5 {
+				  reg = <5>;
+				  adi,mode = <1>;
+				  adi,off-state = <0>;
+				  label = "P_FWD_AVG";
+				};
 			};
 		};
 

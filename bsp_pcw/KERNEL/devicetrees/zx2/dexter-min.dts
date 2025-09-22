@@ -4,7 +4,7 @@
 #include "zynq_enclustra_common.dtsi"
 #include "zynq_enclustra_mars_zx2.dtsi"
 #include <dt-bindings/interrupt-controller/irq.h>
-#include "pcw-power-amps-i2c-1.dtsi"
+#include <dt-bindings/gpio/gpio.h>
 
 /*
  *
@@ -237,6 +237,9 @@
 		lmk,pll2-p = <2>;
 		lmk,pll2-n = <16>; // vco_freq = vcxfo_freq * p * n * / r * 2x = 1966.08MHz
 		lmk,vco-mode = <6>; // PLL2, Int VCO
+		status-ld-gpios = <&gpio0 74 GPIO_ACTIVE_HIGH>; // EMIO_OFFSET + 20 = 74
+		// status-holdover-gpios = <&gpio0 XX GPIO_ACTIVE_HIGH>; // do not use! (it's connected to MISO)
+		status-clkin0-gpios = <&gpio0 75 GPIO_ACTIVE_HIGH>; // EMIO_OFFSET + 21 = 75
 
 		lmk04805_0_c0:channel@0 {
 			reg = <0>;

@@ -31,7 +31,7 @@ source ${DIR}/settings.sh
 # target path #
 ###############
 if [ $# -lt 1 ]; then
-  TARG="${DIR}/${KERNEL_DIR}"
+  TARG="${DIR}/${KERNEL_DIR_ARM}"
 else
   TARG="${1%/}"
 fi
@@ -54,7 +54,7 @@ else
   # checkout clean master branch of enclustra-linux
   git -C ${DIR}/enclustra-linux reset --hard
   git -C ${DIR}/enclustra-linux clean -fd
-  git -C ${DIR}/enclustra-linux checkout master
+  git -C ${DIR}/enclustra-linux checkout v1.12
 fi
 
 
@@ -78,7 +78,7 @@ mkdir -p ${OUT}
 ###############################
 # copy adau1761 firmware file #
 ###############################
-#cp ${DIR}/pcw_sources/adau1761.bin ${TARG}/firmware/
+cp ${DIR}/binaries/adau1761.bin ${TARG}/firmware/
 
 
 #########################
@@ -112,7 +112,7 @@ export ARCH=arm
 export CROSS_COMPILE=arm-none-linux-gnueabi-
 
 # clean kernel
-if [ ${CLEAN_BUILD} == "true" ]; then
+if [ "${CLEAN_BUILD}" = "true" ]; then
   make distclean
 fi
 
