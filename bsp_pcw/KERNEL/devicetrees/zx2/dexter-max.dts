@@ -70,7 +70,11 @@
 		#size-cells = <0x1>;
 		ranges;
 
-
+		axi_jtag0: axi-jtag@55550000 {
+			status = "okay";
+			compatible = "dmem-uio";
+			reg = <0x55550000 0x1000>;
+		};
 
 		tx0_dma: tx0-dmac@43c00000 {
 			compatible = "adi,axi-dmac-1.00.a";

@@ -125,6 +125,7 @@ if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
 analog.com:user:axi_dmac:1.0\
 xilinx.com:ip:clk_wiz:6.0\
+xilinx.com:ip:debug_bridge:3.0\
 PrecisionWave_AG:pcwlib:dexter_dsp_tx:1.0\
 xilinx.com:ip:xlconstant:1.1\
 xilinx.com:ip:ila:6.2\
@@ -601,6 +602,19 @@ proc create_root_design { parentCell } {
    CONFIG.USE_LOCKED {true} \
    CONFIG.USE_RESET {false} \
  ] $clkgen
+
+  # Create instance: debug_bridge_0, and set properties
+  set debug_bridge_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:debug_bridge:3.0 debug_bridge_0 ]
+  set_property -dict [ list \
+   CONFIG.C_BSCAN_MUX {2} \
+   CONFIG.C_DEBUG_MODE {2} \
+   CONFIG.C_NUM_BS_MASTER {1} \
+   CONFIG.C_USER_SCAN_CHAIN {1} \
+   CONFIG.C_XVC_HW_ID {0x0002} \
+ ] $debug_bridge_0
+
+  # Create instance: debug_bridge_1, and set properties
+  set debug_bridge_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:debug_bridge:3.0 debug_bridge_1 ]
 
   # Create instance: dexter_dsp_tx_1, and set properties
   set dexter_dsp_tx_1 [ create_bd_cell -type ip -vlnv PrecisionWave_AG:pcwlib:dexter_dsp_tx:1.0 dexter_dsp_tx_1 ]
@@ -1410,7 +1424,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   # Create instance: sys_ps7_axi_periph, and set properties
   set sys_ps7_axi_periph [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 sys_ps7_axi_periph ]
   set_property -dict [ list \
-   CONFIG.NUM_MI {3} \
+   CONFIG.NUM_MI {4} \
  ] $sys_ps7_axi_periph
 
   # Create instance: sys_rstgen, and set properties
@@ -1456,6 +1470,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   connect_bd_intf_net -intf_net axi_dmac_0_m_src_axi [get_bd_intf_pins axi_dmac_0/m_src_axi] [get_bd_intf_pins axi_mem_intercon/S00_AXI]
   connect_bd_intf_net -intf_net axi_dmac_1_m_src_axi [get_bd_intf_pins axi_dmac_1/m_src_axi] [get_bd_intf_pins axi_mem_intercon/S01_AXI]
   connect_bd_intf_net -intf_net axi_mem_intercon_M00_AXI [get_bd_intf_pins axi_mem_intercon/M00_AXI] [get_bd_intf_pins sys_ps7/S_AXI_HP1]
+  connect_bd_intf_net -intf_net debug_bridge_0_m0_bscan [get_bd_intf_pins debug_bridge_0/m0_bscan] [get_bd_intf_pins debug_bridge_1/S_BSCAN]
   connect_bd_intf_net -intf_net sys_ps7_DDR [get_bd_intf_ports ddr] [get_bd_intf_pins sys_ps7/DDR]
   connect_bd_intf_net -intf_net sys_ps7_FIXED_IO [get_bd_intf_ports fixed_io] [get_bd_intf_pins sys_ps7/FIXED_IO]
   connect_bd_intf_net -intf_net sys_ps7_M_AXI_GP0 [get_bd_intf_pins sys_ps7/M_AXI_GP0] [get_bd_intf_pins sys_ps7_axi_periph/S00_AXI]
@@ -1463,6 +1478,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   connect_bd_intf_net -intf_net sys_ps7_axi_periph_M00_AXI [get_bd_intf_pins axi_dmac_0/s_axi] [get_bd_intf_pins sys_ps7_axi_periph/M00_AXI]
   connect_bd_intf_net -intf_net sys_ps7_axi_periph_M01_AXI [get_bd_intf_pins dexter_dsp_tx_1/dexter_dsp_tx_s_axi] [get_bd_intf_pins sys_ps7_axi_periph/M01_AXI]
   connect_bd_intf_net -intf_net sys_ps7_axi_periph_M02_AXI [get_bd_intf_pins axi_dmac_1/s_axi] [get_bd_intf_pins sys_ps7_axi_periph/M02_AXI]
+  connect_bd_intf_net -intf_net sys_ps7_axi_periph_M03_AXI [get_bd_intf_pins debug_bridge_0/S_AXI] [get_bd_intf_pins sys_ps7_axi_periph/M03_AXI]
 
   # Create port connections
   connect_bd_net -net adc_clk_in_n [get_bd_ports adc_clk_in_n] [get_bd_pins adc_if/adc_clk_in_n]
@@ -1501,7 +1517,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   connect_bd_net -net sys_concat_intc_dout [get_bd_pins sys_concat_intc/dout] [get_bd_pins sys_ps7/IRQ_F2P]
   connect_bd_net -net sys_cpu_reset [get_bd_pins sys_rstgen/peripheral_reset]
   connect_bd_net -net sys_logic_inv_Res [get_bd_pins sys_logic_inv/Res] [get_bd_pins sys_ps7/USB0_VBUS_PWRFAULT]
-  connect_bd_net -net sys_ps7_FCLK_CLK0 [get_bd_ports sys_cpu_clk] [get_bd_pins axi_dmac_0/m_src_axi_aclk] [get_bd_pins axi_dmac_0/s_axi_aclk] [get_bd_pins axi_dmac_1/m_src_axi_aclk] [get_bd_pins axi_dmac_1/s_axi_aclk] [get_bd_pins axi_mem_intercon/ACLK] [get_bd_pins axi_mem_intercon/M00_ACLK] [get_bd_pins axi_mem_intercon/S00_ACLK] [get_bd_pins axi_mem_intercon/S01_ACLK] [get_bd_pins sys_ps7/FCLK_CLK0] [get_bd_pins sys_ps7/M_AXI_GP0_ACLK] [get_bd_pins sys_ps7/S_AXI_HP1_ACLK] [get_bd_pins sys_ps7_axi_periph/ACLK] [get_bd_pins sys_ps7_axi_periph/M00_ACLK] [get_bd_pins sys_ps7_axi_periph/M02_ACLK] [get_bd_pins sys_ps7_axi_periph/S00_ACLK] [get_bd_pins sys_rstgen/slowest_sync_clk]
+  connect_bd_net -net sys_ps7_FCLK_CLK0 [get_bd_ports sys_cpu_clk] [get_bd_pins axi_dmac_0/m_src_axi_aclk] [get_bd_pins axi_dmac_0/s_axi_aclk] [get_bd_pins axi_dmac_1/m_src_axi_aclk] [get_bd_pins axi_dmac_1/s_axi_aclk] [get_bd_pins axi_mem_intercon/ACLK] [get_bd_pins axi_mem_intercon/M00_ACLK] [get_bd_pins axi_mem_intercon/S00_ACLK] [get_bd_pins axi_mem_intercon/S01_ACLK] [get_bd_pins debug_bridge_0/s_axi_aclk] [get_bd_pins debug_bridge_1/clk] [get_bd_pins sys_ps7/FCLK_CLK0] [get_bd_pins sys_ps7/M_AXI_GP0_ACLK] [get_bd_pins sys_ps7/S_AXI_HP1_ACLK] [get_bd_pins sys_ps7_axi_periph/ACLK] [get_bd_pins sys_ps7_axi_periph/M00_ACLK] [get_bd_pins sys_ps7_axi_periph/M02_ACLK] [get_bd_pins sys_ps7_axi_periph/M03_ACLK] [get_bd_pins sys_ps7_axi_periph/S00_ACLK] [get_bd_pins sys_rstgen/slowest_sync_clk]
   connect_bd_net -net sys_ps7_FCLK_RESET0_N [get_bd_pins adc_if/ext_reset_in] [get_bd_pins rst_164M/ext_reset_in] [get_bd_pins sys_ps7/FCLK_RESET0_N] [get_bd_pins sys_rstgen/ext_reset_in]
   connect_bd_net -net sys_ps7_GPIO_O [get_bd_ports gpio_o] [get_bd_pins sys_ps7/GPIO_O]
   connect_bd_net -net sys_ps7_GPIO_T [get_bd_ports gpio_t] [get_bd_pins sys_ps7/GPIO_T]
@@ -1514,7 +1530,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   connect_bd_net -net sys_ps7_SPI0_SS1_O [get_bd_ports spi0_csn_1] [get_bd_pins sys_ps7/SPI0_SS1_O]
   connect_bd_net -net sys_ps7_SPI0_SS2_O [get_bd_ports spi0_csn_2] [get_bd_pins sys_ps7/SPI0_SS2_O]
   connect_bd_net -net sys_ps7_SPI0_SS_O [get_bd_ports spi0_csn_0] [get_bd_pins sys_ps7/SPI0_SS_O]
-  connect_bd_net -net sys_rstgen_peripheral_aresetn [get_bd_ports sys_cpu_resetn] [get_bd_pins axi_dmac_0/m_src_axi_aresetn] [get_bd_pins axi_dmac_0/s_axi_aresetn] [get_bd_pins axi_dmac_1/m_src_axi_aresetn] [get_bd_pins axi_dmac_1/s_axi_aresetn] [get_bd_pins axi_mem_intercon/ARESETN] [get_bd_pins axi_mem_intercon/M00_ARESETN] [get_bd_pins axi_mem_intercon/S00_ARESETN] [get_bd_pins axi_mem_intercon/S01_ARESETN] [get_bd_pins sys_ps7_axi_periph/ARESETN] [get_bd_pins sys_ps7_axi_periph/M00_ARESETN] [get_bd_pins sys_ps7_axi_periph/M02_ARESETN] [get_bd_pins sys_ps7_axi_periph/S00_ARESETN] [get_bd_pins sys_rstgen/peripheral_aresetn]
+  connect_bd_net -net sys_rstgen_peripheral_aresetn [get_bd_ports sys_cpu_resetn] [get_bd_pins axi_dmac_0/m_src_axi_aresetn] [get_bd_pins axi_dmac_0/s_axi_aresetn] [get_bd_pins axi_dmac_1/m_src_axi_aresetn] [get_bd_pins axi_dmac_1/s_axi_aresetn] [get_bd_pins axi_mem_intercon/ARESETN] [get_bd_pins axi_mem_intercon/M00_ARESETN] [get_bd_pins axi_mem_intercon/S00_ARESETN] [get_bd_pins axi_mem_intercon/S01_ARESETN] [get_bd_pins debug_bridge_0/s_axi_aresetn] [get_bd_pins sys_ps7_axi_periph/ARESETN] [get_bd_pins sys_ps7_axi_periph/M00_ARESETN] [get_bd_pins sys_ps7_axi_periph/M02_ARESETN] [get_bd_pins sys_ps7_axi_periph/M03_ARESETN] [get_bd_pins sys_ps7_axi_periph/S00_ARESETN] [get_bd_pins sys_rstgen/peripheral_aresetn]
   connect_bd_net -net vcc_dout [get_bd_pins sys_ps7/SPI0_SS_I] [get_bd_pins vcc/dout]
   connect_bd_net -net xlslice_2_Dout [get_bd_ports duc_i] [get_bd_pins duc_if/duc_i]
   connect_bd_net -net xlslice_3_Dout [get_bd_ports duc_q] [get_bd_pins duc_if/duc_q]
@@ -1529,6 +1545,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces axi_dmac_1/m_src_axi] [get_bd_addr_segs sys_ps7/S_AXI_HP1/HP1_DDR_LOWOCM] -force
   assign_bd_address -offset 0x43C00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs axi_dmac_0/s_axi/axi_lite] -force
   assign_bd_address -offset 0x43C10000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs axi_dmac_1/s_axi/axi_lite] -force
+  assign_bd_address -offset 0x55550000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs debug_bridge_0/S_AXI/Reg0] -force
   assign_bd_address -offset 0x43D00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs dexter_dsp_tx_1/dexter_dsp_tx_s_axi/reg0] -force
 
 
