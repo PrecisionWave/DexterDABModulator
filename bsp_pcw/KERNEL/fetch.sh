@@ -8,8 +8,8 @@ source ${DIR}/settings.sh
 # clone analog repository
 git clone git@github.com:PrecisionWave/linux.git ${DIR}/${KERNEL_DIR_ARM}
 git -C ${DIR}/${KERNEL_DIR_ARM} checkout ${KERNEL_BRANCH}
-git clone git@github.com:PrecisionWave/linux.git ${DIR}/${KERNEL_DIR_ARM64}
-git -C ${DIR}/${KERNEL_DIR_ARM64} checkout ${KERNEL_BRANCH}
+# git clone git@github.com:PrecisionWave/linux.git ${DIR}/${KERNEL_DIR_ARM64}
+# git -C ${DIR}/${KERNEL_DIR_ARM64} checkout ${KERNEL_BRANCH}
 
 # clone enclustra repository
 git clone https://github.com/enclustra-bsp/xilinx-linux ${DIR}/enclustra-linux
