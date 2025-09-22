@@ -16,14 +16,14 @@ Baiscally there are three steps to do:
   - [Start here](build_bsp_sdboot.md) and follow the dependencies to build and copy all relevant files
 
 ### Tested Kuiper Release
-28. July 2021 - 2019_R2 Release  
+2 April 2023 release (2021_r2)
   
 | File                                  | Checksum                          |
 | ------------------------------------- | --------------------------------- |
-| image_2021-07-28-ADI-Kuiper-full.zip  | 279097240dec7156ff5e15b7ce0b8a25  |
-| 2021-07-28-ADI-Kuiper-full.img        | b160453396e482234094a92134769ec6  |
+| image_2023-04-02-ADI-Kuiper-full.zip  | 0cdcf6e131318113a137cf54335b9614  |
+| 2023-04-02-ADI-Kuiper-full.img        | aeff476b577b45cc6ce6ce02403a57c2  |
 
-https://swdownloads.analog.com/cse/kuiper/image_2021-07-28-ADI-Kuiper-full.zip
+https://swdownloads.analog.com/cse/kuiper/image_2023-04-02-ADI-Kuiper-full.zip
 
 ### Notes
 #### Users and Passwords  
