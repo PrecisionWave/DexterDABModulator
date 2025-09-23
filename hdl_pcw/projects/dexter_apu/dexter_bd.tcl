@@ -238,21 +238,32 @@ proc create_hier_cell_microblaze_0_local_memory { parentCell nameHier } {
 
   # Create instance: ilmb_v10, and set properties
   set ilmb_v10 [ create_bd_cell -type ip -vlnv xilinx.com:ip:lmb_v10:3.0 ilmb_v10 ]
+  set_property -dict [ list \
+   CONFIG.C_LMB_NUM_SLAVES {1} \
+ ] $ilmb_v10
 
   # Create instance: lmb_bram, and set properties
   set lmb_bram [ create_bd_cell -type ip -vlnv xilinx.com:ip:blk_mem_gen:8.4 lmb_bram ]
   set_property -dict [ list \
+   CONFIG.Byte_Size {8} \
+   CONFIG.EN_SAFETY_CKT {true} \
+   CONFIG.Enable_32bit_Address {true} \
    CONFIG.Memory_Type {True_Dual_Port_RAM} \
+   CONFIG.Register_PortA_Output_of_Memory_Primitives {false} \
+   CONFIG.Register_PortB_Output_of_Memory_Primitives {false} \
+   CONFIG.Use_Byte_Write_Enable {true} \
+   CONFIG.Use_RSTA_Pin {true} \
+   CONFIG.Use_RSTB_Pin {true} \
    CONFIG.use_bram_block {BRAM_Controller} \
  ] $lmb_bram
 
   # Create interface connections
+  connect_bd_intf_net -intf_net ilmb_bram_if_cntlr_BRAM_PORT [get_bd_intf_pins ilmb_bram_if_cntlr/BRAM_PORT] [get_bd_intf_pins lmb_bram/BRAM_PORTB]
   connect_bd_intf_net -intf_net microblaze_0_dlmb [get_bd_intf_pins DLMB] [get_bd_intf_pins dlmb_v10/LMB_M]
   connect_bd_intf_net -intf_net microblaze_0_dlmb_bus [get_bd_intf_pins dlmb_bram_if_cntlr/SLMB] [get_bd_intf_pins dlmb_v10/LMB_Sl_0]
   connect_bd_intf_net -intf_net microblaze_0_dlmb_cntlr [get_bd_intf_pins dlmb_bram_if_cntlr/BRAM_PORT] [get_bd_intf_pins lmb_bram/BRAM_PORTA]
   connect_bd_intf_net -intf_net microblaze_0_ilmb [get_bd_intf_pins ILMB] [get_bd_intf_pins ilmb_v10/LMB_M]
   connect_bd_intf_net -intf_net microblaze_0_ilmb_bus [get_bd_intf_pins ilmb_bram_if_cntlr/SLMB] [get_bd_intf_pins ilmb_v10/LMB_Sl_0]
-  connect_bd_intf_net -intf_net microblaze_0_ilmb_cntlr [get_bd_intf_pins ilmb_bram_if_cntlr/BRAM_PORT] [get_bd_intf_pins lmb_bram/BRAM_PORTB]
 
   # Create port connections
   connect_bd_net -net SYS_Rst_1 [get_bd_pins SYS_Rst] [get_bd_pins dlmb_bram_if_cntlr/LMB_Rst] [get_bd_pins dlmb_v10/SYS_Rst] [get_bd_pins ilmb_bram_if_cntlr/LMB_Rst] [get_bd_pins ilmb_v10/SYS_Rst]
@@ -688,9 +699,9 @@ proc create_hier_cell_accel { parentCell nameHier } {
    CONFIG.C_MMU_ZONES {2} \
    CONFIG.C_M_AXI_D_BUS_EXCEPTION {0} \
    CONFIG.C_M_AXI_I_BUS_EXCEPTION {0} \
-   CONFIG.C_NUMBER_OF_PC_BRK {1} \
-   CONFIG.C_NUMBER_OF_RD_ADDR_BRK {0} \
-   CONFIG.C_NUMBER_OF_WR_ADDR_BRK {0} \
+   CONFIG.C_NUMBER_OF_PC_BRK {2} \
+   CONFIG.C_NUMBER_OF_RD_ADDR_BRK {2} \
+   CONFIG.C_NUMBER_OF_WR_ADDR_BRK {2} \
    CONFIG.C_OPCODE_0x0_ILLEGAL {0} \
    CONFIG.C_PVR {0} \
    CONFIG.C_TRACE {0} \
@@ -1898,8 +1909,8 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   assign_bd_address -offset 0x43800000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs accel/mailbox_0/S0_AXI/Reg] -force
   assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces accel/apu2cpu_dma/m_dest_axi] [get_bd_addr_segs sys_ps7/S_AXI_HP2/HP2_DDR_LOWOCM] -force
   assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces accel/cpu2apu_dma/m_src_axi] [get_bd_addr_segs sys_ps7/S_AXI_HP2/HP2_DDR_LOWOCM] -force
-  assign_bd_address -offset 0x20000000 -range 0x00002000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/microblaze_0_local_memory/dlmb_bram_if_cntlr/SLMB/Mem] -force
-  assign_bd_address -offset 0x20000000 -range 0x00002000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Instruction] [get_bd_addr_segs accel/microblaze_0_local_memory/ilmb_bram_if_cntlr/SLMB/Mem] -force
+  assign_bd_address -offset 0x20000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/microblaze_0_local_memory/dlmb_bram_if_cntlr/SLMB/Mem] -force
+  assign_bd_address -offset 0x20000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Instruction] [get_bd_addr_segs accel/microblaze_0_local_memory/ilmb_bram_if_cntlr/SLMB/Mem] -force
   assign_bd_address -offset 0x43600000 -range 0x00010000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/mailbox_0/S1_AXI/Reg] -force
   assign_bd_address -offset 0x41400000 -range 0x00001000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/mdm_1/S_AXI/Reg] -force
   assign_bd_address -offset 0x41200000 -range 0x00010000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/microblaze_0_axi_intc/S_AXI/Reg] -force
