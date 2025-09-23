@@ -1,0 +1,21 @@
+{
+  "folders": [
+    {
+      "name": "Kernel arm 32-Bit",
+      "path": "pcw-linux-arm"
+    },
+    {
+      "name": "Kernel config",
+      "path": "kernel-config"
+    },
+    {
+      "name": "Devicetrees",
+      "path": "devicetrees"
+    },
+    {
+      "name": "Everything",
+      "path": "."
+    }
+],
+"settings": {}
+}
