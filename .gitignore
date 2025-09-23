@@ -1,1 +1,2 @@
-vitis
+vitis/*
+!vitis/.clang-format

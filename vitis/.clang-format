@@ -1,0 +1,25 @@
+﻿---
+BasedOnStyle: Chromium
+AccessModifierOffset: '-2'
+AlignAfterOpenBracket: AlwaysBreak
+AlignOperands: 'false'
+AlignTrailingComments: 'true'
+BinPackArguments: 'false'
+BinPackParameters: 'false'
+BreakBeforeBraces: WebKit
+BreakConstructorInitializers: BeforeComma
+ColumnLimit: '120'
+CompactNamespaces: 'false'
+ConstructorInitializerAllOnOneLineOrOnePerLine: 'false'
+ContinuationIndentWidth: '4'
+FixNamespaceComments: 'true'
+IndentWidth: '4'
+Language: Cpp
+MaxEmptyLinesToKeep: '2'
+PenaltyBreakComment: '1'
+SortIncludes: 'false'
+SpaceBeforeCpp11BracedList: 'true'
+TabWidth: '4'
+UseTab: Never
+
+...
