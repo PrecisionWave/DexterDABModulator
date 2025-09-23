@@ -1,0 +1,421 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+<style type="text/css">
+body {margin-top:6.35em; 
+      margin-left:6.35em; 
+      width:62.5em;
+      text-align:justify;
+      font-size:1em; 
+      font-family:"Arial", Serif;
+      color:#000000;}
+
+h1 {font-size:1.125em;
+    font-family:"Arial", Sans-serif;
+    color:#943634;}
+
+p {font-size:inherit;
+   width:62.5em;
+   font-family:inherit;
+   color:inherit;}
+
+ul {font-size:inherit;
+    width:62.5em;
+    font-family:inherit;
+    color:inherit;}
+
+li {width:46.15em;}
+
+.image {position: relative;
+        width: 100%;}
+
+table {border-collapse:collapse;
+       border-spacing:0;
+       caption-side:bottom;
+       border-style:solid;
+       border-width:thin;
+       font-size:1em;
+       width:62.5em;
+       font-family:inherit;
+       color:inherit;}
+
+.title_table {border-collapse:collapse;
+       border-spacing:0;
+       caption-side:bottom;
+       font-size:1em;
+       width:62.5em;
+       border-style:none;}
+
+.title_table_image_cell {border-bottom:thin solid #000000;}
+
+.title_table_design_cell {vertical-align:bottom;
+        font-size:1.875em;
+        text-align:right;
+        border-bottom:thin solid #000000;}
+
+.title_table_date_cell{font-size:1.25em;
+        vertical-align:bottom;
+        text-align:left;
+        border-bottom:thick solid #943634}
+
+.sg_row {font-size:inherit;
+         font-family:inherit;
+         color:inherit;
+         border-style:solid;
+         border-width:thin;}
+
+.sg_cell {margin:0;
+          padding:1em;
+          border-width:inherit;
+          border-style:inherit;
+          font-size:inherit;
+          font-family:inherit;
+          color:inherit;}
+
+.sg_cell_first_row {margin:0;
+          padding:1em;
+          border-width:inherit;
+          border-style:inherit;
+          border-bottom:thick solid #943634;
+          font-size:inherit;
+          font-family:inherit;
+          color:inherit;}
+
+.sg_caption {text-align:left;
+             caption-side:bottom;
+             font-family:inherit;
+             font-size:inherit;}
+</style>
+</head>
+<body>
+<table class="title_table">
+<tr>
+<td class="title_table_image_cell"></td>
+<td class="title_table_design_cell">dexter_dsp_tx</td>
+</tr>
+<tr>
+<td colspan=2 class="title_table_date_cell"><b></b></td>
+</tr>
+</table>
+<h1>int dexter_dsp_tx_Initialize(dexter_dsp_tx* InstancePtr, u16 DeviceId)</h1>
+<p>
+Initialize dexter_dsp_tx pointer with a specifc instance of the device based device id.
+<br/>
+  @param InstancePtr to be initialized
+<br/>
+  @param DeviceId device id assigned to the device in xparameters.h
+<br/>
+<br/>
+  @return int XST_SUCCESS if initialization is successful
+<br/>
+</p>
+<h1>void dexter_dsp_tx_stream_start1_msb_write(dexter_dsp_tx *InstancePtr, u32 Data);</h1>
+<p>
+ Write to stream_start1_msb gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the stream_start1_msb instance to operate on.<br/>
+ @param	Data is value to be written to gateway stream_start1_msb.<br/>
+<br/>
+ @return	None.<br/>
+<br/>
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_stream_start1_msb_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from stream_start1_msb gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the stream_start1_msb instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>void dexter_dsp_tx_stream_start1_lsb_write(dexter_dsp_tx *InstancePtr, u32 Data);</h1>
+<p>
+ Write to stream_start1_lsb gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the stream_start1_lsb instance to operate on.<br/>
+ @param	Data is value to be written to gateway stream_start1_lsb.<br/>
+<br/>
+ @return	None.<br/>
+<br/>
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_stream_start1_lsb_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from stream_start1_lsb gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the stream_start1_lsb instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>void dexter_dsp_tx_rx_inc1_write(dexter_dsp_tx *InstancePtr, u32 Data);</h1>
+<p>
+ Write to rx_inc1 gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the rx_inc1 instance to operate on.<br/>
+ @param	Data is value to be written to gateway rx_inc1.<br/>
+<br/>
+ @return	None.<br/>
+<br/>
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_rx_inc1_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from rx_inc1 gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the rx_inc1 instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>void dexter_dsp_tx_gain_dc1_write(dexter_dsp_tx *InstancePtr, u32 Data);</h1>
+<p>
+ Write to gain_dc1 gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the gain_dc1 instance to operate on.<br/>
+ @param	Data is value to be written to gateway gain_dc1.<br/>
+<br/>
+ @return	None.<br/>
+<br/>
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_gain_dc1_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from gain_dc1 gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the gain_dc1 instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>void dexter_dsp_tx_rx_inc0_write(dexter_dsp_tx *InstancePtr, u32 Data);</h1>
+<p>
+ Write to rx_inc0 gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the rx_inc0 instance to operate on.<br/>
+ @param	Data is value to be written to gateway rx_inc0.<br/>
+<br/>
+ @return	None.<br/>
+<br/>
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_rx_inc0_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from rx_inc0 gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the rx_inc0 instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>void dexter_dsp_tx_pps_settings_write(dexter_dsp_tx *InstancePtr, u32 Data);</h1>
+<p>
+ Write to pps_settings gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the pps_settings instance to operate on.<br/>
+ @param	Data is value to be written to gateway pps_settings.<br/>
+<br/>
+ @return	None.<br/>
+<br/>
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_pps_settings_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from pps_settings gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the pps_settings instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>void dexter_dsp_tx_pps_delay_write(dexter_dsp_tx *InstancePtr, u32 Data);</h1>
+<p>
+ Write to pps_delay gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the pps_delay instance to operate on.<br/>
+ @param	Data is value to be written to gateway pps_delay.<br/>
+<br/>
+ @return	None.<br/>
+<br/>
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_pps_delay_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from pps_delay gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the pps_delay instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>void dexter_dsp_tx_stream_start0_lsb_write(dexter_dsp_tx *InstancePtr, u32 Data);</h1>
+<p>
+ Write to stream_start0_lsb gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the stream_start0_lsb instance to operate on.<br/>
+ @param	Data is value to be written to gateway stream_start0_lsb.<br/>
+<br/>
+ @return	None.<br/>
+<br/>
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_stream_start0_lsb_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from stream_start0_lsb gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the stream_start0_lsb instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>void dexter_dsp_tx_stream_start0_msb_write(dexter_dsp_tx *InstancePtr, u32 Data);</h1>
+<p>
+ Write to stream_start0_msb gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the stream_start0_msb instance to operate on.<br/>
+ @param	Data is value to be written to gateway stream_start0_msb.<br/>
+<br/>
+ @return	None.<br/>
+<br/>
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_stream_start0_msb_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from stream_start0_msb gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the stream_start0_msb instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>void dexter_dsp_tx_gain_dc0_write(dexter_dsp_tx *InstancePtr, u32 Data);</h1>
+<p>
+ Write to gain_dc0 gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the gain_dc0 instance to operate on.<br/>
+ @param	Data is value to be written to gateway gain_dc0.<br/>
+<br/>
+ @return	None.<br/>
+<br/>
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_gain_dc0_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from gain_dc0 gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the gain_dc0 instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_buff_ovflws0_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from buff_ovflws0 gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the buff_ovflws0 instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_version_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from version gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the version instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_pps_error_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from pps_error gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the pps_error instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_pps_cnt_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from pps_cnt gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the pps_cnt instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_pps_clks_lsb_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from pps_clks_lsb gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the pps_clks_lsb instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_pps_clks_msb_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from pps_clks_msb gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the pps_clks_msb instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+<h1>u32 dexter_dsp_tx_buff_ovflws1_read(dexter_dsp_tx *InstancePtr);</h1>
+<p>
+ Read from buff_ovflws1 gateway of dexter_dsp_tx. Assignments are LSB-justified.<br/>
+<br/>
+ @param	InstancePtr is the buff_ovflws1 instance to operate on.<br/>
+<br/>
+ @return	u32<br/>
+
+ @note    .<br/>
+<br/>
+</p>
+</body>
+</html>
