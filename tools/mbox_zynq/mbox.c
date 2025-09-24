@@ -147,7 +147,7 @@ int main(int argc, char** argv)
     bool do_read = false;
     bool do_write = false;
     const char* mmap_dev = "/dev/mem";
-    off_t offset = 0x043800000U;
+    off_t offset = 0x044020000U;
     size_t map_size = getpagesize();
     printf("Page size: %zu bytes\n", map_size);
 
