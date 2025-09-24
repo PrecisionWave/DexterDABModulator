@@ -69,4 +69,6 @@ cd [file dirname [file normalize [info script]]]
 # Create project
 source ../pcw_create_project.tcl
 
+add_files -fileset utils_1 -norecurse post_bitstream.tcl
+
 puts "Project creation finished!"
