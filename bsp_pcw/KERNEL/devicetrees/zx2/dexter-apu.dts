@@ -183,6 +183,16 @@
 			uio,number-of-dynamic-regions = <1>;
 			uio,dynamic-regions-sizes = <262144>;
 		};
+
+		apu_uart@44050000 {
+			status = "okay";
+			compatible = "xlnx,xps-uartlite-1.00.a";
+			reg = <0x44050000 0x1000>;
+			interrupts = <0 33 IRQ_TYPE_EDGE_RISING>;
+			interrupt-parent = <&intc>;
+			port-number = <0>;
+			clocks = <&clkc 16>;
+		};
 	};
 
 	dac_vref: regulator-3v3 {
