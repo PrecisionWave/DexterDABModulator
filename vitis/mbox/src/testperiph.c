@@ -76,7 +76,7 @@ int main()
      * Use this configuration info down below when initializing this
      * component.
      */
-    ConfigPtr = XMbox_LookupConfig(XPAR_ACCEL_MAILBOX_0_TESTAPP_ID);
+    ConfigPtr = XMbox_LookupConfig(XPAR_ACCEL_SHARED_MAILBOX_TESTAPP_ID);
     if (ConfigPtr == (XMbox_Config*)NULL) {
         print("XMbox_LookupConfig FAILED\r\n");
     }

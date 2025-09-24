@@ -32,3 +32,8 @@ platform generate -domains
 platform config -updatehw {/home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu/dexter_apu/system_top.xsa}
 platform generate -domains 
 platform generate
+platform active {system_top}
+platform config -updatehw {/home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu/system_top.xsa}
+platform generate
+platform clean
+platform generate
