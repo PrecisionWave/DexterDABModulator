@@ -4,3 +4,6 @@ vivado*.str
 NONE
 dexter_apu
 dexter_apu_backup*
+vitis*.str
+*.log
+.Xil
