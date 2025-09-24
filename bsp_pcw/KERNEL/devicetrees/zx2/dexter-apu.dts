@@ -15,7 +15,7 @@
  * 62  IRQ_F2P[1]       30      axi_dmac_1
  * 63  IRQ_F2P[2]       31      apu_mbx
  * 64  IRQ_F2P[3]       32      apu2cpu and cpu2apu dma
- * 65  IRQ_F2P[4]
+ * 65  IRQ_F2P[4]       33      apu_uart
  * 66  IRQ_F2P[5]
  * 67  IRQ_F2P[6]
  * 68  IRQ_F2P[7]
@@ -125,9 +125,9 @@
 		};
 
 
-		apu2cpu_dma: apu2cpu_dmac@43c20000 {
+		apu2cpu_dma: apu2cpu_dmac@44030000 {
 			compatible = "adi,axi-dmac-1.00.a";
-			reg = <0x43c20000 0x10000>;
+			reg = <0x44030000 0x10000>;
 			#dma-cells = <1>;
 			interrupts = <0 32 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-parent = <&intc>;
@@ -147,9 +147,9 @@
 			};
 		};
 
-		cpu2apu_dma: cpu2apu_dmac@43c30000 {
+		cpu2apu_dma: cpu2apu_dmac@44040000 {
 			compatible = "adi,axi-dmac-1.00.a";
-			reg = <0x43c10000 0x10000>;
+			reg = <0x44040000 0x10000>;
 			#dma-cells = <1>;
 			interrupts = <0 32 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-parent = <&intc>;
@@ -169,10 +169,10 @@
 			};
 		};
 
-		apu_mbx@43800000 {
+		apu_ctrl@44000000 {
 			status = "okay";
 			compatible = "dmem-uio";
-			reg = <0x43800000 0x1000>;
+			reg = <0x44000000 0x30000>;
 			interrupts = <0 31 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-parent = <&intc>;
 
