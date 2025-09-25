@@ -169,9 +169,9 @@
 			};
 		};
 
-		apu_ctrl@44000000 {
+		apu@44000000 {
 			status = "okay";
-			compatible = "dmem-uio";
+			compatible = "pcw,dexter-apu";
 			reg = <0x44000000 0x30000>;
 			interrupts = <0 31 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-parent = <&intc>;
@@ -179,9 +179,6 @@
 			clocks = <&clkc 16>;
 			dmas = <&cpu2apu_dma 0>, <&apu2cpu_dma 0>;
 			dma-names = "in", "out";
-
-			uio,number-of-dynamic-regions = <1>;
-			uio,dynamic-regions-sizes = <262144>;
 		};
 
 		apu_uart@44050000 {

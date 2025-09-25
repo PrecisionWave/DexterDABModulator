@@ -1,21 +1,29 @@
 {
-  "folders": [
-    {
-      "name": "Kernel arm 32-Bit",
-      "path": "pcw-linux-arm"
-    },
-    {
-      "name": "Kernel config",
-      "path": "kernel-config"
-    },
-    {
-      "name": "Devicetrees",
-      "path": "devicetrees"
-    },
-    {
-      "name": "Everything",
-      "path": "."
-    }
-],
-"settings": {}
+	"folders": [
+		{
+			"name": "Kernel arm 32-Bit",
+			"path": "pcw-linux-arm"
+		},
+		{
+			"name": "Kernel config",
+			"path": "kernel-config"
+		},
+		{
+			"name": "Devicetrees",
+			"path": "devicetrees"
+		},
+		{
+			"name": "Everything",
+			"path": "."
+		}
+	],
+	"settings": {
+		"editor.tabSize": 8,
+		"editor.useTabStops": true,
+		"editor.insertSpaces": false,
+		"files.associations": {
+			"platform_device.h": "c",
+			"of.h": "c"
+		},
+	}
 }
