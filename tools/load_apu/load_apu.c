@@ -1,5 +1,17 @@
 // Load APU SRAM with program and start processor
 
+// Usage:
+//  Using /dev/mem:
+//      ./load_apu -f mbox.bin
+//      ./load_apu -r
+//
+//  Using /dev/apu0 to write to SRAM
+//      ./load_apu -a0 -d/dev/apu0 -f mbox.bin
+//      ./load_apu -a0 -d/dev/apu0 -r
+//
+//  Using /dev/apu0 to wite to DMA memory (experimental)
+//      ./load_apu -a0x1000 -d/dev/apu0 -fmbox.bin
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -204,17 +216,20 @@ int main(int argc, char** argv)
 
     while ((c = getopt(argc, argv, "d:l:a:rf:")) != -1) {
         switch (c) {
+            case 'd':
+                mmap_dev = optarg;
+                break;
             case 'l':
                 map_size = strtoul(optarg, NULL, 16);
                 if ((map_size & (page_size - 1)) != 0) {
-                    fprintf(stderr, "Error: length must be page aligned");
+                    fprintf(stderr, "Error: length must be page aligned\n");
                     return 1;
                 }
                 break;
             case 'a':
                 offset = strtoul(optarg, NULL, 16);
                 if ((offset & (page_size - 1)) != 0) {
-                    fprintf(stderr, "Error: Address must be page aligned");
+                    fprintf(stderr, "Error: Address must be page aligned\n");
                     return 1;
                 }
                 mmap_dev = "/dev/mem";
@@ -227,7 +242,7 @@ int main(int argc, char** argv)
                 download_file = optarg;
                 break;
             case '?':
-                fprintf(stderr, "usage: %s [-l length] [-a address] [-r] [-f file]\n", *argv);
+                fprintf(stderr, "usage: %s [-l length] [-a address] [-d device] [-r] [-f file]\n", *argv);
                 return 1;
         }
     }
