@@ -33,6 +33,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "mmio.h"
+
 // APU controls
 const off_t APU_CTRL_BASE = 0x044000000U;
 const off_t APU_CTRL_LENGTH = 0x30000U;
@@ -41,165 +43,19 @@ const off_t APU_SRAM_LENGTH = 0x04000U;
 const off_t APU_GPIO_OFFSET = 0x10000U;
 const off_t APU_MBOX_OFFSET = 0x20000U;
 
-uint32_t ioread(void* ptr, size_t reg)
-{
-    volatile uint8_t* p8 = (volatile uint8_t*)(ptr) + reg;
-    volatile uint32_t* p32 = (volatile uint32_t*)p8;
-    return atomic_load(p32);
-}
-
-void iowrite(void* ptr, size_t reg, uint32_t data)
-{
-    volatile uint8_t* p8 = (volatile uint8_t*)(ptr) + reg;
-    volatile uint32_t* p32 = (volatile uint32_t*)p8;
-    atomic_store(p32, data);
-}
-
-void apu_reset(void* ptr, bool assert)
+void apu_reset(void* p_regs, bool assert)
 {
     if (assert) {
         // sleep
-        iowrite(ptr, APU_GPIO_OFFSET + 0x0, 0);
+        iowrite32(p_regs, APU_GPIO_OFFSET + 0x0, 0);
         // assert reset
-        iowrite(ptr, APU_GPIO_OFFSET + 0x8, 1);
+        iowrite32(p_regs, APU_GPIO_OFFSET + 0x8, 1);
     } else {
         // assert reset
-        iowrite(ptr, APU_GPIO_OFFSET + 0x8, 0);
+        iowrite32(p_regs, APU_GPIO_OFFSET + 0x8, 0);
         // wakeup
-        iowrite(ptr, APU_GPIO_OFFSET + 0x0, 1);
+        iowrite32(p_regs, APU_GPIO_OFFSET + 0x0, 1);
     }
-}
-
-void iomemset(void* ptr, size_t reg, uint8_t pattern, size_t length)
-{
-    volatile uint8_t* p8 = (volatile uint8_t*)(ptr) + reg;
-    size_t remaining = length;
-    switch (reg & 0x3) {
-        case 1:
-            atomic_store(p8, pattern);
-            p8++;
-            remaining--;
-            if (remaining == 0)
-                return;
-        case 2:
-            atomic_store(p8, pattern);
-            p8++;
-            remaining--;
-            if (remaining == 0)
-                return;
-        case 3:
-            atomic_store(p8, pattern);
-            p8++;
-            remaining--;
-            if (remaining == 0)
-                return;
-        case 0:
-        default:
-            if (remaining == 0)
-                return;
-            break;
-    }
-
-    volatile uint32_t* p32 = (volatile uint32_t*)p8;
-    uint32_t pattern32 = (pattern << 24U) | (pattern << 16U) | (pattern << 8U) | pattern;
-    while (remaining > 3) {
-        atomic_store(p32, pattern32);
-        p32++;
-        remaining -= 4;
-    }
-
-    p8 = (volatile uint8_t*)p32;
-    switch (remaining & 0x3) {
-        case 3:
-            atomic_store(p8, pattern);
-            p8++;
-            remaining--;
-        case 2:
-            atomic_store(p8, pattern);
-            p8++;
-            remaining--;
-        case 1:
-            atomic_store(p8, pattern);
-            p8++;
-            remaining--;
-        case 0:
-        default:
-            break;
-    }
-
-    assert(remaining == 0);
-}
-
-void copytoio(void* ptr, size_t reg, void* src, size_t length)
-{
-    volatile uint8_t* p8 = (volatile uint8_t*)(ptr) + reg;
-    volatile uint8_t* s8 = (volatile uint8_t*)(src);
-    size_t remaining = length;
-    // copy bytes until aligned
-    switch (reg & 0x3) {
-        case 1:
-            atomic_store(p8, *s8);
-            p8++;
-            s8++;
-            remaining--;
-            if (remaining == 0)
-                return;
-        case 2:
-            atomic_store(p8, *s8);
-            p8++;
-            s8++;
-            remaining--;
-            if (remaining == 0)
-                return;
-        case 3:
-            atomic_store(p8, *s8);
-            p8++;
-            s8++;
-            remaining--;
-            if (remaining == 0)
-                return;
-        case 0:
-        default:
-            if (remaining == 0)
-                return;
-            break;
-    }
-
-    // copy words
-    volatile uint32_t* p32 = (volatile uint32_t*)p8;
-    volatile uint32_t* s32 = (volatile uint32_t*)s8;
-    while (remaining > 3) {
-        atomic_store(p32, *s32);
-        p32++;
-        s32++;
-        remaining -= 4;
-    }
-
-    // copy remaining bytes
-    p8 = (volatile uint8_t*)p32;
-    s8 = (volatile uint8_t*)s32;
-    switch (remaining & 0x3) {
-        case 3:
-            atomic_store(p8, *s8);
-            p8++;
-            s8++;
-            remaining--;
-        case 2:
-            atomic_store(p8, *s8);
-            p8++;
-            s8++;
-            remaining--;
-        case 1:
-            atomic_store(p8, *s8);
-            p8++;
-            s8++;
-            remaining--;
-        case 0:
-        default:
-            break;
-    }
-
-    assert(remaining == 0);
 }
 
 int main(int argc, char** argv)
