@@ -21,19 +21,15 @@
 #include <ctype.h>
 #include <string.h>
 
-// open
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-// mmap
-#include <sys/mman.h>
-
 // getopt, getpagesize
 #include <unistd.h>
 #include <errno.h>
 
+// open
+#include <fcntl.h>
+
 #include "mmio.h"
+#include "mmap.h"
 
 // APU controls
 const off_t APU_CTRL_BASE = 0x044000000U;
@@ -64,7 +60,7 @@ int main(int argc, char** argv)
     opterr = 0;
     bool do_reset = false;
     const char* download_file = NULL;
-    const char* mmap_dev = "/dev/mem";
+    const char* dev = "/dev/mem";
     off_t offset = APU_CTRL_BASE;
     size_t map_size = APU_CTRL_LENGTH;
     size_t page_size = getpagesize();
@@ -73,7 +69,7 @@ int main(int argc, char** argv)
     while ((c = getopt(argc, argv, "d:l:a:rf:")) != -1) {
         switch (c) {
             case 'd':
-                mmap_dev = optarg;
+                dev = optarg;
                 break;
             case 'l':
                 map_size = strtoul(optarg, NULL, 16);
@@ -88,7 +84,7 @@ int main(int argc, char** argv)
                     fprintf(stderr, "Error: Address must be page aligned\n");
                     return 1;
                 }
-                mmap_dev = "/dev/mem";
+                dev = "/dev/mem";
                 break;
             case 'r':
                 do_reset = true;
@@ -103,14 +99,8 @@ int main(int argc, char** argv)
         }
     }
 
-    int fd_uio = open(mmap_dev, O_RDWR | O_SYNC);
-    if (fd_uio < 1) {
-        fprintf(stderr, "Failed to open uio: %s\n", mmap_dev);
-        return -1;
-    }
-
-    void* ptr = mmap(NULL, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_uio, offset);
-    if (ptr == MAP_FAILED) {
+    void* ptr = mmap_dev(dev, offset, map_size);
+    if (ptr == NULL) {
         fprintf(stderr, "Error: MMAP Failed. errno %d\n", errno);
         return -1;
     }
@@ -125,47 +115,30 @@ int main(int argc, char** argv)
 
     printf("Loading file %s\n", download_file);
 
-    int dl_f = open(download_file, O_RDONLY);
-    if (dl_f < 0) {
+    size_t flen = 0;
+    void* fptr = mmap_file(download_file, &flen, false);
+    if (fptr == NULL) {
         fprintf(stderr, "Error: Unable to open file %s\n", download_file);
-        goto cleanup;
+        return -1;
     }
 
-    off_t dl_size = lseek(dl_f, 0, SEEK_END);
-    lseek(dl_f, 0, SEEK_SET);
-    if (dl_size < 0) {
-        fprintf(stderr, "Error: Unable to get download file size\n");
-        goto cleanup;
-    }
-
-    if (dl_size > APU_SRAM_LENGTH) {
+    if (flen > APU_SRAM_LENGTH) {
         fprintf(stderr, "Error: Binary file greater than SRAM\n");
         fprintf(stderr, "       SRAM Size: %jd bytes\n", (intmax_t)APU_SRAM_LENGTH);
-        fprintf(stderr, "       File Size: %jd bytes\n", (intmax_t)dl_size);
-        goto cleanup;
+        fprintf(stderr, "       File Size: %jd bytes\n", (intmax_t)flen);
+        return -1;
     }
 
-    printf("Downloading %jd bytes\n", (intmax_t)dl_size);
-
-    void* bin = malloc(dl_size);
-    if (dl_size != read(dl_f, bin, dl_size)) {
-        fprintf(stderr, "Error: Read failed: errno %d\n", errno);
-        goto cleanup;
-    }
+    printf("Downloading %jd bytes\n", (intmax_t)flen);
 
     iomemset(ptr, APU_SRAM_OFFSET, 0, APU_SRAM_LENGTH);
-    copytoio(ptr, APU_SRAM_OFFSET, bin, dl_size);
+    copytoio(ptr, APU_SRAM_OFFSET, fptr, flen);
 
 skip_download:
     if (do_reset) {
         printf("Release APU Reset\n");
         apu_reset(ptr, false);
     }
-
-cleanup:
-    close(dl_f);
-    close(fd_uio);
-    munmap(ptr, map_size);
 
     return 0;
 }

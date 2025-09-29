@@ -3,7 +3,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif // __cplusplus
 
 #include <stdint.h>
 #include <stdio.h>
@@ -15,7 +15,6 @@ void copytoio(void* ptr, size_t reg, void* src, size_t length);
 
 #ifdef __cplusplus
 }
-#endif
-
+#endif // __cplusplus
 
 #endif // MMIO_H__INCLUDED

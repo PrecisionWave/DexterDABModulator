@@ -10,5 +10,5 @@ clean:
 %.o: %.c
 	$(CROSS_CC) -c -Wall -o $@ $<
 
-load_apu: load_apu.o mmio.o
+load_apu: load_apu.o mmio.o mmap.o
 	$(CROSS_CC) -static -o $@ $^
