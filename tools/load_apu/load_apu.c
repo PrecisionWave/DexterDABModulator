@@ -108,14 +108,32 @@ int main(int argc, char** argv)
             return -1;
         }
 
+        struct memory_map_entry mm[2] = {
+            {
+                .name = "SRAM",
+                .mmio = mmio_regs,
+                .mmio_offset = APU_CTRL_SRAM_OFFSET,
+                .length = APU_CTRL_SRAM_LENGTH,
+                .physical = ELF_FILE_SRAM_BASE,
+                .allocated = ELF_FILE_SRAM_BASE,
+            },
+            {
+                .name = "DDR",
+                .mmio = ddr_ram,
+                .mmio_offset = 0,
+                .length = DDR_MEM_LENGTH,
+                .physical = ELF_FILE_DDR_BASE,
+                .allocated = 0x16900000U,
+            }};
+
         bool download_success = false;
         if (memcmp(fptr, ELF_SIGNATURE, 4) == 0) {
-            download_success = load_elf(mmio_regs, ddr_ram, fptr, flen);
+            download_success = load_elf(fptr, flen, mm, sizeof(mm)/sizeof(mm[0]));
         } else {
             download_success = load_sram(mmio_regs, fptr, flen);
         }
 
-        if(!download_success) {
+        if (!download_success) {
             fprintf(stderr, "Error: Download failed!\n");
             return -1;
         }
