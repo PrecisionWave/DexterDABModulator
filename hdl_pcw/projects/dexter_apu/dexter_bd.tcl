@@ -677,6 +677,7 @@ proc create_hier_cell_accel { parentCell nameHier } {
    CONFIG.C_TRACE {0} \
    CONFIG.C_UNALIGNED_EXCEPTIONS {1} \
    CONFIG.C_USE_BARREL {1} \
+   CONFIG.C_USE_BRANCH_TARGET_CACHE {1} \
    CONFIG.C_USE_DCACHE {1} \
    CONFIG.C_USE_DIV {1} \
    CONFIG.C_USE_EXTENDED_FSL_INSTR {1} \
