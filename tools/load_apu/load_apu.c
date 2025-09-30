@@ -28,31 +28,29 @@
 // open
 #include <fcntl.h>
 
+// project includes
+#include "apu.h"
 #include "mmio.h"
 #include "mmap.h"
+#include "load_elf.h"
 
-// APU controls
-const off_t APU_CTRL_BASE = 0x044000000U;
-const off_t APU_CTRL_LENGTH = 0x30000U;
-const off_t APU_SRAM_OFFSET = 0x00000U;
-const off_t APU_SRAM_LENGTH = 0x04000U;
-const off_t APU_GPIO_OFFSET = 0x10000U;
-const off_t APU_MBOX_OFFSET = 0x20000U;
 
-void apu_reset(void* p_regs, bool assert)
+void apu_reset(void* mmio_regs, bool assert)
 {
     if (assert) {
         // sleep
-        iowrite32(p_regs, APU_GPIO_OFFSET + 0x0, 0);
+        iowrite32(mmio_regs, APU_CTRL_GPIO_OFFSET + 0x0, 0);
         // assert reset
-        iowrite32(p_regs, APU_GPIO_OFFSET + 0x8, 1);
+        iowrite32(mmio_regs, APU_CTRL_GPIO_OFFSET + 0x8, 1);
     } else {
         // assert reset
-        iowrite32(p_regs, APU_GPIO_OFFSET + 0x8, 0);
+        iowrite32(mmio_regs, APU_CTRL_GPIO_OFFSET + 0x8, 0);
         // wakeup
-        iowrite32(p_regs, APU_GPIO_OFFSET + 0x0, 1);
+        iowrite32(mmio_regs, APU_CTRL_GPIO_OFFSET + 0x0, 1);
     }
 }
+
+static const char ELF_SIGNATURE[] = {0x7f, 'E', 'L', 'F'};
 
 int main(int argc, char** argv)
 {
@@ -60,8 +58,7 @@ int main(int argc, char** argv)
     opterr = 0;
     bool do_reset = false;
     const char* download_file = NULL;
-    const char* dev = "/dev/mem";
-    off_t offset = APU_CTRL_BASE;
+    const char* dev = "/dev/apu0";
     size_t map_size = APU_CTRL_LENGTH;
     size_t page_size = getpagesize();
     printf("Page size: %zu bytes\n", page_size);
@@ -70,21 +67,6 @@ int main(int argc, char** argv)
         switch (c) {
             case 'd':
                 dev = optarg;
-                break;
-            case 'l':
-                map_size = strtoul(optarg, NULL, 16);
-                if ((map_size & (page_size - 1)) != 0) {
-                    fprintf(stderr, "Error: length must be page aligned\n");
-                    return 1;
-                }
-                break;
-            case 'a':
-                offset = strtoul(optarg, NULL, 16);
-                if ((offset & (page_size - 1)) != 0) {
-                    fprintf(stderr, "Error: Address must be page aligned\n");
-                    return 1;
-                }
-                dev = "/dev/mem";
                 break;
             case 'r':
                 do_reset = true;
@@ -99,45 +81,49 @@ int main(int argc, char** argv)
         }
     }
 
-    void* ptr = mmap_dev(dev, offset, map_size);
-    if (ptr == NULL) {
-        fprintf(stderr, "Error: MMAP Failed. errno %d\n", errno);
+    void* mmio_regs = mmap_dev(dev, 0 * page_size, map_size);
+    if (mmio_regs == NULL) {
+        fprintf(stderr, "Error: MMAP of registers Failed. errno %d\n", errno);
+        return -1;
+    }
+
+    void* ddr_ram = mmap_dev(dev, 1 * page_size, DDR_MEM_LENGTH);
+    if (ddr_ram == NULL) {
+        fprintf(stderr, "Warning: MMAP of shared DDR memory Failed. errno %d\n", errno);
         return -1;
     }
 
     if (do_reset) {
         printf("Assert APU Reset\n");
-        apu_reset(ptr, true);
+        apu_reset(mmio_regs, true);
     }
 
-    if (!download_file)
-        goto skip_download;
+    if (download_file) {
+        printf("Loading file %s\n", download_file);
 
-    printf("Loading file %s\n", download_file);
+        size_t flen = 0;
+        void* fptr = mmap_file(download_file, &flen, false);
+        if (fptr == NULL) {
+            fprintf(stderr, "Error: Unable to open file %s\n", download_file);
+            return -1;
+        }
 
-    size_t flen = 0;
-    void* fptr = mmap_file(download_file, &flen, false);
-    if (fptr == NULL) {
-        fprintf(stderr, "Error: Unable to open file %s\n", download_file);
-        return -1;
+        bool download_success = false;
+        if (memcmp(fptr, ELF_SIGNATURE, 4) == 0) {
+            download_success = load_elf(mmio_regs, ddr_ram, fptr, flen);
+        } else {
+            download_success = load_sram(mmio_regs, fptr, flen);
+        }
+
+        if(!download_success) {
+            fprintf(stderr, "Error: Download failed!\n");
+            return -1;
+        }
     }
 
-    if (flen > APU_SRAM_LENGTH) {
-        fprintf(stderr, "Error: Binary file greater than SRAM\n");
-        fprintf(stderr, "       SRAM Size: %jd bytes\n", (intmax_t)APU_SRAM_LENGTH);
-        fprintf(stderr, "       File Size: %jd bytes\n", (intmax_t)flen);
-        return -1;
-    }
-
-    printf("Downloading %jd bytes\n", (intmax_t)flen);
-
-    iomemset(ptr, APU_SRAM_OFFSET, 0, APU_SRAM_LENGTH);
-    copytoio(ptr, APU_SRAM_OFFSET, fptr, flen);
-
-skip_download:
     if (do_reset) {
         printf("Release APU Reset\n");
-        apu_reset(ptr, false);
+        apu_reset(mmio_regs, false);
     }
 
     return 0;
