@@ -85,7 +85,7 @@ bool load_elf(void* mmio_regs, void* ddr_ram, const char* file, size_t file_len)
         Elf32_Phdr* phdr = (Elf32_Phdr*)(file + ehdr->e_phoff + load * ehdr->e_phentsize);
 
         printf(
-            "    LOAD off    0x%08X vaddr 0x%08x paddr 0x%08x, align 2**%d\n",
+            "    LOAD off    %08X vaddr %08x paddr %08x, align 2**%d\n",
             phdr->p_offset,
             phdr->p_vaddr,
             phdr->p_paddr,
@@ -121,41 +121,21 @@ bool load_elf(void* mmio_regs, void* ddr_ram, const char* file, size_t file_len)
         names = file + snames->sh_offset;
     }
 
-    /* part 1: allocate memory */
+    printf("Sections:\n");
+    printf("Idx Name                      Size      ADDR      File off  Align\n");
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
-
-        if (shdr->sh_type == SHT_NOBITS) {
-            if (shdr->sh_flags & SHF_ALLOC) {
-                printf(
-                    "Allocate memory for section %d: %s: %d bytes (%d bytes aligned, flags %x)\n",
-                    section,
-                    section_name(names, shdr->sh_name),
-                    shdr->sh_size,
-                    shdr->sh_addralign,
-                    shdr->sh_flags);
-            }
-        }
+        printf(
+            "%3d %-25s %08x  %08x  %08x  2**%u\n",
+            section,
+            section_name(names, shdr->sh_name),
+            shdr->sh_size,
+            shdr->sh_addr,
+            shdr->sh_offset,
+            shdr->sh_addralign);
     }
 
-    /* part 2: load program */
-    for (size_t section = 0; section < ehdr->e_shnum; section++) {
-        Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
-
-        if (shdr->sh_type == SHT_PROGBITS) {
-            if (shdr->sh_flags & SHF_ALLOC) {
-                printf(
-                    "Load program for section %d: %s: %d bytes (%d bytes aligned, flags %x)\n",
-                    section,
-                    section_name(names, shdr->sh_name),
-                    shdr->sh_size,
-                    shdr->sh_addralign,
-                    shdr->sh_flags);
-            }
-        }
-    }
-
-    /* part 3: relocate */
+    /* relocation */
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
 
