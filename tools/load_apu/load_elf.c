@@ -81,6 +81,7 @@ bool load_elf(void* mmio_regs, void* ddr_ram, const char* file, size_t file_len)
 
     /* part 0: load program */
     printf("Program Header:\n");
+    bool need_relocation = false;
     for (size_t load = 0; load < ehdr->e_phnum; load++) {
         Elf32_Phdr* phdr = (Elf32_Phdr*)(file + ehdr->e_phoff + load * ehdr->e_phentsize);
 
@@ -102,9 +103,7 @@ bool load_elf(void* mmio_regs, void* ddr_ram, const char* file, size_t file_len)
             success =
                 load_ddr_partial(ddr_ram, phdr->p_paddr - ELF_FILE_DDR_BASE, file + phdr->p_offset, phdr->p_filesz);
 
-            // Missing: MMU setup for virtual <> physical DDR address translation
-            fprintf(stderr, "Missing: MMU setup for virtual <> physical DDR address translation!\n");
-            return false;
+            need_relocation = true;
         }
 
         if (!success) {
@@ -136,6 +135,7 @@ bool load_elf(void* mmio_regs, void* ddr_ram, const char* file, size_t file_len)
     }
 
     /* relocation */
+    bool relocation_performed = false;
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
 
@@ -162,6 +162,13 @@ bool load_elf(void* mmio_regs, void* ddr_ram, const char* file, size_t file_len)
             return false;
         }
     }
+
+    // Missing: MMU setup for virtual <> physical DDR address translation
+    if (need_relocation && !relocation_performed) {
+        fprintf(stderr, "Error: Need position independent code OR MMU set up for address translation\n");
+        return false;
+    }
+
 
     return true;
 }
