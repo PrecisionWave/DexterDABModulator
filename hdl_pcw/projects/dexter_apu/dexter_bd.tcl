@@ -644,51 +644,52 @@ proc create_hier_cell_accel { parentCell nameHier } {
   set microblaze_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:microblaze:11.0 microblaze_0 ]
   set_property -dict [ list \
    CONFIG.C_ADDR_TAG_BITS {18} \
-   CONFIG.C_AREA_OPTIMIZED {1} \
+   CONFIG.C_AREA_OPTIMIZED {2} \
    CONFIG.C_BASE_VECTORS {0x0000000020000000} \
    CONFIG.C_CACHE_BYTE_SIZE {4096} \
    CONFIG.C_DCACHE_ADDR_TAG {18} \
    CONFIG.C_DCACHE_BYTE_SIZE {4096} \
-   CONFIG.C_DCACHE_USE_WRITEBACK {0} \
+   CONFIG.C_DCACHE_USE_WRITEBACK {1} \
    CONFIG.C_DEBUG_ENABLED {1} \
-   CONFIG.C_DIV_ZERO_EXCEPTION {0} \
+   CONFIG.C_DIV_ZERO_EXCEPTION {1} \
    CONFIG.C_D_AXI {1} \
    CONFIG.C_D_LMB {0} \
    CONFIG.C_ENABLE_DISCRETE_PORTS {1} \
-   CONFIG.C_FPU_EXCEPTION {0} \
+   CONFIG.C_FPU_EXCEPTION {1} \
+   CONFIG.C_FSL_EXCEPTION {1} \
    CONFIG.C_FSL_LINKS {1} \
-   CONFIG.C_ICACHE_LINE_LEN {4} \
-   CONFIG.C_ICACHE_STREAMS {0} \
-   CONFIG.C_ICACHE_VICTIMS {0} \
-   CONFIG.C_ILL_OPCODE_EXCEPTION {0} \
+   CONFIG.C_ICACHE_LINE_LEN {8} \
+   CONFIG.C_ICACHE_STREAMS {1} \
+   CONFIG.C_ICACHE_VICTIMS {8} \
+   CONFIG.C_ILL_OPCODE_EXCEPTION {1} \
    CONFIG.C_I_AXI {0} \
    CONFIG.C_I_LMB {0} \
-   CONFIG.C_MMU_DTLB_SIZE {2} \
-   CONFIG.C_MMU_ITLB_SIZE {1} \
+   CONFIG.C_MMU_DTLB_SIZE {4} \
+   CONFIG.C_MMU_ITLB_SIZE {2} \
    CONFIG.C_MMU_ZONES {2} \
-   CONFIG.C_M_AXI_D_BUS_EXCEPTION {0} \
-   CONFIG.C_M_AXI_I_BUS_EXCEPTION {0} \
+   CONFIG.C_M_AXI_D_BUS_EXCEPTION {1} \
+   CONFIG.C_M_AXI_I_BUS_EXCEPTION {1} \
    CONFIG.C_NUMBER_OF_PC_BRK {2} \
-   CONFIG.C_NUMBER_OF_RD_ADDR_BRK {2} \
-   CONFIG.C_NUMBER_OF_WR_ADDR_BRK {2} \
-   CONFIG.C_OPCODE_0x0_ILLEGAL {0} \
-   CONFIG.C_PVR {0} \
+   CONFIG.C_NUMBER_OF_RD_ADDR_BRK {1} \
+   CONFIG.C_NUMBER_OF_WR_ADDR_BRK {1} \
+   CONFIG.C_OPCODE_0x0_ILLEGAL {1} \
+   CONFIG.C_PVR {2} \
    CONFIG.C_TRACE {0} \
-   CONFIG.C_UNALIGNED_EXCEPTIONS {0} \
+   CONFIG.C_UNALIGNED_EXCEPTIONS {1} \
    CONFIG.C_USE_BARREL {1} \
    CONFIG.C_USE_DCACHE {1} \
    CONFIG.C_USE_DIV {1} \
    CONFIG.C_USE_EXTENDED_FSL_INSTR {1} \
    CONFIG.C_USE_FPU {0} \
-   CONFIG.C_USE_HW_MUL {1} \
+   CONFIG.C_USE_HW_MUL {2} \
    CONFIG.C_USE_ICACHE {1} \
-   CONFIG.C_USE_MMU {0} \
+   CONFIG.C_USE_MMU {3} \
    CONFIG.C_USE_MSR_INSTR {1} \
    CONFIG.C_USE_PCMP_INSTR {1} \
    CONFIG.C_USE_REORDER_INSTR {1} \
    CONFIG.C_USE_STACK_PROTECTION {1} \
-   CONFIG.G_TEMPLATE_LIST {8} \
-   CONFIG.G_USE_EXCEPTIONS {0} \
+   CONFIG.G_TEMPLATE_LIST {10} \
+   CONFIG.G_USE_EXCEPTIONS {1} \
  ] $microblaze_0
 
   # Create instance: shared_mailbox, and set properties
@@ -1883,19 +1884,19 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   assign_bd_address -offset 0x43C10000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs axi_dmac_1/s_axi/axi_lite] -force
   assign_bd_address -offset 0x50120000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs axss_gpio/S_AXI/Reg] -force
   assign_bd_address -offset 0x44040000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs accel/cpu2apu_dma/s_axi/axi_lite] -force
-  assign_bd_address -offset 0x44000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs accel/cpu_shared_bram_ctrl/S_AXI/Mem0] -force
   assign_bd_address -offset 0x44010000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs accel/cpu_mb_control/S_AXI/Reg] -force
+  assign_bd_address -offset 0x44000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs accel/cpu_shared_bram_ctrl/S_AXI/Mem0] -force
   assign_bd_address -offset 0x44050000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs accel/cpu_uartlite/S_AXI/Reg] -force
   assign_bd_address -offset 0x55550000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs debug_bridge_0/S_AXI/Reg0] -force
   assign_bd_address -offset 0x43D00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs dexter_dsp_tx_1/dexter_dsp_tx_s_axi/reg0] -force
   assign_bd_address -offset 0x44020000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs accel/shared_mailbox/S0_AXI/Reg] -force
   assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces accel/apu2cpu_dma/m_dest_axi] [get_bd_addr_segs sys_ps7/S_AXI_HP2/HP2_DDR_LOWOCM] -force
   assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces accel/cpu2apu_dma/m_src_axi] [get_bd_addr_segs sys_ps7/S_AXI_HP2/HP2_DDR_LOWOCM] -force
-  assign_bd_address -offset 0x43600000 -range 0x00010000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/shared_mailbox/S1_AXI/Reg] -force
+  assign_bd_address -offset 0x41200000 -range 0x00010000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/mb_axi_intc/S_AXI/Reg] -force
   assign_bd_address -offset 0x20000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/mb_shared_bram_ctrl/S_AXI/Mem0] -force
   assign_bd_address -offset 0x20000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Instruction] [get_bd_addr_segs accel/mb_shared_bram_ctrl/S_AXI/Mem0] -force
   assign_bd_address -offset 0x40600000 -range 0x00010000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/mb_uartlite/S_AXI/Reg] -force
-  assign_bd_address -offset 0x41200000 -range 0x00010000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/mb_axi_intc/S_AXI/Reg] -force
+  assign_bd_address -offset 0x43600000 -range 0x00010000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/shared_mailbox/S1_AXI/Reg] -force
   assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs sys_ps7/S_AXI_HP2/HP2_DDR_LOWOCM] -force
   assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Instruction] [get_bd_addr_segs sys_ps7/S_AXI_HP2/HP2_DDR_LOWOCM] -force
 
