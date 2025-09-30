@@ -44,7 +44,7 @@ void iomemset(void* ptr, size_t reg, uint8_t pattern, size_t length)
 }
 
 
-void copytoio(void* ptr, size_t reg, void* src, size_t length)
+void copytoio(void* ptr, size_t reg, const void* src, size_t length)
 {
     volatile uint8_t* p8 = (volatile uint8_t*)(ptr) + reg;
     volatile uint8_t* p8_end = (volatile uint8_t*)(ptr) + reg + length;

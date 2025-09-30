@@ -25,6 +25,7 @@ static void mmap_cleanup(void)
 {
     struct mmap* item = mmap_list;
     while (item != NULL) {
+        // printf("Unmaping %p (%zu)\n", item->ptr, item->length);
         munmap(item->ptr, item->length);
         struct mmap* next = item->next;
         free(item);
