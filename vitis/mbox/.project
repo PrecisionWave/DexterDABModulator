@@ -3,7 +3,7 @@
 	<name>mbox</name>
 	<comment>Created by Vitis v2021.1</comment>
 	<projects>
-		<project>system_top</project>
+		<project>dexter_apu</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

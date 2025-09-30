@@ -17,7 +17,9 @@ _HEAP_SIZE = DEFINED(_HEAP_SIZE) ? _HEAP_SIZE : 0x800;
 
 MEMORY
 {
-   shared_mem : ORIGIN = 0x20000050, LENGTH = 0x3FB0
+   sram : ORIGIN = 0x20000050, LENGTH = 0x3FB0
+   ddr : ORIGIN = 0x100000, LENGTH = 0x1FF00000
+   reserved : ORIGIN = 0x0, LENGTH = 0x40000
 }
 
 /* Specify the default entry point to the program */
@@ -48,19 +50,19 @@ SECTIONS
    *(.text)
    *(.text.*)
    *(.gnu.linkonce.t.*)
-} > shared_mem
+} > sram
 
 .note.gnu.build-id : {
    KEEP (*(.note.gnu.build-id))
-} > shared_mem
+} > sram
 
 .init : {
    KEEP (*(.init))
-} > shared_mem
+} > sram
 
 .fini : {
    KEEP (*(.fini))
-} > shared_mem
+} > sram
 
 .ctors : {
    __CTOR_LIST__ = .;
@@ -71,7 +73,7 @@ SECTIONS
    KEEP (*(.ctors))
    __CTOR_END__ = .;
    ___CTORS_END___ = .;
-} > shared_mem
+} > sram
 
 .dtors : {
    __DTOR_LIST__ = .;
@@ -82,7 +84,7 @@ SECTIONS
    KEEP (*(.dtors))
    PROVIDE(__DTOR_END__ = .);
    PROVIDE(___DTORS_END___ = .);
-} > shared_mem
+} > sram
 
 .rodata : {
    __rodata_start = .;
@@ -90,7 +92,7 @@ SECTIONS
    *(.rodata.*)
    *(.gnu.linkonce.r.*)
    __rodata_end = .;
-} > shared_mem
+} > sram
 
 .sdata2 : {
    . = ALIGN(8);
@@ -100,7 +102,7 @@ SECTIONS
    *(.gnu.linkonce.s2.*)
    . = ALIGN(8);
    __sdata2_end = .;
-} > shared_mem
+} > sram
 
 .sbss2 : {
    __sbss2_start = .;
@@ -108,7 +110,7 @@ SECTIONS
    *(.sbss2.*)
    *(.gnu.linkonce.sb2.*)
    __sbss2_end = .;
-} > shared_mem
+} > sram
 
 .data : {
    . = ALIGN(4);
@@ -117,31 +119,31 @@ SECTIONS
    *(.data.*)
    *(.gnu.linkonce.d.*)
    __data_end = .;
-} > shared_mem
+} > sram
 
 .got : {
    *(.got)
-} > shared_mem
+} > sram
 
 .got1 : {
    *(.got1)
-} > shared_mem
+} > sram
 
 .got2 : {
    *(.got2)
-} > shared_mem
+} > sram
 
 .eh_frame : {
    *(.eh_frame)
-} > shared_mem
+} > sram
 
 .jcr : {
    *(.jcr)
-} > shared_mem
+} > sram
 
 .gcc_except_table : {
    *(.gcc_except_table)
-} > shared_mem
+} > sram
 
 .sdata : {
    . = ALIGN(8);
@@ -150,7 +152,7 @@ SECTIONS
    *(.sdata.*)
    *(.gnu.linkonce.s.*)
    __sdata_end = .;
-} > shared_mem
+} > sram
 
 .sbss (NOLOAD) : {
    . = ALIGN(4);
@@ -160,7 +162,7 @@ SECTIONS
    *(.gnu.linkonce.sb.*)
    . = ALIGN(8);
    __sbss_end = .;
-} > shared_mem
+} > sram
 
 .tdata : {
    __tdata_start = .;
@@ -168,7 +170,7 @@ SECTIONS
    *(.tdata.*)
    *(.gnu.linkonce.td.*)
    __tdata_end = .;
-} > shared_mem
+} > sram
 
 .tbss : {
    __tbss_start = .;
@@ -176,7 +178,7 @@ SECTIONS
    *(.tbss.*)
    *(.gnu.linkonce.tb.*)
    __tbss_end = .;
-} > shared_mem
+} > sram
 
 .bss (NOLOAD) : {
    . = ALIGN(4);
@@ -187,7 +189,7 @@ SECTIONS
    *(COMMON)
    . = ALIGN(4);
    __bss_end = .;
-} > shared_mem
+} > sram
 
 _SDA_BASE_ = __sdata_start + ((__sbss_end - __sdata_start) / 2 );
 
@@ -201,7 +203,7 @@ _SDA2_BASE_ = __sdata2_start + ((__sbss2_end - __sdata2_start) / 2 );
    _heap_start = .;
    . += _HEAP_SIZE;
    _heap_end = .;
-} > shared_mem
+} > sram
 
 .stack (NOLOAD) : {
    _stack_end = .;
@@ -209,7 +211,7 @@ _SDA2_BASE_ = __sdata2_start + ((__sbss2_end - __sdata2_start) / 2 );
    . = ALIGN(8);
    _stack = .;
    __stack = _stack;
-} > shared_mem
+} > sram
 
 _end = .;
 }

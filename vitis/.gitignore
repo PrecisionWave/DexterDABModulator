@@ -3,3 +3,5 @@ RemoteSystemsTempFiles
 .analytics
 
 *.log
+
+**/accel_microblaze_0/libsrc/standalone_v7_5/src/arm/**

@@ -66,7 +66,7 @@ int main()
 {
     Xil_ICacheEnable();
     Xil_DCacheEnable();
-    print("---Entering main---\n\r");
+    print("---Entering main---\n");
 
     XMbox_Config* ConfigPtr;
     int Status;
@@ -78,37 +78,37 @@ int main()
      */
     ConfigPtr = XMbox_LookupConfig(XPAR_ACCEL_SHARED_MAILBOX_TESTAPP_ID);
     if (ConfigPtr == (XMbox_Config*)NULL) {
-        print("XMbox_LookupConfig FAILED\r\n");
+        print("XMbox_LookupConfig FAILED\n");
     }
 
-    print("XMbox_LookupConfig OK\r\n");
+    print("XMbox_LookupConfig OK\n");
 
     /*
      * Perform the rest of the initialization.
      */
     Status = XMbox_CfgInitialize(&Mbox, ConfigPtr, ConfigPtr->BaseAddress);
     if (Status != XST_SUCCESS) {
-        print("XMbox_CfgInitialize FAILED\r\n");
+        print("XMbox_CfgInitialize FAILED\n");
     }
 
-    print("XMbox_CfgInitialize OK\r\n");
+    print("XMbox_CfgInitialize OK\n");
 
     while (1) {
         /* Send the hello */
         Status = MailboxExample_Send(&Mbox, MY_CPU_ID);
         if (Status != XST_SUCCESS) {
-            print("MailboxExample_Send FAILED\r\n");
+            print("MailboxExample_Send FAILED\n");
         }
 
-        print("MailboxExample_Send OK\r\n");
+        print("MailboxExample_Send OK\n");
 
         /* Receive the hello and verify the message */
         Status = MailboxExample_Receive(&Mbox, MY_CPU_ID);
         if (Status != XST_SUCCESS) {
-            print("MailboxExample_Receive FAILED\r\n");
+            print("MailboxExample_Receive FAILED\n");
         }
 
-        print("MailboxExample_Receive OK\r\n");
+        print("MailboxExample_Receive OK\n");
     }
 
     Xil_DCacheDisable();
