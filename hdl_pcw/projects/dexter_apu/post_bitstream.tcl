@@ -1,1 +1,1 @@
-write_hw_platform -fixed -force -file system_top.xsa
+write_hw_platform -fixed -force -file dexter_apu.xsa
