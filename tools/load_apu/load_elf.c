@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include <elf.h>
 
@@ -121,8 +122,8 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
             // A standard 32 bit relocation.    (S + A)
             old_value = ioread32(mme_offset->mmio, offset);
             iowrite32(mme_offset->mmio, offset, value);
-            printf("%s @ %04x:", mme_offset->name, offset);
-            printf("R_MICROBLAZE_32: %08x -> %08x\n", old_value, value);
+            // printf("%s @ %04x:", mme_offset->name, offset);
+            // printf("R_MICROBLAZE_32: %08x -> %08x\n", old_value, value);
             return true;
 
         case R_MICROBLAZE_64_PCREL:
@@ -134,13 +135,13 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
             old_value = ioread32(mme_offset->mmio, offset + 0);
             new_value = (old_value & 0xffff0000ULL) | ((value >> 16) & 0xffff);
             iowrite32(mme_offset->mmio, offset + 0, new_value);
-            printf("%s @ %04x:", mme_offset->name, offset);
-            printf("R_MICROBLAZE_64_PCREL (+0): %08x -> %08x, ", old_value, new_value);
+            // printf("%s @ %04x:", mme_offset->name, offset);
+            // printf("R_MICROBLAZE_64_PCREL (+0): %08x -> %08x, ", old_value, new_value);
 
             old_value = ioread32(mme_offset->mmio, offset + 4);
             new_value = (old_value & 0xffff0000ULL) | (value & 0xffff);
             iowrite32(mme_offset->mmio, offset + 4, new_value);
-            printf("(+4): %08x -> %08x\n", old_value, new_value);
+            // printf("(+4): %08x -> %08x\n", old_value, new_value);
             return true;
 
         case R_MICROBLAZE_64:
@@ -148,16 +149,15 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
             old_value = ioread32(mme_offset->mmio, offset + 0);
             new_value = (old_value & 0xffff0000ULL) | ((value >> 16) & 0xffff);
             iowrite32(mme_offset->mmio, offset + 0, new_value);
-            printf("%s @ %04x:", mme_offset->name, offset);
-            printf("R_MICROBLAZE_64 (+0): %08x -> %08x, ", old_value, new_value);
+            // printf("%s @ %04x:", mme_offset->name, offset);
+            // printf("R_MICROBLAZE_64 (+0): %08x -> %08x, ", old_value, new_value);
 
             old_value = ioread32(mme_offset->mmio, offset + 4);
             new_value = (old_value & 0xffff0000ULL) | (value & 0xffff);
             iowrite32(mme_offset->mmio, offset + 4, new_value);
-            printf("(+4): %08x -> %08x\n", old_value, new_value);
+            // printf("(+4): %08x -> %08x\n", old_value, new_value);
             return true;
 
-#if 0
         case R_MICROBLAZE_GOTPC_64:
             // Really needed if PC relative?
             // A 64 bit GOTPC relocation.       G+A–P (#imm)
@@ -167,6 +167,7 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
             old_value = ioread32(mme_offset->mmio, offset + 0);
             new_value = (old_value & 0xffff0000ULL) | ((value >> 16) & 0xffff);
             iowrite32(mme_offset->mmio, offset + 0, new_value);
+            // printf("%s @ %04x:", mme_offset->name, offset);
             // printf("R_MICROBLAZE_GOTPC_64 (+0): %08x -> %08x, ", old_value, new_value);
 
             old_value = ioread32(mme_offset->mmio, offset + 4);
@@ -177,17 +178,12 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
 
         case R_MICROBLAZE_GOT_64:
             // A 64 bit GOT relocation.         G+A (#imm)
-            old_value = ioread32(mme_offset->mmio, offset + 0);
-            new_value = old_value;
-            // new_value = (old_value & 0xffff0000ULL) | ((value >> 16) & 0xffff);
-            iowrite32(mme_offset->mmio, offset + 0, new_value);
-            printf("%04x: R_MICROBLAZE_GOT_64 (+0): %08x -> %08x, ", offset, old_value, new_value);
-
-            old_value = ioread32(mme_offset->mmio, offset + 4);
-            new_value = (old_value & 0xffff0000ULL) | ((value >> 16) & 0xffff);
-            iowrite32(mme_offset->mmio, offset + 4, new_value);
-            printf("(+4): %08x -> %08x\n", old_value, new_value);
-            return true;
+            // Don't know what to do for now.
+            // Removing -fpie does not generate these so it will load.
+            printf("%s @ %04x:", mme_offset->name, offset);
+            printf("R_MICROBLAZE_GOT_64 (+0): %08x -> ?, ", ioread32(mme_offset->mmio, offset + 0));
+            printf("(+4): %08x -> ? is unimplemented!\n", ioread32(mme_offset->mmio, offset + 4));
+            return false;
 
         case R_MICROBLAZE_PLT_64:
             // A 64 bit PLT relocation.         L+A (#imm)
@@ -197,6 +193,7 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
             old_value = ioread32(mme_offset->mmio, offset + 0);
             new_value = (old_value & 0xffff0000ULL) | ((value >> 16) & 0xffff);
             iowrite32(mme_offset->mmio, offset + 0, new_value);
+            // printf("%s @ %04x:", mme_offset->name, offset);
             // printf("R_MICROBLAZE_PLT_64 (+0): %08x -> %08x, ", old_value, new_value);
 
             old_value = ioread32(mme_offset->mmio, offset + 4);
@@ -204,7 +201,6 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
             iowrite32(mme_offset->mmio, offset + 4, new_value);
             // printf("(+4): %08x -> %08x\n", old_value, new_value);
             return true;
-#endif
 
         case R_MICROBLAZE_32_PCREL_LO:
         case R_MICROBLAZE_NONE:
@@ -280,16 +276,15 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
     }
 
     printf("Sections:\n");
-    printf("Idx Type Name                      Size      ADDR      File off  Flags  Align\n");
+    printf("Idx Name                        Size      ADDR      File off  Flags Align\n");
     Elf32_Sym* sym = NULL;
     const char* sym_names = NULL;
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
         const char* name = section_name(names, shdr->sh_name);
         printf(
-            "%3d %3d %-25s %08x  %08x  %08x  %04x  2**%u\n",
+            "%3d %-27s %08x  %08x  %08x  %04x  2**%u\n",
             section,
-            shdr->sh_type,
             name,
             shdr->sh_size,
             shdr->sh_addr,
@@ -306,11 +301,14 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
 
     /* relocation */
     bool relocation_error = false;
+    if (need_relocation) {
+        printf("Relocations:\n");
+    }
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
 
         if (sym && shdr->sh_type == SHT_REL) {
-            printf("REL in section %d: %s (flags %08x)\n", section, section_name(names, shdr->sh_name), shdr->sh_flags);
+            printf("REL in section %2d: flags %04x %s\n", section, shdr->sh_flags, section_name(names, shdr->sh_name));
 
             for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
                 Elf32_Rel* rel = (Elf32_Rel*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
@@ -324,8 +322,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
         }
 
         if (sym && shdr->sh_type == SHT_RELA) {
-            printf(
-                "RELA in section %d: %s (flags %08x)\n", section, section_name(names, shdr->sh_name), shdr->sh_flags);
+            printf("RELA in section %2d: flags %04x %s\n", section, shdr->sh_flags, section_name(names, shdr->sh_name));
             for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
                 Elf32_Rela* rela = (Elf32_Rela*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
                 struct memory_map_entry* mme = mm_lookup(mm, rela->r_offset);
