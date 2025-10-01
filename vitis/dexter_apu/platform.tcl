@@ -30,3 +30,15 @@ platform generate -domains standalone_accel_microblaze_0
 platform active {dexter_apu}
 platform config -updatehw {/home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu/dexter_apu.xsa}
 platform generate -domains 
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform active {dexter_apu}
+platform config -updatehw {/home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu/dexter_apu.xsa}
+platform clean
+platform generate
+bsp reload
+bsp reload

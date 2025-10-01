@@ -579,7 +579,7 @@ proc create_hier_cell_accel { parentCell nameHier } {
   # Create instance: cpu_uartlite, and set properties
   set cpu_uartlite [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_uartlite:2.0 cpu_uartlite ]
   set_property -dict [ list \
-   CONFIG.C_BAUDRATE {115200} \
+   CONFIG.C_BAUDRATE {230400} \
  ] $cpu_uartlite
 
   # Create instance: mb_axi_cache, and set properties
@@ -637,14 +637,14 @@ proc create_hier_cell_accel { parentCell nameHier } {
   # Create instance: mb_uartlite, and set properties
   set mb_uartlite [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_uartlite:2.0 mb_uartlite ]
   set_property -dict [ list \
-   CONFIG.C_BAUDRATE {115200} \
+   CONFIG.C_BAUDRATE {230400} \
  ] $mb_uartlite
 
   # Create instance: microblaze_0, and set properties
   set microblaze_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:microblaze:11.0 microblaze_0 ]
   set_property -dict [ list \
    CONFIG.C_ADDR_TAG_BITS {18} \
-   CONFIG.C_AREA_OPTIMIZED {2} \
+   CONFIG.C_AREA_OPTIMIZED {1} \
    CONFIG.C_BASE_VECTORS {0x0000000020000000} \
    CONFIG.C_CACHE_BYTE_SIZE {4096} \
    CONFIG.C_DCACHE_ADDR_TAG {18} \
@@ -655,41 +655,41 @@ proc create_hier_cell_accel { parentCell nameHier } {
    CONFIG.C_D_AXI {1} \
    CONFIG.C_D_LMB {0} \
    CONFIG.C_ENABLE_DISCRETE_PORTS {1} \
-   CONFIG.C_FPU_EXCEPTION {1} \
+   CONFIG.C_FPU_EXCEPTION {0} \
    CONFIG.C_FSL_EXCEPTION {1} \
    CONFIG.C_FSL_LINKS {1} \
-   CONFIG.C_ICACHE_LINE_LEN {8} \
-   CONFIG.C_ICACHE_STREAMS {1} \
-   CONFIG.C_ICACHE_VICTIMS {8} \
+   CONFIG.C_ICACHE_LINE_LEN {4} \
+   CONFIG.C_ICACHE_STREAMS {0} \
+   CONFIG.C_ICACHE_VICTIMS {0} \
    CONFIG.C_ILL_OPCODE_EXCEPTION {1} \
    CONFIG.C_I_AXI {0} \
    CONFIG.C_I_LMB {0} \
-   CONFIG.C_MMU_DTLB_SIZE {4} \
-   CONFIG.C_MMU_ITLB_SIZE {2} \
+   CONFIG.C_MMU_DTLB_SIZE {2} \
+   CONFIG.C_MMU_ITLB_SIZE {1} \
    CONFIG.C_MMU_ZONES {2} \
    CONFIG.C_M_AXI_D_BUS_EXCEPTION {1} \
    CONFIG.C_M_AXI_I_BUS_EXCEPTION {1} \
    CONFIG.C_NUMBER_OF_PC_BRK {2} \
-   CONFIG.C_NUMBER_OF_RD_ADDR_BRK {1} \
-   CONFIG.C_NUMBER_OF_WR_ADDR_BRK {1} \
+   CONFIG.C_NUMBER_OF_RD_ADDR_BRK {2} \
+   CONFIG.C_NUMBER_OF_WR_ADDR_BRK {2} \
    CONFIG.C_OPCODE_0x0_ILLEGAL {1} \
-   CONFIG.C_PVR {2} \
+   CONFIG.C_PVR {0} \
    CONFIG.C_TRACE {0} \
    CONFIG.C_UNALIGNED_EXCEPTIONS {1} \
    CONFIG.C_USE_BARREL {1} \
-   CONFIG.C_USE_BRANCH_TARGET_CACHE {1} \
+   CONFIG.C_USE_BRANCH_TARGET_CACHE {0} \
    CONFIG.C_USE_DCACHE {1} \
    CONFIG.C_USE_DIV {1} \
    CONFIG.C_USE_EXTENDED_FSL_INSTR {1} \
    CONFIG.C_USE_FPU {0} \
    CONFIG.C_USE_HW_MUL {2} \
    CONFIG.C_USE_ICACHE {1} \
-   CONFIG.C_USE_MMU {3} \
+   CONFIG.C_USE_MMU {0} \
    CONFIG.C_USE_MSR_INSTR {1} \
    CONFIG.C_USE_PCMP_INSTR {1} \
    CONFIG.C_USE_REORDER_INSTR {1} \
    CONFIG.C_USE_STACK_PROTECTION {1} \
-   CONFIG.G_TEMPLATE_LIST {10} \
+   CONFIG.G_TEMPLATE_LIST {9} \
    CONFIG.G_USE_EXCEPTIONS {1} \
  ] $microblaze_0
 
