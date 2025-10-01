@@ -41,7 +41,7 @@ static void mmap_cleanup(void)
     }
 }
 
-void* mmap_apu(int fd, enum device_index index, size_t* out_length, size_t* out_physical)
+void* mmap_apu(int fd, enum device_index index, uint32_t* out_length, uint32_t* out_physical)
 {
     int page_size = getpagesize();
 

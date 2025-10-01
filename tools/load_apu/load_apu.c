@@ -46,17 +46,22 @@ void apu_reset(int fd, bool assert)
 
 static const char ELF_SIGNATURE[] = {0x7f, 'E', 'L', 'F'};
 
-static struct memory_map_entry mm[2] = {
-    {
-        .name = "SRAM",
-        .index = APU_DEVICE_SRAM,
-        .linked = ELF_FILE_SRAM_BASE,
-    },
-    {
-        .name = "DDR",
-        .index = APU_DEVICE_DDR,
-        .linked = ELF_FILE_DDR_BASE,
-    }};
+static struct memory_map mm = {
+    .count = 2,
+    .entries =
+        {
+            {
+                .name = "SRAM",
+                .index = APU_DEVICE_SRAM,
+                .linked = ELF_FILE_SRAM_BASE,
+            },
+            {
+                .name = "DDR",
+                .index = APU_DEVICE_DDR,
+                .linked = ELF_FILE_DDR_BASE,
+            },
+        },
+};
 
 int main(int argc, char** argv)
 {
@@ -91,10 +96,10 @@ int main(int argc, char** argv)
         return 2;
     }
 
-    for (size_t i = 0; i < sizeof(mm) / sizeof(mm[0]); i++) {
-        mm[i].mmio = mmap_apu(fd, mm[i].index, &mm[i].length, &mm[i].allocated);
-        if (mm[i].mmio == NULL) {
-            fprintf(stderr, "Error: MMAP of APU %s failed! errno %d\n", mm[i].name, errno);
+    for (size_t i = 0; i < mm.count; i++) {
+        mm.entries[i].mmio = mmap_apu(fd, mm.entries[i].index, &mm.entries[i].length, &mm.entries[i].allocated);
+        if (mm.entries[i].mmio == NULL) {
+            fprintf(stderr, "Error: MMAP of APU %s failed! errno %d\n", mm.entries[i].name, errno);
             return 3;
         }
     }
@@ -116,9 +121,9 @@ int main(int argc, char** argv)
 
         bool download_success = false;
         if (memcmp(fptr, ELF_SIGNATURE, 4) == 0) {
-            download_success = load_elf(fptr, flen, mm, sizeof(mm) / sizeof(mm[0]));
+            download_success = load_elf(fptr, flen, &mm);
         } else {
-            download_success = load_bin(fptr, flen, ELF_FILE_SRAM_BASE, mm, sizeof(mm) / sizeof(mm[0]));
+            download_success = load_bin(fptr, flen, &mm, ELF_FILE_SRAM_BASE);
         }
 
         if (!download_success) {

@@ -5,6 +5,7 @@
 
 #include <elf.h>
 
+#include "memorymap.h"
 #include "mmio.h"
 #include "apu.h"
 
@@ -23,20 +24,9 @@ static bool load_mem(struct memory_map_entry* mme, const off_t offset, const voi
     return true;
 }
 
-bool load_bin(
-    const void* data,
-    const size_t data_len,
-    const uint32_t address,
-    struct memory_map_entry* mm,
-    size_t mm_entries)
+bool load_bin(const void* data, const size_t data_len, struct memory_map* mm, const uint32_t address)
 {
-    struct memory_map_entry* mme = NULL;
-
-    for (size_t i = 0; i < mm_entries; i++) {
-        if (address >= mm[i].linked && address < mm[i].linked + mm[i].length)
-            mme = &mm[i];
-    }
-
+    struct memory_map_entry* mme = mm_lookup(mm, address);
     if (!mme) {
         fprintf(stderr, "Error: Address not found in memory map\n");
         return false;
@@ -51,8 +41,6 @@ static const char* section_name(const char* names, int index)
     return names ? names + index : "?";
 }
 
-
-static void lookup_sym(const char* file, size_t index) {}
 
 // From UG984: Relocations
 //
@@ -109,11 +97,15 @@ static void lookup_sym(const char* file, size_t index) {}
 //  S   The value of the symbol whose index resides in the relocation entry.
 
 static bool
-do_rel(struct memory_map_entry* mm, size_t mm_entries, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend)
+do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend)
 {
+    struct memory_map_entry* mme_offset = mm_lookup(mm, r_offset);
+    struct memory_map_entry* mme_value = mm_lookup(mm, symbol->st_value);
+
     switch (type) {
         case R_MICROBLAZE_32:
             // A standard 32 bit relocation.    (S + A)
+            printf("R_MICROBLAZE_32: offs %08x add %08x val %08x\n", r_offset, r_addend, symbol->st_value);
             return false;
 
         case R_MICROBLAZE_64_PCREL:
@@ -139,7 +131,8 @@ do_rel(struct memory_map_entry* mm, size_t mm_entries, Elf32_Addr r_offset, Elf3
         case R_MICROBLAZE_NONE:
         case R_MICROBLAZE_64_NONE:
         case 33: /* R_MICROBLAZE_32_NONE.  */
-            return false;
+            // This relocation does nothing.    none
+            return true;
 
         default:
             printf("Unknown relocation type %d\n", type);
@@ -149,12 +142,8 @@ do_rel(struct memory_map_entry* mm, size_t mm_entries, Elf32_Addr r_offset, Elf3
     return false;
 }
 
-static void lookup_symbol(const char* file, Elf32_Word sym)
-{
-    // Elf32_Ehdr* ehdr = (Elf32_Ehdr*)file;
-}
 
-bool load_elf(const char* file, size_t file_len, struct memory_map_entry* mm, size_t mm_entries)
+bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
 {
     Elf32_Ehdr* ehdr = (Elf32_Ehdr*)file;
 
@@ -171,9 +160,10 @@ bool load_elf(const char* file, size_t file_len, struct memory_map_entry* mm, si
     fprintf(stderr, "e_type: %d\n", ehdr->e_type);
 
     printf("Zeroing memory...\n");
-    for (size_t i = 0; i < mm_entries; i++) {
-        printf("  %s\n", mm[i].name);
-        iomemset(mm[i].mmio, 0, 0, mm[i].length);
+    for (size_t i = 0; i < mm->count; i++) {
+        struct memory_map_entry* e = &mm->entries[i];
+        printf("  %-8s 0x%08x - %08x\n", e->name, e->allocated, e->allocated + e->length - 1);
+        iomemset(e->mmio, 0, 0, e->length);
     }
 
     /* part 0: load program */
@@ -183,22 +173,19 @@ bool load_elf(const char* file, size_t file_len, struct memory_map_entry* mm, si
         Elf32_Phdr* phdr = (Elf32_Phdr*)(file + ehdr->e_phoff + load * ehdr->e_phentsize);
 
         printf(
-            "    LOAD off    %08X vaddr %08x paddr %08x, align 2**%d\n",
+            "  LOAD off    %08X vaddr %08x paddr %08x, align 2**%d\n",
             phdr->p_offset,
             phdr->p_vaddr,
             phdr->p_paddr,
             phdr->p_align);
-        printf("         filesz 0x%08X memsz 0x%08x flags 0x%x\n", phdr->p_filesz, phdr->p_memsz, phdr->p_flags);
+        printf("       filesz 0x%08X memsz 0x%08x flags 0x%x\n", phdr->p_filesz, phdr->p_memsz, phdr->p_flags);
 
         bool success = false;
-        for (size_t i = 0; i < mm_entries && !success; i++) {
-            // printf("mm[%d]: %08x - %08x alloc %08x\n", i, mm[i].linked, mm[i].length, mm[i].allocated);
-            if (phdr->p_paddr >= mm[i].linked && phdr->p_paddr < mm[i].linked + mm[i].length) {
-                success = load_mem(&mm[i], phdr->p_paddr - mm[i].linked, file + phdr->p_offset, phdr->p_filesz);
-                need_relocation |= mm[i].linked != mm[i].allocated;
-            }
+        struct memory_map_entry* mme = mm_lookup(mm, phdr->p_paddr);
+        if (mme) {
+            success = load_mem(mme, phdr->p_paddr - mme->linked, file + phdr->p_offset, phdr->p_filesz);
+            need_relocation |= mme->linked != mme->allocated;
         }
-
         if (!success) {
             fprintf(stderr, "Load failed!\n");
             return false;
@@ -214,17 +201,26 @@ bool load_elf(const char* file, size_t file_len, struct memory_map_entry* mm, si
     }
 
     printf("Sections:\n");
-    printf("Idx Name                      Size      ADDR      File off  Align\n");
+    printf("Idx Name                      Size      ADDR      File off  Flags  Align\n");
+    Elf32_Sym* sym = NULL;
+    const char* sym_names = NULL;
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
         printf(
-            "%3d %-25s %08x  %08x  %08x  2**%u\n",
+            "%3d %-25s %08x  %08x  %08x  %04x  2**%u\n",
             section,
             section_name(names, shdr->sh_name),
             shdr->sh_size,
             shdr->sh_addr,
             shdr->sh_offset,
+            shdr->sh_flags,
             shdr->sh_addralign);
+        if (shdr->sh_type == SHT_SYMTAB) {
+            sym = (Elf32_Sym*)(file + shdr->sh_offset);
+        }
+        if (shdr->sh_type == SHT_STRTAB && section != ehdr->e_shstrndx) {
+            sym_names = (const char*)(file + shdr->sh_offset);
+        }
     }
 
     /* relocation */
@@ -232,35 +228,50 @@ bool load_elf(const char* file, size_t file_len, struct memory_map_entry* mm, si
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
 
-        if (shdr->sh_type == SHT_REL) {
-            printf("REL for section %d: %s\n", section, section_name(names, shdr->sh_name));
+        if (sym && shdr->sh_type == SHT_REL) {
+            printf("REL in section %d: %s (flags %08x)\n", section, section_name(names, shdr->sh_name), shdr->sh_flags);
 
-            for (size_t i = 0; i < shdr->sh_size / shdr->sh_entsize; i++) {
-                Elf32_Rel* rel = (Elf32_Rel*)(file + shdr->sh_offset + i * shdr->sh_entsize);
-                // printf(
-                //     "  Entry %d: %08x symbol %06x type %2d\n",
-                //     i,
-                //     rel->r_offset,
-                //     ELF32_R_SYM(rel->r_info),
-                //     ELF32_R_TYPE(rel->r_info));
-                lookup_symbol(file, ELF32_R_SYM(rel->r_info));
-                relocation_error |= !do_rel(mm, mm_entries, rel->r_offset, ELF32_R_TYPE(rel->r_info), 0);
+            for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
+                Elf32_Rel* rel = (Elf32_Rel*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
+
+                struct memory_map_entry* mme = mm_lookup(mm, rel->r_offset);
+                if (mme) {
+                    Elf32_Sym* symbol = &sym[ELF32_R_SYM(rel->r_info)];
+                    // Elf32_Shdr* sym_section =
+                    //     (Elf32_Shdr*)(file + ehdr->e_shoff + symbol->st_shndx * ehdr->e_shentsize);
+                    printf(
+                        "  off %08x type %2d size %2d sec %2u: %s\n",
+                        rel->r_offset,
+                        ELF32_R_TYPE(rel->r_info),
+                        symbol->st_size,
+                        symbol->st_shndx,
+                        &sym_names[symbol->st_name]);
+                    relocation_error |= !do_rel(mm, symbol, rel->r_offset, ELF32_R_TYPE(rel->r_info), 0);
+                }
             }
         }
 
-        if (shdr->sh_type == SHT_RELA) {
-            printf("RELA for section %d: %s\n", section, section_name(names, shdr->sh_name));
-            for (size_t i = 0; i < shdr->sh_size / shdr->sh_entsize; i++) {
-                Elf32_Rela* rela = (Elf32_Rela*)(file + shdr->sh_offset + i * shdr->sh_entsize);
-                // printf(
-                //     "  Entry %d: %08x symbol %06x type %2d addend %08x\n",
-                //     i,
-                //     rela->r_offset,
-                //     ELF32_R_SYM(rela->r_info),
-                //     ELF32_R_TYPE(rela->r_info),
-                //     rela->r_addend);
-                lookup_symbol(file, ELF32_R_SYM(rela->r_info));
-                relocation_error |= !do_rel(mm, mm_entries, rela->r_offset, ELF32_R_TYPE(rela->r_info), rela->r_addend);
+        if (sym && shdr->sh_type == SHT_RELA) {
+            printf(
+                "RELA in section %d: %s (flags %08x)\n", section, section_name(names, shdr->sh_name), shdr->sh_flags);
+            for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
+                Elf32_Rela* rela = (Elf32_Rela*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
+                struct memory_map_entry* mme = mm_lookup(mm, rela->r_offset);
+                if (mme) {
+                    Elf32_Sym* symbol = &sym[ELF32_R_SYM(rela->r_info)];
+                    // Elf32_Shdr* sym_section =
+                    //     (Elf32_Shdr*)(file + ehdr->e_shoff + symbol->st_shndx * ehdr->e_shentsize);
+                    printf(
+                        "  off %08x type %2d add %08x size %2d sec %2u: %s\n",
+                        rela->r_offset,
+                        ELF32_R_TYPE(rela->r_info),
+                        rela->r_addend,
+                        symbol->st_size,
+                        symbol->st_shndx,
+                        &sym_names[symbol->st_name]);
+                    relocation_error |=
+                        !do_rel(mm, symbol, rela->r_offset, ELF32_R_TYPE(rela->r_info), rela->r_addend);
+                }
             }
         }
     }
