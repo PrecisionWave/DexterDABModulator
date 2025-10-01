@@ -28,6 +28,9 @@
 // open
 #include <fcntl.h>
 
+// ioctl
+#include <sys/ioctl.h>
+
 // project includes
 #include "apu.h"
 #include "mmio.h"
@@ -35,22 +38,25 @@
 #include "load_elf.h"
 
 
-void apu_reset(void* mmio_regs, bool assert)
+void apu_reset(int fd, bool assert)
 {
-    if (assert) {
-        // sleep
-        iowrite32(mmio_regs, APU_CTRL_GPIO_OFFSET + 0x0, 0);
-        // assert reset
-        iowrite32(mmio_regs, APU_CTRL_GPIO_OFFSET + 0x8, 1);
-    } else {
-        // assert reset
-        iowrite32(mmio_regs, APU_CTRL_GPIO_OFFSET + 0x8, 0);
-        // wakeup
-        iowrite32(mmio_regs, APU_CTRL_GPIO_OFFSET + 0x0, 1);
-    }
+    int val = assert ? 1 : 0;
+    ioctl(fd, DEXTER_APU_IOCTL_APU_RESET, &val);
 }
 
 static const char ELF_SIGNATURE[] = {0x7f, 'E', 'L', 'F'};
+
+static struct memory_map_entry mm[2] = {
+    {
+        .name = "SRAM",
+        .index = APU_DEVICE_SRAM,
+        .linked = ELF_FILE_SRAM_BASE,
+    },
+    {
+        .name = "DDR",
+        .index = APU_DEVICE_DDR,
+        .linked = ELF_FILE_DDR_BASE,
+    }};
 
 int main(int argc, char** argv)
 {
@@ -59,9 +65,7 @@ int main(int argc, char** argv)
     bool do_reset = false;
     const char* download_file = NULL;
     const char* dev = "/dev/apu0";
-    size_t map_size = APU_CTRL_LENGTH;
-    size_t page_size = getpagesize();
-    printf("Page size: %zu bytes\n", page_size);
+    printf("Page size: %zu bytes\n", getpagesize());
 
     while ((c = getopt(argc, argv, "d:l:a:rf:")) != -1) {
         switch (c) {
@@ -81,21 +85,23 @@ int main(int argc, char** argv)
         }
     }
 
-    void* mmio_regs = mmap_dev(dev, 0 * page_size, map_size);
-    if (mmio_regs == NULL) {
-        fprintf(stderr, "Error: MMAP of registers Failed. errno %d\n", errno);
-        return -1;
+    int fd = open(dev, O_RDWR | O_SYNC);
+    if (fd < 1) {
+        fprintf(stderr, "Error: Unable to open device. errno %d\n", errno);
+        return 2;
     }
 
-    void* ddr_ram = mmap_dev(dev, 1 * page_size, DDR_MEM_LENGTH);
-    if (ddr_ram == NULL) {
-        fprintf(stderr, "Warning: MMAP of shared DDR memory Failed. errno %d\n", errno);
-        return -1;
+    for (size_t i = 0; i < sizeof(mm) / sizeof(mm[0]); i++) {
+        mm[i].mmio = mmap_apu(fd, mm[i].index, &mm[i].length, &mm[i].allocated);
+        if (mm[i].mmio == NULL) {
+            fprintf(stderr, "Error: MMAP of APU %s failed! errno %d\n", mm[i].name, errno);
+            return 3;
+        }
     }
 
     if (do_reset) {
         printf("Assert APU Reset\n");
-        apu_reset(mmio_regs, true);
+        apu_reset(fd, true);
     }
 
     if (download_file) {
@@ -105,43 +111,25 @@ int main(int argc, char** argv)
         void* fptr = mmap_file(download_file, &flen, false);
         if (fptr == NULL) {
             fprintf(stderr, "Error: Unable to open file %s\n", download_file);
-            return -1;
+            return 4;
         }
-
-        struct memory_map_entry mm[2] = {
-            {
-                .name = "SRAM",
-                .mmio = mmio_regs,
-                .mmio_offset = APU_CTRL_SRAM_OFFSET,
-                .length = APU_CTRL_SRAM_LENGTH,
-                .physical = ELF_FILE_SRAM_BASE,
-                .allocated = ELF_FILE_SRAM_BASE,
-            },
-            {
-                .name = "DDR",
-                .mmio = ddr_ram,
-                .mmio_offset = 0,
-                .length = DDR_MEM_LENGTH,
-                .physical = ELF_FILE_DDR_BASE,
-                .allocated = 0x16900000U,
-            }};
 
         bool download_success = false;
         if (memcmp(fptr, ELF_SIGNATURE, 4) == 0) {
-            download_success = load_elf(fptr, flen, mm, sizeof(mm)/sizeof(mm[0]));
+            download_success = load_elf(fptr, flen, mm, sizeof(mm) / sizeof(mm[0]));
         } else {
-            download_success = load_sram(mmio_regs, fptr, flen);
+            download_success = load_bin(fptr, flen, ELF_FILE_SRAM_BASE, mm, sizeof(mm) / sizeof(mm[0]));
         }
 
         if (!download_success) {
             fprintf(stderr, "Error: Download failed!\n");
-            return -1;
+            return 5;
         }
     }
 
     if (do_reset) {
         printf("Release APU Reset\n");
-        apu_reset(mmio_regs, false);
+        apu_reset(fd, false);
     }
 
     return 0;

@@ -12,16 +12,16 @@ extern "C" {
 
 struct memory_map_entry {
     const char* name;
+    int index;
     void* mmio;
-    off_t mmio_offset;
-    size_t length;
-    uint32_t physical;
+    uint32_t length;
+    uint32_t linked;
     uint32_t allocated;
 };
 
 
-bool load_elf(const char* file, size_t file_len, struct memory_map_entry* mm, size_t mm_len);
-bool load_sram(void* mmio_regs, const void* data, size_t data_len);
+bool load_elf(const char* file, const size_t file_len, struct memory_map_entry* mm, const size_t mm_len);
+bool load_bin(const void* data, const size_t data_len, const uint32_t address, struct memory_map_entry* mm, const size_t mm_len);
 
 #ifdef __cplusplus
 }

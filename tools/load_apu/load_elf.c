@@ -8,35 +8,42 @@
 #include "mmio.h"
 #include "apu.h"
 
-bool load_sram(void* mmio_regs, const void* data, size_t data_len)
+static bool load_mem(struct memory_map_entry* mme, const off_t offset, const void* data, size_t data_len)
 {
-    if (data_len > APU_CTRL_SRAM_LENGTH) {
-        fprintf(stderr, "Error: Binary file greater than SRAM\n");
-        fprintf(stderr, "       SRAM Size: %jd bytes\n", (intmax_t)APU_CTRL_SRAM_LENGTH);
+    if (data_len > mme->length - offset) {
+        fprintf(stderr, "Error: Binary file greater than %s\n", mme->name);
+        fprintf(stderr, "       Mem  Size: %jd bytes\n", (intmax_t)mme->length - offset);
         fprintf(stderr, "       File Size: %jd bytes\n", (intmax_t)data_len);
         return false;
     }
 
-    printf("Downloading %jd bytes to SRAM\n", (intmax_t)data_len);
+    printf("Downloading %jd bytes to %s\n", (intmax_t)data_len, mme->name);
 
-    iomemset(mmio_regs, APU_CTRL_SRAM_OFFSET, 0, APU_CTRL_SRAM_LENGTH);
-    copytoio(mmio_regs, APU_CTRL_SRAM_OFFSET, data, data_len);
+    copytoio(mme->mmio, offset, data, data_len);
     return true;
 }
 
-static bool load_mem(struct memory_map_entry mme, const off_t offset, const void* data, size_t data_len)
+bool load_bin(
+    const void* data,
+    const size_t data_len,
+    const uint32_t address,
+    struct memory_map_entry* mm,
+    size_t mm_entries)
 {
-    if (data_len > mme.length - offset) {
-        fprintf(stderr, "Error: Binary file greater than %s\n", mme.name);
-        fprintf(stderr, "       Mem  Size: %jd bytes\n", (intmax_t)mme.length - offset);
-        fprintf(stderr, "       File Size: %jd bytes\n", (intmax_t)data_len);
+    struct memory_map_entry* mme = NULL;
+
+    for (size_t i = 0; i < mm_entries; i++) {
+        if (address >= mm[i].linked && address < mm[i].linked + mm[i].length)
+            mme = &mm[i];
+    }
+
+    if (!mme) {
+        fprintf(stderr, "Error: Address not found in memory map\n");
         return false;
     }
 
-    printf("Downloading %jd bytes to %s\n", (intmax_t)data_len, mme.name);
-
-    copytoio(mme.mmio, mme.mmio_offset + offset, data, data_len);
-    return true;
+    iomemset(mme->mmio, 0, 0, mme->length);
+    return load_mem(mme, 0, data, data_len);
 }
 
 static const char* section_name(const char* names, int index)
@@ -166,7 +173,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map_entry* mm, si
     printf("Zeroing memory...\n");
     for (size_t i = 0; i < mm_entries; i++) {
         printf("  %s\n", mm[i].name);
-        iomemset(mm[i].mmio, mm[i].mmio_offset, 0, mm[i].length);
+        iomemset(mm[i].mmio, 0, 0, mm[i].length);
     }
 
     /* part 0: load program */
@@ -185,9 +192,10 @@ bool load_elf(const char* file, size_t file_len, struct memory_map_entry* mm, si
 
         bool success = false;
         for (size_t i = 0; i < mm_entries && !success; i++) {
-            if (phdr->p_paddr >= mm[i].physical && phdr->p_paddr < mm[i].physical + mm[i].length) {
-                success = load_mem(mm[i], phdr->p_paddr - mm[i].physical, file + phdr->p_offset, phdr->p_filesz);
-                need_relocation |= mm[i].physical != mm[i].allocated;
+            // printf("mm[%d]: %08x - %08x alloc %08x\n", i, mm[i].linked, mm[i].length, mm[i].allocated);
+            if (phdr->p_paddr >= mm[i].linked && phdr->p_paddr < mm[i].linked + mm[i].length) {
+                success = load_mem(&mm[i], phdr->p_paddr - mm[i].linked, file + phdr->p_offset, phdr->p_filesz);
+                need_relocation |= mm[i].linked != mm[i].allocated;
             }
         }
 

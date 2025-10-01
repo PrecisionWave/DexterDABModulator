@@ -1,20 +1,11 @@
 #ifndef APU_H__INCLUDED
 #define APU_H__INCLUDED
 
-// APU controls
-#define APU_CTRL_LENGTH         0x30000U
-#define APU_CTRL_SRAM_OFFSET    0x00000U
-#define APU_CTRL_SRAM_LENGTH    0x04000U
-#define APU_CTRL_GPIO_OFFSET    0x10000U
-#define APU_CTRL_MBOX_OFFSET    0x20000U
-
-// DDR memory access
-#define DDR_MEM_LENGTH          (1U * 1024 * 1024)
+#include <stdint.h>
+#include "dexter_apu.h"
 
 // ELF file stuff
 #define ELF_FILE_DDR_BASE       0x00100000U
-#define ELF_FILE_DDR_LENGTH     DDR_MEM_LENGTH
 #define ELF_FILE_SRAM_BASE      0x20000000U
-#define ELF_FILE_SRAM_LENGTH    APU_CTRL_SRAM_LENGTH
 
 #endif // APU_H__INCLUDED
