@@ -69,7 +69,7 @@
                                 								
                                 <option id="xilinx.gnu.mb.compiler.inferred.mul.220643985" name="Hardware Multiplier" superClass="xilinx.gnu.mb.compiler.inferred.mul" useByScannerDiscovery="false" value="xilinx.gnu.mb.compiler.inferred.mul.64bit" valueType="enumerated"/>
                                 								
-                                <option id="xilinx.gnu.compiler.misc.other.248047977" name="Other flags" superClass="xilinx.gnu.compiler.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -MT&quot;$@&quot; -mxl-frequency -fpie -fPIE" valueType="string"/>
+                                <option id="xilinx.gnu.compiler.misc.other.248047977" name="Other flags" superClass="xilinx.gnu.compiler.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -MT&quot;$@&quot; -mxl-frequency" valueType="string"/>
                                 								
                                 <option id="xilinx.gnu.compiler.inferred.swplatform.includes.1355916635" name="Software Platform Include Path" superClass="xilinx.gnu.compiler.inferred.swplatform.includes" useByScannerDiscovery="false" valueType="includePath">
                                     									
@@ -145,7 +145,7 @@
                                 								
                                 <option id="xilinx.gnu.c.linker.option.lscript.666219850" name="Linker Script" superClass="xilinx.gnu.c.linker.option.lscript" useByScannerDiscovery="false" value="../src/lscript.ld" valueType="string"/>
                                 								
-                                <option id="xilinx.gnu.c.link.option.ldflags.1256647167" name="Linker Flags" superClass="xilinx.gnu.c.link.option.ldflags" useByScannerDiscovery="false" value="-fpie -fPIE -flinker-output=pie -Wl,--emit-reloc" valueType="string"/>
+                                <option id="xilinx.gnu.c.link.option.ldflags.1256647167" name="Linker Flags" superClass="xilinx.gnu.c.link.option.ldflags" useByScannerDiscovery="false" value="-Wl,--emit-reloc" valueType="string"/>
                                 								
                                 <inputType id="xilinx.gnu.linker.input.106462344" superClass="xilinx.gnu.linker.input">
                                     									
@@ -210,6 +210,8 @@
             </storageModule>
             			
             <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+            			
+            <storageModule moduleId="ilg.gnuarmeclipse.managedbuild.packs"/>
             		
         </cconfiguration>
         		
