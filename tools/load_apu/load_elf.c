@@ -364,9 +364,10 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
 
     printf("Successfully applied %zu relocations\n", relocation_total_count - relocation_error_count);
 
-    if (relocation_error_count > 0) {
+    if (relocation_total_count == 0 || (relocation_error_count > 0)) {
         fprintf(stderr, "Error: Relocation failed for %zu relocations.\n", relocation_error_count);
         fprintf(stderr, "       This ELF file needs relocation OR MMU set for address translation\n");
+        fprintf(stderr, "       Hint: Relink ELF with \"-Wl,--emit-reloc\"\n");
         return false;
     }
 
