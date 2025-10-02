@@ -63,6 +63,8 @@ static struct memory_map mm = {
         },
 };
 
+int g_elf_debug_level = 0;
+
 int main(int argc, char** argv)
 {
     int c;
@@ -72,7 +74,7 @@ int main(int argc, char** argv)
     const char* dev = "/dev/apu0";
     printf("Page size: %zu bytes\n", getpagesize());
 
-    while ((c = getopt(argc, argv, "d:l:a:rf:")) != -1) {
+    while ((c = getopt(argc, argv, "d:rf:v")) != -1) {
         switch (c) {
             case 'd':
                 dev = optarg;
@@ -83,6 +85,9 @@ int main(int argc, char** argv)
             case 'f':
                 do_reset = true;
                 download_file = optarg;
+                break;
+            case 'v':
+                g_elf_debug_level++;
                 break;
             case '?':
                 fprintf(stderr, "usage: %s [-l length] [-a address] [-d device] [-r] [-f file]\n", *argv);
