@@ -45,7 +45,7 @@ bool load_bin(const void* data, const size_t data_len, struct memory_map* mm, co
     return load_mem(mme, 0, data, data_len);
 }
 
-static const char* section_name(const char* names, int index)
+static const char* lookup_name(const char* names, int index)
 {
     return names ? names + index : "?";
 }
@@ -167,48 +167,19 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
             return true;
 
         case R_MICROBLAZE_GOTPC_64:
-            // Really needed if PC relative?
             // A 64 bit GOTPC relocation.       G+A–P (#imm)
-            value -= offset + 4;
-            value -= mme_offset->apu_loaded;
-
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
-            new_value = (old_value & 0xffff0000ULL) | ((value >> 16) & 0xffff);
-            iowrite32(mme_offset->cpu_virtual, offset + 0, new_value);
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_MICROBLAZE_GOTPC_64 (+0): %08x -> %08x, ", old_value, new_value);
-
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
-            new_value = (old_value & 0xffff0000ULL) | (value & 0xffff);
-            iowrite32(mme_offset->cpu_virtual, offset + 4, new_value);
-            local_debug(2, "(+4): %08x -> %08x\n", old_value, new_value);
-            return true;
+            // Added hint to rebuild ELF without this
+            return false;
 
         case R_MICROBLAZE_GOT_64:
             // A 64 bit GOT relocation.         G+A (#imm)
-            // Don't know what to do for now.
-            // Removing -fpie does not generate these so it will load.
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_MICROBLAZE_GOT_64 (+0): %08x -> ?, ", ioread32(mme_offset->cpu_virtual, offset + 0));
-            local_debug(2, "(+4): %08x -> ? is unimplemented!\n", ioread32(mme_offset->cpu_virtual, offset + 4));
+            // Added hint to rebuild ELF without this
             return false;
 
         case R_MICROBLAZE_PLT_64:
             // A 64 bit PLT relocation.         L+A (#imm)
-            value -= offset + 4;
-            value -= mme_offset->apu_loaded;
-
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
-            new_value = (old_value & 0xffff0000ULL) | ((value >> 16) & 0xffff);
-            iowrite32(mme_offset->cpu_virtual, offset + 0, new_value);
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_MICROBLAZE_PLT_64 (+0): %08x -> %08x, ", old_value, new_value);
-
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
-            new_value = (old_value & 0xffff0000ULL) | (value & 0xffff);
-            iowrite32(mme_offset->cpu_virtual, offset + 4, new_value);
-            local_debug(2, "(+4): %08x -> %08x\n", old_value, new_value);
-            return true;
+            // Added hint to rebuild ELF without this
+            return false;
 
         case R_MICROBLAZE_32_PCREL_LO:
         case R_MICROBLAZE_NONE:
@@ -291,15 +262,16 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
 
     /* relocation */
     local_debug(1, "Sections:\n");
-    local_debug(1, "  Idx Name                        Size      ADDR      File off  Flags Align\n");
+    local_debug(1, "  Idx Type Name                        Size      ADDR      File off  Flags Align\n");
     Elf32_Sym* sym = NULL;
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
-        const char* name = section_name(names, shdr->sh_name);
+        const char* name = lookup_name(names, shdr->sh_name);
         local_debug(
             1,
-            "  %3d %-27s %08x  %08x  %08x  %04x  2**%u\n",
+            "  %3d %4d %-27s %08x  %08x  %08x  %04x  2**%u\n",
             section,
+            shdr->sh_type,
             name,
             shdr->sh_size,
             shdr->sh_addr,
@@ -319,11 +291,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
 
         if (sym && shdr->sh_type == SHT_REL) {
             local_debug(
-                1,
-                "  REL in section %2d: flags %04x %s\n",
-                section,
-                shdr->sh_flags,
-                section_name(names, shdr->sh_name));
+                1, "  REL in section %2d: flags %04x %s\n", section, shdr->sh_flags, lookup_name(names, shdr->sh_name));
 
             for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
                 Elf32_Rel* rel = (Elf32_Rel*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
@@ -331,8 +299,15 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
                 struct memory_map_entry* mme = mm_lookup(mm, rel->r_offset);
                 if (mme) {
                     Elf32_Sym* symbol = &sym[ELF32_R_SYM(rel->r_info)];
-                    if (!do_rel(mm, symbol, rel->r_offset, ELF32_R_TYPE(rel->r_info), 0))
+                    if (!do_rel(mm, symbol, rel->r_offset, ELF32_R_TYPE(rel->r_info), 0)) {
                         relocation_error_count++;
+                        fprintf(
+                            stderr,
+                            "Relocation failed for symbol %d in section %d (type %d)\n",
+                            entry,
+                            section,
+                            ELF32_R_TYPE(rel->r_info));
+                    }
                     relocation_total_count++;
                 }
             }
@@ -346,14 +321,21 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
                 "  RELA in section %2d: flags %04x %s\n",
                 section,
                 shdr->sh_flags,
-                section_name(names, shdr->sh_name));
+                lookup_name(names, shdr->sh_name));
             for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
                 Elf32_Rela* rela = (Elf32_Rela*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
                 struct memory_map_entry* mme = mm_lookup(mm, rela->r_offset);
                 if (mme) {
                     Elf32_Sym* symbol = &sym[ELF32_R_SYM(rela->r_info)];
-                    if (!do_rel(mm, symbol, rela->r_offset, ELF32_R_TYPE(rela->r_info), rela->r_addend))
+                    if (!do_rel(mm, symbol, rela->r_offset, ELF32_R_TYPE(rela->r_info), rela->r_addend)) {
                         relocation_error_count++;
+                        fprintf(
+                            stderr,
+                            "Relocation failed for symbol %d in section %d (type %d)\n",
+                            entry,
+                            section,
+                            ELF32_R_TYPE(rela->r_info));
+                    }
                     relocation_total_count++;
                 }
             }
@@ -364,13 +346,18 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
 
     printf("Successfully applied %zu relocations\n", relocation_total_count - relocation_error_count);
 
-    if (relocation_total_count == 0 || (relocation_error_count > 0)) {
-        fprintf(stderr, "Error: Relocation failed for %zu relocations.\n", relocation_error_count);
-        fprintf(stderr, "       This ELF file needs relocation OR MMU set for address translation\n");
-        fprintf(stderr, "       Hint: Relink ELF with \"-Wl,--emit-reloc\"\n");
+    if (relocation_total_count == 0) {
+        fprintf(stderr, "Error: This ELF file needs relocation OR MMU set for address translation\n");
+        fprintf(stderr, "Hint:  Relink ELF with \"-Wl,--emit-reloc\" added\n");
+        fprintf(stderr, "       and -fpie \"-Wl,--gc-sections\" and \"-Wl,--gc-keep-exported\" removed\n");
         return false;
     }
 
+    if (relocation_error_count > 0) {
+        fprintf(stderr, "Error: Relocation failed for %zu relocations.\n", relocation_error_count);
+        fprintf(stderr, "Hint:  Relink ELF with -fpie \"-Wl,--gc-sections\" and \"-Wl,--gc-keep-exported\" removed\n");
+        return false;
+    }
 
     return true;
 }
