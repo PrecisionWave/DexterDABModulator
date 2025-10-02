@@ -53,12 +53,12 @@ static struct memory_map mm = {
             {
                 .name = "SRAM",
                 .index = APU_DEVICE_SRAM,
-                .linked = ELF_FILE_SRAM_BASE,
+                .apu_linked = ELF_FILE_SRAM_BASE,
             },
             {
                 .name = "DDR",
                 .index = APU_DEVICE_DDR,
-                .linked = ELF_FILE_DDR_BASE,
+                .apu_linked = ELF_FILE_DDR_BASE,
             },
         },
 };
@@ -97,8 +97,7 @@ int main(int argc, char** argv)
     }
 
     for (size_t i = 0; i < mm.count; i++) {
-        mm.entries[i].mmio = mmap_apu(fd, mm.entries[i].index, &mm.entries[i].length, &mm.entries[i].allocated);
-        if (mm.entries[i].mmio == NULL) {
+        if (!mmap_apu(fd, mm.entries[i].index, &mm.entries[i])) {
             fprintf(stderr, "Error: MMAP of APU %s failed! errno %d\n", mm.entries[i].name, errno);
             return 3;
         }

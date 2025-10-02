@@ -9,12 +9,14 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "memorymap.h"
+
 enum device_index {
     APU_DEVICE_SRAM,
     APU_DEVICE_DDR,
 };
 
-void* mmap_apu(int fd, enum device_index index, size_t* out_length, size_t* out_physical);
+bool mmap_apu(int fd, enum device_index index, struct memory_map_entry* mme);
 void* mmap_dev(const char* dev, size_t offset, size_t length);
 void* mmap_file(const char* file, size_t* out_length, bool rw);
 

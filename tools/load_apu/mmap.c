@@ -41,8 +41,10 @@ static void mmap_cleanup(void)
     }
 }
 
-void* mmap_apu(int fd, enum device_index index, uint32_t* out_length, uint32_t* out_physical)
+bool mmap_apu(int fd, enum device_index index, struct memory_map_entry* mme)
 {
+    assert(mme != NULL);
+
     int page_size = getpagesize();
 
     uint32_t map_length = 0;
@@ -79,13 +81,12 @@ void* mmap_apu(int fd, enum device_index index, uint32_t* out_length, uint32_t* 
 
     void* ptr = mmap(NULL, map_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, map_offset);
     if (ptr == MAP_FAILED) {
-        return NULL;
+        return false;
     }
 
-    if (out_length)
-        *out_length = map_length;
-    if (out_physical)
-        *out_physical = physical;
+    mme->length = map_length;
+    mme->apu_loaded = physical;
+    mme->cpu_virtual = ptr;
 
     if (mmap_list == NULL) {
         atexit(mmap_cleanup);
@@ -97,7 +98,7 @@ void* mmap_apu(int fd, enum device_index index, uint32_t* out_length, uint32_t* 
     mmap_list->ptr = ptr;
     mmap_list->length = map_length;
 
-    return ptr;
+    return true;
 }
 
 void* mmap_dev(const char* dev, size_t offset, size_t length)

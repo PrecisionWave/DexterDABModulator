@@ -7,10 +7,10 @@
 struct memory_map_entry {
     const char* name;
     int index;
-    void* mmio;
+    void* cpu_virtual;
     uint32_t length;
-    uint32_t linked;
-    uint32_t allocated;
+    uint32_t apu_linked;
+    uint32_t apu_loaded;
 };
 
 struct memory_map {
