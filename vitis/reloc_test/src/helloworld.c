@@ -53,6 +53,8 @@ int main()
     print("Hello World\n");
     print("Successfully ran Hello World application from DDR memory\n\n");
 
+    for(;;);
+
     Xil_DCacheDisable();
     Xil_ICacheDisable();
 
