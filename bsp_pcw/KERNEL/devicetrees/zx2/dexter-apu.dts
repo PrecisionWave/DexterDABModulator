@@ -125,7 +125,7 @@
 		};
 
 
-		apu2cpu_dma: apu2cpu_dmac@44030000 {
+		apu1_apu2cpu_dma: apu2cpu_dmac@44030000 {
 			compatible = "adi,axi-dmac-1.00.a";
 			reg = <0x44030000 0x10000>;
 			#dma-cells = <1>;
@@ -147,7 +147,7 @@
 			};
 		};
 
-		cpu2apu_dma: cpu2apu_dmac@44040000 {
+		apu0_cpu2apu_dma: cpu2apu_dmac@44040000 {
 			compatible = "adi,axi-dmac-1.00.a";
 			reg = <0x44040000 0x10000>;
 			#dma-cells = <1>;
@@ -169,7 +169,7 @@
 			};
 		};
 
-		apu@44000000 {
+		apu0@44000000 {
 			status = "okay";
 			compatible = "pcw,dexter-apu";
 			reg = <0x44000000 0x30000>;
@@ -177,17 +177,21 @@
 			interrupt-parent = <&intc>;
 
 			clocks = <&clkc 16>;
-			dmas = <&cpu2apu_dma 0>, <&apu2cpu_dma 0>;
+			dmas = <&apu0_cpu2apu_dma 0>, <&apu1_apu2cpu_dma 0>;
 			dma-names = "in", "out";
 		};
 
-		apu_uart@44050000 {
+		apu0_uart@44050000 {
 			status = "okay";
-			compatible = "xlnx,xps-uartlite-1.00.a";
-			reg = <0x44050000 0x1000>;
-			interrupts = <0 33 IRQ_TYPE_EDGE_RISING>;
+			compatible = "ns16550a";
+			reg = <0x44050000 0x10000>;
 			interrupt-parent = <&intc>;
-			port-number = <0>;
+			interrupts = <0 33 IRQ_TYPE_LEVEL_HIGH>;
+			clock-frequency = <100000000>;
+			baud = <115200>;
+			reg-shift = <2>;
+			reg-offset = <0x1000>;
+			clock-names = "s_axi_aclk";
 			clocks = <&clkc 16>;
 		};
 	};
