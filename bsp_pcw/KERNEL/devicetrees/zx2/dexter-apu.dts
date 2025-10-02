@@ -178,7 +178,7 @@
 
 			clocks = <&clkc 16>;
 			dmas = <&apu0_cpu2apu_dma 0>, <&apu1_apu2cpu_dma 0>;
-			dma-names = "in", "out";
+			dma-names = "tx", "rx";
 		};
 
 		apu0_uart@44050000 {
