@@ -15,6 +15,15 @@ CPU:
 - Wait for message from APU
 - Send response to APU
 
+## Vitis quirks
+Sometimes it is required to generate a binary file for the SRAM only targets.
+This can be achieved by adding a custom post build step:
+- Command: `mb-objcopy -O binary mbox.elf mbox.bin`
+- Description: Create SRAM image
+
+![Post build step](screenshots/mbox_bin.png)
+
+
 ## Demo
 ### Load APU
 ```
