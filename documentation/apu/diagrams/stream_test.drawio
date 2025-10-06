@@ -1,0 +1,60 @@
+<mxfile host="65bd71144e">
+    <diagram id="pDnA73VOz7nwqlSrXqKU" name="Page-1">
+        <mxGraphModel dx="1701" dy="774" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="9" value="Zynq PL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;horizontal=1;verticalAlign=top;dashed=1;" vertex="1" parent="1">
+                    <mxGeometry x="60" y="40" width="560" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="APU Tx DMA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+                    <mxGeometry x="80" y="80" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Microblaze APU" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+                    <mxGeometry x="280" y="80" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="APU Rx DMA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+                    <mxGeometry x="480" y="80" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="Stream" style="edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;rounded=0;endArrow=classic;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;curved=1;endFill=1;" edge="1" parent="1" source="2" target="3">
+                    <mxGeometry width="140" relative="1" as="geometry">
+                        <mxPoint x="160" y="170" as="sourcePoint"/>
+                        <mxPoint x="300" y="170" as="targetPoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="8" value="Stream" style="edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;rounded=0;endArrow=classic;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;curved=1;endFill=1;" edge="1" parent="1" source="3" target="4">
+                    <mxGeometry width="140" relative="1" as="geometry">
+                        <mxPoint x="210" y="110" as="sourcePoint"/>
+                        <mxPoint x="290" y="110" as="targetPoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="11" value="PS DDR Memory" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="80" y="230" width="520" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="Read" style="edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;rounded=0;endArrow=classic;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;curved=1;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="2">
+                    <mxGeometry width="140" relative="1" as="geometry">
+                        <mxPoint x="210" y="110" as="sourcePoint"/>
+                        <mxPoint x="140" y="230" as="targetPoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="14" value="R/W" style="edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;rounded=0;endArrow=classic;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;curved=1;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1">
+                    <mxGeometry width="140" relative="1" as="geometry">
+                        <mxPoint x="339.8" y="120" as="sourcePoint"/>
+                        <mxPoint x="339.8" y="230" as="targetPoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="15" value="Write" style="edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;rounded=0;endArrow=classic;sourcePerimeterSpacing=0;targetPerimeterSpacing=0;curved=1;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1">
+                    <mxGeometry width="140" relative="1" as="geometry">
+                        <mxPoint x="539.8" y="120" as="sourcePoint"/>
+                        <mxPoint x="539.8" y="230" as="targetPoint"/>
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

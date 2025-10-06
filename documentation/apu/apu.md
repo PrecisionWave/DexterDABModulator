@@ -39,78 +39,10 @@ The projects contains the mbox companion app for the Zynq and the Microblaze.
 ## Vectors
 C_BASE_ADDRESS in the CPU configuration is set to `0x2000 0000` which in turn puts all vectors in the block ram.
 
+## Demos
+- Mailbox Demo [Mailbox Demo](./mbox.md)
+- Relocation test [Relocation test](./reloc_test.md)
+- Stream test [Stream test](./stream_test.md)
+
 ## System overview
 ![apu_v2](./apu_v2.png)
-
-### Mailbox demo
-#### Watch UART output
-```
-root@analog:~# cat /dev/ttyUL0
-```
-
-#### Load the program
-```
-root@analog:~# ./load_apu -f mbox.bin 
-Page size: 4096 bytes
-Assert APU Reset
-Loading file mbox.bin
-Downloading 5728 bytes
-Release APU Reset
-```
-
-#### UART output
-```
-root@analog:~# cat /dev/ttyUL0
----Entering main---
-XMbox_LookupConfig OK
-XMbox_CfgInitialize OK
-MailboxExample_Send OK
-```
-
-#### Start communication from Zynq
-```
-root@analog:~# ./mbox -rw
-Page size: 4096 bytes
-REG_MBOX_STATUS: 0x0000000c
-REG_MBOX_ERROR:  0x00000000
-REG_MBOX_SIT:    0x00000000
-REG_MBOX_RIT:    0x00000000
-REG_MBOX_IS:     0x00000002
-REG_MBOX_IE:     0x00000000
-REG_MBOX_IP:     0x00000000
-mbox write....
-   0: 6c6c6548 Hell
-   4: 5420216f o! T
-   8: 43206568 he C
-  12: 75736e6f onsu
-  16: 2072656d mer 
-  20: 65657267 gree
-  24: 74207374 ts t
-  28: 50206568 he P
-  32: 75646f72 rodu
-  36: 00726563 cer.
-Wrote 40 bytes
-mbox read....
-   0: 6c6c6548 Hell
-   4: 5420216f o! T
-   8: 50206568 he P
-  12: 75646f72 rodu
-  16: 20726563 cer 
-  20: 65657267 gree
-  24: 74207374 ts t
-  28: 43206568 he C
-  32: 75736e6f onsu
-  36: 0072656d mer.
-...done
-```
-
-#### UART output
-```
-root@analog:~# cat /dev/ttyUL0
----Entering main---
-XMbox_LookupConfig OK
-XMbox_CfgInitialize OK
-MailboxExample_Send OK
-MailboxExample_Receive OK
-MailboxExample_Send OK
-```
