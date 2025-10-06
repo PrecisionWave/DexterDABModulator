@@ -64,6 +64,19 @@ static struct memory_map mm = {
 };
 
 int g_elf_debug_level = 0;
+bool g_elf_force_reloc = false;
+
+void usage(const char* progname)
+{
+    fprintf(stderr, "usage: %s [-d /dev/apuX] [-r] [-f file] [-x dumpfile] [-a]\n", progname);
+    fprintf(stderr, "  -d /dev/apu0     Device to use\n");
+    fprintf(stderr, "  -f file.elf      Download elf file\n");
+    fprintf(stderr, "  -f file.bin      Download bin file\n");
+    fprintf(stderr, "  -r               Perform APU reset (implied by -f)\n");
+    fprintf(stderr, "  -v               Increase debug level\n");
+    fprintf(stderr, "  -a               Force elf relocation\n");
+    fprintf(stderr, "  -x basename      Dump RAM contents after download\n");
+}
 
 int main(int argc, char** argv)
 {
@@ -71,10 +84,11 @@ int main(int argc, char** argv)
     opterr = 0;
     bool do_reset = false;
     const char* download_file = NULL;
+    const char* dump_file = NULL;
     const char* dev = "/dev/apu0";
     printf("Page size: %zu bytes\n", getpagesize());
 
-    while ((c = getopt(argc, argv, "d:rf:v")) != -1) {
+    while ((c = getopt(argc, argv, "d:rf:vx:a")) != -1) {
         switch (c) {
             case 'd':
                 dev = optarg;
@@ -89,10 +103,21 @@ int main(int argc, char** argv)
             case 'v':
                 g_elf_debug_level++;
                 break;
+            case 'x':
+                dump_file = optarg;
+                break;
+            case 'a':
+                g_elf_force_reloc = true;
+                break;
             case '?':
-                fprintf(stderr, "usage: %s [-l length] [-a address] [-d device] [-r] [-f file]\n", *argv);
+                usage(argv[0]);
                 return 1;
         }
+    }
+
+    if (!download_file && !do_reset) {
+        usage(argv[0]);
+        return 42;
     }
 
     int fd = open(dev, O_RDWR | O_SYNC);
@@ -133,6 +158,24 @@ int main(int argc, char** argv)
         if (!download_success) {
             fprintf(stderr, "Error: Download failed!\n");
             return 5;
+        }
+    }
+
+    if (dump_file) {
+        for (size_t i = 0; i < mm.count; i++) {
+            char dump_file_name[1024];
+            memset(dump_file_name, 0, sizeof(dump_file_name));
+            snprintf(dump_file_name, sizeof(dump_file_name) - 1, "%s.%s", dump_file, mm.entries[i].name);
+            printf("Dumping %s to %s...\n", mm.entries[i].name, dump_file_name);
+            int dfd = open(dump_file_name, O_CREAT | O_RDWR | O_TRUNC, 0666);
+            if (mm.entries[i].length != write(dfd, mm.entries[i].cpu_virtual, mm.entries[i].length)) {
+                int tmp_errno = errno;
+                fprintf(
+                    stderr, "Error: Failed to write %d bytes to file. errno was %d\n", mm.entries[i].length, tmp_errno);
+                return 10;
+            }
+            printf("Wrote %d bytes\n", mm.entries[i].length);
+            close(dfd);
         }
     }
 

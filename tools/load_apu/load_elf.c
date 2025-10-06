@@ -11,6 +11,8 @@
 #include "apu.h"
 
 extern int g_elf_debug_level;
+extern bool g_elf_force_reloc;
+
 #define local_debug(level, fmt, ...)      \
     {                                     \
         if (g_elf_debug_level >= (level)) \
@@ -248,7 +250,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
         }
     }
 
-    if (!need_relocation) {
+    if (!need_relocation && !g_elf_force_reloc) {
         return true;
     }
 
