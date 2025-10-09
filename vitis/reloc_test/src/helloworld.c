@@ -47,8 +47,11 @@
 
 int main()
 {
-    Xil_ICacheEnable();
-    Xil_DCacheEnable();
+	Xil_ICacheInvalidate();
+	Xil_DCacheInvalidate();
+
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
 
     print("Hello World\n");
     print("Successfully ran Hello World application from DDR memory\n\n");
