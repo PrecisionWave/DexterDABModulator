@@ -78,6 +78,12 @@ void usage(const char* progname)
     fprintf(stderr, "  -x basename      Dump RAM contents after download\n");
 }
 
+struct APU_LDR {
+    const uint64_t signature;
+    const uint32_t ddr_start;
+    const uint32_t ddr_length;
+} __attribute__((aligned(8), packed)) loader_info;
+
 int main(int argc, char** argv)
 {
     int c;
@@ -153,6 +159,21 @@ int main(int argc, char** argv)
             download_success = load_elf(fptr, flen, &mm);
         } else {
             download_success = load_bin(fptr, flen, &mm, ELF_FILE_SRAM_BASE);
+        }
+
+        if (download_success) {
+            uint64_t ldr_signature = 0x10adcba987654321ULL;
+            uint64_t ldr_complete =  0x10ad123456789abcULL;
+            struct memory_map_entry* mme = mm_lookup(&mm, ELF_FILE_SRAM_BASE);
+            struct memory_map_entry* mme_ddr = mm_lookup(&mm, ELF_FILE_DDR_BASE);
+            for (size_t i = 0; i < mme->length - sizeof(struct APU_LDR); i++) {
+                if (memcmp(mme->cpu_virtual + i, &ldr_signature, sizeof(ldr_signature)) == 0) {
+                    printf("APU_LDR signature found at SRAM:%04x\n", i);
+                    memcpy(mme->cpu_virtual + i, &ldr_complete, sizeof(ldr_complete));
+                    memcpy(mme->cpu_virtual + i + 8, &mme_ddr->apu_loaded, 4);
+                    memcpy(mme->cpu_virtual + i + 12, &mme_ddr->length, 4);
+                }
+            }
         }
 
         if (!download_success) {
