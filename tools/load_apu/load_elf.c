@@ -123,6 +123,18 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
         value -= mme_value->apu_linked;
         value += mme_value->apu_loaded;
     }
+
+    local_debug(
+        2,
+        "%s symbol: bind %d, type %d, other:%d, value: %08x, r_offset: %08x, r_addend: %08x\n",
+        mme_offset != mme_value ? "Foreign" : "Local",
+        ELF32_ST_BIND(symbol->st_info),
+        ELF32_ST_TYPE(symbol->st_info),
+        symbol->st_other,
+        symbol->st_value,
+        r_offset,
+        r_addend);
+
     value += r_addend;
     uint32_t old_value;
     uint32_t new_value;
