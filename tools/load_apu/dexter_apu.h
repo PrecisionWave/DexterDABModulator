@@ -22,4 +22,8 @@
 #define DEXTER_APU_IOCTL_SYNC_FOR_CPU       _IOW(0, 5, int)
 #define DEXTER_APU_IOCTL_SYNC_FOR_DEVICE    _IOW(0, 6, int)
 
+#define DEXTER_APU_DMA_FROM_DEVICE          0
+#define DEXTER_APU_DMA_TO_DEVICE            1
+#define DEXTER_APU_DMA_BIDIR                2
+
 #endif  // #define __CHAR_APU_DEXTER_H
