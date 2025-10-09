@@ -29,7 +29,7 @@
             			
             <storageModule moduleId="cdtBuildSystem" version="4.0.0">
                 				
-                <configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="xilinx.gnu.mb.exe.debug.1594391765" name="Debug" parent="xilinx.gnu.mb.exe.debug" postbuildStep="">
+                <configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="xilinx.gnu.mb.exe.debug.1594391765" name="Debug" parent="xilinx.gnu.mb.exe.debug" postannouncebuildStep="Convert to SRAM bin" postbuildStep="mb-objcopy -O binary clear_ddr.elf clear_ddr.bin">
                     					
                     <folderInfo id="xilinx.gnu.mb.exe.debug.1594391765." name="/" resourcePath="">
                         						
@@ -143,7 +143,7 @@
                                 								
                                 <option id="xilinx.gnu.c.linker.option.lscript.1980153835" name="Linker Script" superClass="xilinx.gnu.c.linker.option.lscript" useByScannerDiscovery="false" value="../src/lscript.ld" valueType="string"/>
                                 								
-                                <option id="xilinx.gnu.c.link.option.ldflags.2089658283" superClass="xilinx.gnu.c.link.option.ldflags" useByScannerDiscovery="false" value="-Wl,--emit-reloc" valueType="string"/>
+                                <option id="xilinx.gnu.c.link.option.ldflags.2089658283" name="Linker Flags" superClass="xilinx.gnu.c.link.option.ldflags" useByScannerDiscovery="false" value="-Wl,--emit-reloc" valueType="string"/>
                                 								
                                 <inputType id="xilinx.gnu.linker.input.748994498" superClass="xilinx.gnu.linker.input">
                                     									

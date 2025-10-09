@@ -54,13 +54,11 @@ struct APU_LDR {
 	const uint64_t signature;
 	const uint32_t ddr_start;
 	const uint32_t ddr_length;
-}__attribute__((aligned(8),packed)) loader_info = {
-		.signature =
-		0x10adcba987654321ULL,
-};
+}__attribute__((aligned(8),packed)) loader_info = { .signature =
+		0x10adcba987654321ULL, };
 
-extern uint8_t* __ddr_start;
-extern uint8_t* __ddr_end;
+extern uint8_t __ddr_start;
+extern uint8_t __ddr_end;
 
 int main() {
 	Xil_DCacheDisable();
@@ -76,17 +74,19 @@ int main() {
 			loader_info.ddr_start + loader_info.ddr_length - 1);
 	xil_printf("\n");
 	xil_printf("Linker info\n");
-	xil_printf("DDR from 0x%08x to %08x...\n", __ddr_start, __ddr_end);
+	xil_printf("DDR from 0x%08x to %08x...\n", &__ddr_start, &__ddr_end - 1);
 	xil_printf("\n");
 	xil_printf("Clearing Memory...\n");
 
-	uint8_t* p = __ddr_start;
-	uint8_t* p_end = __ddr_end;
+	uint8_t* p = &__ddr_start;
+	uint8_t* p_end = &__ddr_end;
 
 	if (loader_info.signature == 0x10ad123456789abcULL) {
 		p = (uint8_t*) (loader_info.ddr_start);
 		p_end = (uint8_t*) (loader_info.ddr_start + loader_info.ddr_length - 1);
 	}
+
+	xil_printf("DDR from 0x%08x to %08x...\n", p, p_end);
 
 	uint8_t* p_start = p;
 	do {

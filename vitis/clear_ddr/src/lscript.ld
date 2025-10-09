@@ -12,14 +12,14 @@
 
 _STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x400;
 _HEAP_SIZE = DEFINED(_HEAP_SIZE) ? _HEAP_SIZE : 0x800;
-DDR_LENGTH =  1048576;
+_DDR_LENGTH = 1048576;
 
 /* Define Memories in the system */
 
 MEMORY
 {
    sram : ORIGIN = 0x20000050, LENGTH = 0x3FB0
-   ddr : ORIGIN = 0x100000, LENGTH = DDR_LENGTH
+   ddr : ORIGIN = 0x100000, LENGTH = _DDR_LENGTH
    rsvd : ORIGIN = 0x0, LENGTH = 0x40000
 }
 
@@ -49,7 +49,7 @@ SECTIONS
 
 .ddr(NOLOAD) : {
    __ddr_start = .;
-   . += DDR_LENGTH - 1;
+   . += _DDR_LENGTH;
    __ddr_end = .;
 } > ddr
    
