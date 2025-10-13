@@ -20,6 +20,7 @@
 // getopt, getpagesize
 #include <unistd.h>
 
+#define DEXTER_APU_REGS_MBOX_OFFSET                0
 
 // Mailbox Registers
 const size_t REG_MBOX_WRDATA = 0 * 4;  // WRDATA    Write only  N/A     FIFO Write Data (FSL tx)
@@ -146,10 +147,11 @@ int main(int argc, char** argv)
     bool do_flush = false;
     bool do_read = false;
     bool do_write = false;
-    const char* mmap_dev = "/dev/mem";
-    off_t offset = 0x044020000U;
-    size_t map_size = getpagesize();
-    printf("Page size: %zu bytes\n", map_size);
+    const char* mmap_dev = "/dev/apu0";
+    off_t mbox_offset = 0x20000U;
+    off_t map_offset = 0U;
+    size_t page_size = getpagesize();
+    printf("Page size:  %zu bytes\n", page_size);
 
     while ((c = getopt(argc, argv, "frwo:a:d:")) != -1) {
         switch (c) {
@@ -166,15 +168,10 @@ int main(int argc, char** argv)
                 do_read = true;
                 break;
             case 'o':
-                offset = strtoul(optarg, NULL, 16) * map_size;
+                map_offset = strtoul(optarg, NULL, 0);
                 break;
             case 'a':
-                offset = strtoul(optarg, NULL, 16);
-                if ((offset & (map_size - 1)) != 0) {
-                    fprintf(stderr, "Error: Address must be page aligned");
-                    return 1;
-                }
-                mmap_dev = "/dev/mem";
+                mbox_offset = strtoul(optarg, NULL, 0);
                 break;
             case '?':
                 fprintf(stderr, "usage: %s [-d /dev/uioX] -rwf [-o uio offset] [-a physical address]\n", *argv);
@@ -182,19 +179,30 @@ int main(int argc, char** argv)
         }
     }
 
+    printf("Device:     %s\n", mmap_dev);
+    printf("Map offset: 0x%08lx\n", map_offset);
+    printf("Mbox reg:   0x%08lx\n", mbox_offset);
+
     int fd_uio = open(mmap_dev, O_RDWR | O_SYNC);
     if (fd_uio < 1) {
         fprintf(stderr, "Failed to open uio: %s\n", mmap_dev);
         return -1;
     }
 
-    void* ptr = mmap(NULL, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_uio, offset & ~(map_size - 1));
+    size_t map_size = ((mbox_offset + page_size) / page_size) * page_size;
+    printf("Map size:   %zu bytes (%zu pages)\n", map_size, map_size / page_size);
+
+    void* ptr = mmap(NULL, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_uio, map_offset & ~(map_size - 1));
     if (ptr == MAP_FAILED) {
         fprintf(stderr, "MMAP Failed\n");
         return -1;
     }
 
-    mbox_t mbox = (mbox_t)ptr;
+    printf("MMap to virtual address %p\n", ptr);
+
+    mbox_t mbox = (mbox_t)(ptr + mbox_offset);
+
+    printf("Mbox at virtual address %p\n", mbox);
 
     mbox_dump(mbox);
 
