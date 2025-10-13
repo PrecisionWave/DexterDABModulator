@@ -1,5 +1,90 @@
 # Microblaze Application Processor Unit for Dexter
 
+## System overview
+![apu_v2](./diagrams/apu2.png)
+
+Implementation details:
+- [Block Design](./apu_v3.pdf)
+
+### Microblaze core
+The Microblaze core is fully featured for Real-time applications: 32 bit core wit no MMU and no FPU.
+
+#### Configuration
+- Real-time Preset
+- 32-Bit implementation
+
+#### General settings
+- Area optimization
+- Use I and D cache
+- Enable Exceptions
+
+#### Instructions
+- Barrel Shifter
+- No FPU
+- MUL64 integer multiplier
+- Integer divider
+- Additional MSR instructions
+- Pattern comparator
+- Reversed load/store and swap instructions
+- Stream instructions
+
+#### Exceptions
+- Integer division exception
+- I and D AXI BUS exceptions
+- Illegal instruction exception
+- Unaligned data exception
+- Treat 0 as illegal instruction
+- Stream exception
+- Stack protection
+
+#### Cache
+- 4kB I Cache with line length of 4
+- 4kB D Cache with line length of 4 and write-back policy
+
+#### Debug
+- Basic debug module
+- 2 PC break points
+- 2 write address watch points
+- 2 read address watch points
+- 5 performance monitor event counters (32-Bit)
+- 1 performance latency counter  (32-Bit)
+
+#### Buses
+- Peripheral Data AXI
+- *I/D-Cache AXI*
+- 1 Stream link
+
+### Interfaces
+#### UART
+The UART is the simplest communication interface in the system.
+It's a simple uartlite on the APU side and an 16550 serial port on the CPU side.
+It runs with a fixed bad rate of 115200 and is suitable for debug output.
+
+#### Mailbox
+The mailbox is a more elaborate way for data exchange. It is intended for synchronization of two independent running
+systems. It is basically two FIFOs with control logic on either side.
+
+#### Streaming DMA
+The streaming DMA is the intended high throughput data transfer between the CPU and APU. The DMA part is entirely
+controlled by the CPU. For the APU it looks like two FIFOs with a control bit attached to it. The APU has special
+instructions to interact with the data streams. see  [Stream instructions](./stream_instructions.md).
+
+#### Shared Memory
+There are two kind of shared memory intended for program loading and execution available;
+- The SRAM is intended to be used exclusively by the APU. It is owned by the APU.
+- The DDR interface is intended for bigger programs. It is owned by the CPU.
+
+##### SRAM
+All vectors from the APU are located in the SRAM. It is 16kB in size and is just big enough for system debugging.
+
+##### Zynq DDR
+The Zynq main memory can be used for program execution. To use this memory by the APU a little help of the CPU and
+operating system is required. The APU can basically access all the CPU main memory. Synchronization and cache coherency
+is an art of its own. It is recommended to only use it for program execution and not data transfer.
+
+## Toolchain
+Use the Vitis IDE and Microblaze toolchain that come with Vivado 2021.1.
+
 ## Startup / Reset
 The Microblaze CPU is configured to start suspended. This means it will immediately halt after reset until it is woken
 up by one of the wake-up pins.
@@ -11,40 +96,39 @@ One of the reset sources is also connected to the Zynq CPU over the cpu_mb_contr
 To download a program, hold the Microblaze in reset until ready to launch, download the program and then release the
 reset and start the execution via the wake-up control.
 
-## Loader application
-The `load_apu` tool can load a Microblaze binary image to the block ram and start it.
-The projects contains the mbox companion app for the Zynq and the Microblaze.
+Use the `load_apu` tool to:
+- load and start a Microblaze binary images to SRAM 
+- load, relocate and start an Microblaze ELF file to SRAM and DDR memory
 
 ## Memory Maps
-### Microblaze
-| Address       | Size | Peripheral           |
-| ------------- | ---- | -------------------- |
-| `0x0000 0000` | 512M | Zynq main memory     |
-| `0x2000 0000` | 16k  | Shared block ram     |
-| `0x4060 0000` | 64k  | uartlite to Zynq     |
-| `0x4120 0000` | 64k  | interrupt controller |
-| `0x4360 0000` | 64k  | Shared mailbox       |
+All addresses listed below are physical addresses as seen by the device.
 
-### Zynq
-| Address       | Size | Peripheral         |
-| ------------- | ---- | ------------------ |
-| `0x0000 0000` | 512M | Zynq main memory   |
-| `0x4400 0000` | 16k  | Shared block ram   |
-| `0x4401 0000` | 64k  | Control GPIO       |
-| `0x4402 0000` | 64k  | Shared mailbox     |
-| `0x4403 0000` | 64k  | AXI DMA MB -> Zynq |
-| `0x4404 0000` | 64k  | AXI DMA Zynq -> MB |
-| `0x4405 0000` | 64k  | 16550 UART to MB   |
+| CPU view      | APU view           | Size | Peripheral                 |
+| ------------- | ------------------ | ---- | -------------------------- |
+| `0x0000 0000` | `0x0000 0000`      | 512M | CPU DDR (Zynq main memory) |
+| `0x4400 0000` | `0x2000 0000`      | 16k  | APU SRAM                   |
+| `0x4402 0000` | `0x4360 0000`      | 64k  | Shared mailbox             |
+| `0x4403 0000` | Stream 0 (M0_AXIS) | 64k  | AXI DMA APU -> CPU         |
+| `0x4404 0000` | Stream 0 (S0_AXIS) | 64k  | AXI DMA CPU -> APU         |
+| n/a           | `0x4060 0000`      | 64k  | APU uartlite UART          |
+| n/a           | `0x4120 0000`      | 64k  | APU interrupt controller   |
+| `0x4405 0000` | n/a                | 64k  | CPU 16550 UART             |
+| `0x4401 0000` | n/a                | 64k  | Reset control GPIO         |
 
-## Vectors
-C_BASE_ADDRESS in the CPU configuration is set to `0x2000 0000` which in turn puts all vectors in the block ram.
+### Vectors
+C_BASE_ADDRESS in the CPU configuration is set to `0x2000 0000` which puts all vectors inside SRAM.
 
 ## Demos
-- Mailbox Demo [Mailbox Demo](./mbox.md)
-- Relocation test [Relocation test](./reloc_test.md)
-- Stream test [Stream test](./stream_test.md)
+- [Mailbox Demo](./mbox.md)
+- [Relocation test](./reloc_test.md)
+- [Stream test](./stream_test.md)
 
 ## Tipps and tricks
+
+### Stream instructions
+- [Stream instructions](./stream_instructions.md)
+
+### Serial port
 The 16550 serial port `/dev/ttyS0` in the APU design might get claimed by the getty process.
 
 This can be checked via the ps command:
@@ -71,7 +155,9 @@ $ ps aux | grep ttyS0
 root       787  0.0  0.1   4880   508 pts/1    S+   04:39   0:00 grep ttyS0
 ```
 
+## Utilization
 
-## System overview
-![apu_v2](./diagrams/apu2.png)
-
+| Name                 | Slice LUTs | Slice Registers | F7 Muxes | Slice | LUT as Logic | LUT as Memory | Block RAM Tile | DSPs | BUFGCTRL |
+| -------------------- | ---------- | --------------- | -------- | ----- | ------------ | ------------- | -------------- | ---- | -------- |
+| FPGA xc7z020clg400-2 | 53200      | 106400          | 26600    | 13300 | 53200        | 17400         | 140            | 220  | 32       |
+| APU (accel)          | 9933       | 10803           | 96       | 3900  | 9031         | 902           | 9              | 4    | 2        |
