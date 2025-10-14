@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdatomic.h>
+#include <string.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -19,8 +20,6 @@
 
 // getopt, getpagesize
 #include <unistd.h>
-
-#define DEXTER_APU_REGS_MBOX_OFFSET                0
 
 // Mailbox Registers
 const size_t REG_MBOX_WRDATA = 0 * 4;  // WRDATA    Write only  N/A     FIFO Write Data (FSL tx)
@@ -149,7 +148,7 @@ int main(int argc, char** argv)
     bool do_write = false;
     const char* mmap_dev = "/dev/apu0";
     off_t mbox_offset = 0x20000U;
-    off_t map_offset = 0U;
+    off_t mmap_offset = 0U;
     size_t page_size = getpagesize();
     printf("Page size:  %zu bytes\n", page_size);
 
@@ -157,6 +156,10 @@ int main(int argc, char** argv)
         switch (c) {
             case 'd':
                 mmap_dev = optarg;
+                if (strcmp(optarg, "/dev/mem") == 0) {
+                    mmap_offset = 0x44000000U;
+                    mbox_offset = 0x20000U;
+                }
                 break;
             case 'f':
                 do_flush = true;
@@ -168,20 +171,36 @@ int main(int argc, char** argv)
                 do_read = true;
                 break;
             case 'o':
-                map_offset = strtoul(optarg, NULL, 0);
+                mmap_offset = strtoul(optarg, NULL, 0);
                 break;
             case 'a':
                 mbox_offset = strtoul(optarg, NULL, 0);
                 break;
             case '?':
-                fprintf(stderr, "usage: %s [-d /dev/uioX] -rwf [-o uio offset] [-a physical address]\n", *argv);
+                fprintf(stderr, "usage: %s [-d /dev/apuX] -rwf [-o mmap offset] [-a mbox offset]\n", *argv);
+                fprintf(stderr, "   -d /dev/apuX    Optional, use device /dev/apuX\n");
+                fprintf(stderr, "   -d /dev/mem     Optional, use device /dev/mem\n");
+                fprintf(
+                    stderr,
+                    "   -o 0            Optional, offset used for mmap call (Default is 0 and 0x44000000 for "
+                    "/dev/mem)\n");
+                fprintf(stderr, "   -a 0x20000      Optional, offset to mailbox registers (Default is 0x20000)\n");
+                fprintf(stderr, "   -r              Read from Mailbox\n");
+                fprintf(stderr, "   -w              Write to Mailbox\n");
+                fprintf(stderr, "   -f              Flush Mailbox\n");
                 return 1;
         }
     }
 
     printf("Device:     %s\n", mmap_dev);
-    printf("Map offset: 0x%08lx\n", map_offset);
+    printf("Map offset: 0x%08lx\n", mmap_offset);
     printf("Mbox reg:   0x%08lx\n", mbox_offset);
+
+    if (!do_flush && !do_read && !do_write) { 
+        printf("Warning: Using default action \"RW\"\n");
+        do_read = true;
+        do_write = true;
+    }
 
     int fd_uio = open(mmap_dev, O_RDWR | O_SYNC);
     if (fd_uio < 1) {
@@ -189,10 +208,10 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    size_t map_size = ((mbox_offset + page_size) / page_size) * page_size;
-    printf("Map size:   %zu bytes (%zu pages)\n", map_size, map_size / page_size);
+    size_t mmap_size = ((mbox_offset + page_size) / page_size) * page_size;
+    printf("Map size:   %zu bytes (%zu pages)\n", mmap_size, mmap_size / page_size);
 
-    void* ptr = mmap(NULL, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_uio, map_offset & ~(map_size - 1));
+    void* ptr = mmap(NULL, mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_uio, mmap_offset & ~(mmap_size - 1));
     if (ptr == MAP_FAILED) {
         fprintf(stderr, "MMAP Failed\n");
         return -1;
@@ -268,7 +287,7 @@ int main(int argc, char** argv)
     }
 
     close(fd_uio);
-    munmap(ptr, map_size);
+    munmap(ptr, mmap_size);
 
     return 0;
 }
