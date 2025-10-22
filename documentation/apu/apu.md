@@ -125,6 +125,9 @@ C_BASE_ADDRESS in the CPU configuration is set to `0x2000 0000` which puts all v
 
 ## Tipps and tricks
 
+### Debug
+- [Debugging tipps](./debug.md)
+
 ### Stream instructions
 - [Stream instructions](./stream_instructions.md)
 
