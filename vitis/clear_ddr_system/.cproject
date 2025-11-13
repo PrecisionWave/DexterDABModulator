@@ -21,7 +21,7 @@
             			
             <storageModule moduleId="cdtBuildSystem" version="4.0.0">
                 				
-                <configuration artifactName="${ProjName}" buildProperties="" description="" id="com.xilinx.sdx.system.managedbuilder.debugConfiguration.263308784" name="Debug" parent="com.xilinx.sdx.system.managedbuilder.debugConfiguration">
+                <configuration artifactName="${ProjName}" buildProperties="" description="" id="com.xilinx.sdx.system.managedbuilder.debugConfiguration.263308784" name="Debug" parent="com.xilinx.sdx.system.managedbuilder.debugConfiguration" postbuildStep="mb-objcopy -O binary clear_ddr.elf clear_ddr.bin">
                     					
                     <folderInfo id="com.xilinx.sdx.system.managedbuilder.debugConfiguration.263308784." name="/" resourcePath="">
                         						
@@ -29,7 +29,7 @@
                             							
                             <targetPlatform id="com.xilinx.sdx.system.managedbuilder.debugConfiguration.263308784..1446005333" name=""/>
                             							
-                            <builder buildPath="${workspace_loc:/clear_ddr_system}/Debug" enableAutoBuild="true" id="com.xilinx.sdx.system.managedbuilder.systemBuilder.443384988" managedBuildOn="true" name="System Project Builder.Debug" superClass="com.xilinx.sdx.system.managedbuilder.systemBuilder"/>
+                            <builder buildPath="${workspace_loc:/clear_ddr_system}/Debug" enableAutoBuild="true" id="com.xilinx.sdx.system.managedbuilder.systemBuilder.443384988" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="System Project Builder" superClass="com.xilinx.sdx.system.managedbuilder.systemBuilder"/>
                             							
                             <tool id="com.xilinx.sdx.system.managedbuilder.toolchain.cfjoinTool.2078415925" name="System Builder" superClass="com.xilinx.sdx.system.managedbuilder.toolchain.cfjoinTool"/>
                             						
@@ -71,7 +71,7 @@
                             							
                             <targetPlatform id="com.xilinx.sdx.system.managedbuilder.releaseConfiguration.1094171172..1515657355" name=""/>
                             							
-                            <builder buildPath="${workspace_loc:/clear_ddr_system}/Release" enableAutoBuild="true" id="com.xilinx.sdx.system.managedbuilder.systemBuilder.570134037" managedBuildOn="true" name="System Project Builder.Release" superClass="com.xilinx.sdx.system.managedbuilder.systemBuilder"/>
+                            <builder buildPath="${workspace_loc:/clear_ddr_system}/Release" enableAutoBuild="true" id="com.xilinx.sdx.system.managedbuilder.systemBuilder.570134037" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="System Project Builder" superClass="com.xilinx.sdx.system.managedbuilder.systemBuilder"/>
                             							
                             <tool id="com.xilinx.sdx.system.managedbuilder.toolchain.cfjoinTool.1771295663" name="System Builder" superClass="com.xilinx.sdx.system.managedbuilder.toolchain.cfjoinTool"/>
                             						
@@ -103,6 +103,22 @@
         	
     </storageModule>
     	
-    <storageModule moduleId="refreshScope"/>
+    <storageModule moduleId="refreshScope" versionNumber="2">
+        		
+        <configuration configurationName="Debug">
+            			
+            <resource resourceType="PROJECT" workspacePath="/clear_ddr_system"/>
+            		
+        </configuration>
+        		
+        <configuration configurationName="Release">
+            			
+            <resource resourceType="PROJECT" workspacePath="/clear_ddr_system"/>
+            		
+        </configuration>
+        	
+    </storageModule>
+    	
+    <storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
     
 </cproject>

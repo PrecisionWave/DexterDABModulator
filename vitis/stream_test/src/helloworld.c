@@ -8,6 +8,9 @@
 
 int main()
 {
+    Xil_ICacheInvalidate();
+    Xil_DCacheInvalidate();
+
     Xil_ICacheEnable();
     Xil_DCacheEnable();
 

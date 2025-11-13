@@ -64,10 +64,8 @@ int main() {
 	Xil_DCacheDisable();
 	Xil_ICacheDisable();
 
-	Xil_DCacheInvalidate()
-	;
-	Xil_ICacheInvalidate()
-	;
+	Xil_DCacheInvalidate();
+	Xil_ICacheInvalidate();
 
 	xil_printf("APU loader info\n");
 	xil_printf("DDR from 0x%08x to %08x...\n", loader_info.ddr_start,

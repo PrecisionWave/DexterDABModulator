@@ -64,6 +64,9 @@ static char* ConsumerHello = "Hello! The Consumer greets the Producer";
 
 int main()
 {
+    Xil_ICacheInvalidate();
+    Xil_DCacheInvalidate();
+
     Xil_ICacheEnable();
     Xil_DCacheEnable();
     print("---Entering main---\n");
