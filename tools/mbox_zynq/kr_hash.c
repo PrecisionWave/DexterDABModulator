@@ -38,6 +38,13 @@ const size_t REG_MBOX_CTRL = 11 * 4;
 
 typedef volatile void* mbox_t;
 
+static int fd_dev_apu0 = -1;
+
+static uint32_t MessageOut[4];
+static uint32_t MessageIn[4];
+#define MESSAGE_SIZE (4*4)
+
+
 uint32_t mbox_ioread(mbox_t mbox, size_t reg)
 {
     volatile uint8_t* p8 = (volatile uint8_t*)(mbox) + reg;
@@ -114,11 +121,48 @@ void mbox_dump(mbox_t mbox)
     fflush(stdout);
 }
 
-static char ProducerHello[] = "Hello! The Producer greets the Consumer";
-static_assert(sizeof(ProducerHello) % 4 == 0, "Message must be a multiple of 4 bytes!");
-static_assert(sizeof(ProducerHello) == 40, "Example expects 40 bytes");
+static uintptr_t get_ddr_phys_addr()
+{
+    if (fd_dev_apu0 == -1) exit(1);
+    uintptr_t val = 0;
 
-static uint32_t MessageOut[4];
+#define DEXTER_APU_IOCTL_GET_DDR_PHYS       _IOR(0, 4, uint32_t)
+    ioctl(fd_dev_apu0, DEXTER_APU_IOCTL_GET_DDR_PHYS, &val);
+    return val;
+}
+
+static void send_command(mbox_t mbox, char command)
+{
+    memset(MessageOut, 0, MESSAGE_SIZE);
+    MessageOut[0] = command;
+    MessageOut[1] = 0;
+    MessageOut[2] = 0;
+    MessageOut[3] = '.';
+
+    printf("mbox write....\n");
+    size_t written = 0;
+    while (written != 4) {
+        if (mbox_is_full(mbox)) {
+            usleep(100);
+            continue;
+        }
+
+        uint32_t data = MessageOut[written];
+        mbox_write_fifo(mbox, data);
+        char* pdata = (char*)&data;
+        printf(
+                "%4d: %08x %c%c%c%c\n",
+                written,
+                data,
+                isprint(pdata[0]) ? pdata[0] : '.',
+                isprint(pdata[1]) ? pdata[1] : '.',
+                isprint(pdata[2]) ? pdata[2] : '.',
+                isprint(pdata[3]) ? pdata[3] : '.');
+
+        written += 1;
+    }
+    printf("Wrote %u \n", written);
+}
 
 
 size_t mbox_write(mbox_t mbox, void* buffer, size_t buffer_size)
@@ -138,50 +182,90 @@ size_t mbox_write(mbox_t mbox, void* buffer, size_t buffer_size)
     return bytes_written;
 }
 
-static int fd_dev_mem = -1;
-#define DEXTER_APU_IOCTL_SYNC_FOR_CPU       _IOW(0, 5, int)
-#define DEXTER_APU_IOCTL_SYNC_FOR_DEVICE    _IOW(0, 6, int)
-
-#define DEXTER_APU_DMA_FROM_DEVICE          0
-#define DEXTER_APU_DMA_TO_DEVICE            1
-#define DEXTER_APU_DMA_BIDIR                2
-static int check_data()
+static int receive_address(mbox_t mbox, char expected_command)
 {
-    const char* mmap_dev_mem = "/dev/apu0";
+    printf("mbox read....\n");
 
-    if (fd_dev_mem == -1) {
-        fd_dev_mem = open(mmap_dev_mem, O_RDWR | O_SYNC);
-        if (fd_dev_mem < 1) {
-            fprintf(stderr, "Failed to open %s\n", mmap_dev_mem);
-            return -1;
+    size_t bytes_read = 0;
+
+    uint32_t *msg = MessageIn;
+
+    while (bytes_read != MESSAGE_SIZE) {
+        if (mbox_is_empty(mbox)) {
+            usleep(100);
+            continue;
         }
 
-        /*
-        int val = DEXTER_APU_DMA_BIDIR;
-        ioctl(fd_dev_mem, DEXTER_APU_IOCTL_SYNC_FOR_CPU, &val);
-        */
+        uint32_t data = mbox_read_fifo(mbox);
+        printf("%4d: %08x\n", bytes_read, data);
+        *msg = data;
+        msg++;
+        bytes_read += 4;
     }
 
-    size_t page_size = getpagesize();
-    const size_t data_offset = 0x169103fc - 0x16900000;
+    printf("...done\n");
 
-    size_t mmap_size = ((data_offset + page_size) / page_size) * page_size;
-    printf("Map %zx with size:   %zu bytes (%zu pages)\n",
-            data_offset, mmap_size, mmap_size / page_size);
+    const char cmd = MessageIn[0] & 0xFF;
 
-    void* ptr = mmap(NULL, mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_dev_mem, data_offset & ~(mmap_size - 1));
-    if (ptr == MAP_FAILED) {
-        fprintf(stderr, "MMAP Failed\n");
+    if (cmd != expected_command) {
+        printf("Received wrong command from APU!, expected %c, got %c\n", expected_command, cmd);
         return -1;
     }
 
-    printf("MMap to virtual address %p\n", ptr);
+    if (MessageIn[3] != '.') {
+        printf("message from APU not ending with a period!\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+static void* mmap_apu_data(uintptr_t data_offset, size_t *mmap_size)
+{
+    size_t page_size = getpagesize();
+
+    *mmap_size = ((data_offset + page_size) / page_size) * page_size;
+    printf("Map arm2apu %zx with size:   %zu bytes (%zu pages)\n",
+            data_offset, *mmap_size, *mmap_size / page_size);
+
+    void* ptr = mmap(NULL, *mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_dev_apu0, data_offset & ~(*mmap_size - 1));
+    if (ptr == MAP_FAILED) {
+        fprintf(stderr, "MMAP Failed\n");
+        return MAP_FAILED;
+    }
+    return ptr;
+}
+
+// This returns the expected K&R hash the APU computes
+static uint32_t write_arm2apu_data(void* ptr, uintptr_t data_offset, uint32_t len, int pattern)
+{
+    printf("write_arm2apu_data %p\n", ptr);
+
+    uint32_t h = 0;
 
     volatile uint8_t* data = (volatile uint8_t*)ptr;
     for (int i = 0; i < 64; i++) {
-        uint8_t val = atomic_load(data + i);
+        uint32_t val = (pattern * i) % 31;
+
+        h += val + 31 * h;
+
+        atomic_store(data + i, val);
         printf("%02x %d\n", val, val);
     }
+
+    return h;
+}
+
+static int check_hash(void *ptr, uint32_t expected_hash)
+{
+    printf("check_hash %p\n", ptr);
+
+    volatile uint32_t* data = (volatile uint32_t*)ptr;
+    uint32_t apu_hash = atomic_load(data);
+    if (apu_hash != expected_hash)
+        printf("HASH ERROR 0x%08x 0x%08x\n", apu_hash, expected_hash);
+    else
+        printf(".");
 
     return 0;
 }
@@ -190,56 +274,21 @@ int main(int argc, char** argv)
 {
     int c;
     opterr = 0;
-    bool do_check = false;
-    bool do_flush = false;
-    bool do_read = false;
-    bool do_write = false;
-    char write_char = 0;
+    bool do_flush = true;
     const char* mmap_dev = "/dev/apu0";
     off_t mbox_offset = 0x20000U;
     off_t mmap_offset = 0U;
     size_t page_size = getpagesize();
     printf("Page size:  %zu bytes\n", page_size);
 
-    while ((c = getopt(argc, argv, "cfro:a:d:w:")) != -1) {
+    while ((c = getopt(argc, argv, "F")) != -1) {
         switch (c) {
-            case 'c':
-                do_check = true;
-                break;
-            case 'd':
-                mmap_dev = optarg;
-                if (strcmp(optarg, "/dev/mem") == 0) {
-                    mmap_offset = 0x44000000U;
-                    mbox_offset = 0x20000U;
-                }
-                break;
-            case 'f':
-                do_flush = true;
-                break;
-            case 'w':
-                do_write = true;
-                write_char = optarg[0];
-                break;
-            case 'r':
-                do_read = true;
-                break;
-            case 'o':
-                mmap_offset = strtoul(optarg, NULL, 0);
-                break;
-            case 'a':
-                mbox_offset = strtoul(optarg, NULL, 0);
+            case 'F':
+                do_flush = false;
                 break;
             case '?':
-                fprintf(stderr, "usage: %s [-d /dev/apuX] -rwf [-o mmap offset] [-a mbox offset]\n", *argv);
-                fprintf(stderr, "   -c              Check pattern\n");
-                fprintf(stderr, "   -r              Read from Mailbox\n");
-                fprintf(stderr, "   -w              Write to Mailbox\n");
-                fprintf(stderr, "   -f              Flush Mailbox\n");
-                fprintf(stderr, "\n");
-                fprintf(stderr, "   -d /dev/apuX    Optional, use device /dev/apuX\n");
-                fprintf(stderr, "   -d /dev/mem     Optional, use device /dev/mem\n");
-                fprintf(stderr, "   -o 0            Optional, offset used for mmap call (Default is 0 and 0x44000000 for /dev/mem)\n");
-                fprintf(stderr, "   -a 0x20000      Optional, offset to mailbox registers (Default is 0x20000)\n");
+                fprintf(stderr, "usage: %s \n", *argv);
+                fprintf(stderr, "   -F              do not flush Mailbox\n");
                 return 1;
         }
     }
@@ -248,13 +297,8 @@ int main(int argc, char** argv)
     printf("Map offset: 0x%08lx\n", mmap_offset);
     printf("Mbox reg:   0x%08lx\n", mbox_offset);
 
-    if (!do_check && !do_flush && !do_read && !do_write) {
-        printf("What do you want to do? specify one of -c -r -f -w");
-        return -1;
-    }
-
-    int fd_uio = open(mmap_dev, O_RDWR | O_SYNC);
-    if (fd_uio < 1) {
+    fd_dev_apu0 = open(mmap_dev, O_RDWR | O_SYNC);
+    if (fd_dev_apu0 < 1) {
         fprintf(stderr, "Failed to mmap %s\n", mmap_dev);
         return -1;
     }
@@ -262,7 +306,7 @@ int main(int argc, char** argv)
     size_t mmap_size = ((mbox_offset + page_size) / page_size) * page_size;
     printf("Map size:   %zu bytes (%zu pages)\n", mmap_size, mmap_size / page_size);
 
-    void* ptr = mmap(NULL, mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_uio, mmap_offset & ~(mmap_size - 1));
+    void* ptr = mmap(NULL, mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_dev_apu0, mmap_offset & ~(mmap_size - 1));
     if (ptr == MAP_FAILED) {
         fprintf(stderr, "MMAP Failed\n");
         return -1;
@@ -284,70 +328,66 @@ int main(int argc, char** argv)
         printf("...done\n");
     }
 
-    if (do_write) {
-        memset(MessageOut, 0, 4*4);
-        MessageOut[0] = write_char;
-        MessageOut[1] = 0;
-        MessageOut[2] = 0;
-        MessageOut[3] = 46; // ASCII .
+    printf("Ask the APU for data_in memory address");
+    send_command(mbox, 'a');
 
-        printf("mbox write....\n");
-        size_t written = 0;
-        while (written != 4) {
-            if (mbox_is_full(mbox)) {
-                usleep(100);
-                continue;
-            }
-
-            uint32_t data = MessageOut[written];
-            mbox_write_fifo(mbox, data);
-            char* pdata = (char*)&data;
-            printf(
-                "%4d: %08x %c%c%c%c\n",
-                written,
-                data,
-                isprint(pdata[0]) ? pdata[0] : '.',
-                isprint(pdata[1]) ? pdata[1] : '.',
-                isprint(pdata[2]) ? pdata[2] : '.',
-                isprint(pdata[3]) ? pdata[3] : '.');
-
-            written += 1;
-        }
-        printf("Wrote %u \n", written);
+    if (receive_address(mbox, 'a') == -1) {
+        printf("Failed to receive_address");
+        return -1;
     }
 
-    if (do_check) {
-        check_data();
-    }
+    const uintptr_t ddr_phys_base = get_ddr_phys_addr();
 
-    if (do_read) {
-        printf("mbox read....\n");
+    const uintptr_t data_arm2apu_phys_address = MessageIn[1];
+    const uint32_t data_arm2apu_len = MessageIn[2];
+    const uintptr_t data_arm2apu_offset = data_arm2apu_phys_address - ddr_phys_base;
 
-        size_t bytes_read = 0;
+    printf("ARM2APU Data at 0x%08x, offset 0x%08x\n", data_arm2apu_phys_address, data_arm2apu_offset);
 
-        while (bytes_read != sizeof(ProducerHello)) {
-            if (mbox_is_empty(mbox)) {
-                usleep(100);
-                continue;
-            }
+    size_t data_arm2apu_mmap_size;
+    void* data_arm2apu_ptr = mmap_apu_data(data_arm2apu_offset, &data_arm2apu_mmap_size);
+    if (data_arm2apu_ptr == MAP_FAILED) return -1;
 
-            uint32_t data = mbox_read_fifo(mbox);
-            char* pdata = (char*)&data;
-            printf(
-                "%4d: %08x %c%c%c%c\n",
-                bytes_read,
-                data,
-                isprint(pdata[0]) ? pdata[0] : '.',
-                isprint(pdata[1]) ? pdata[1] : '.',
-                isprint(pdata[2]) ? pdata[2] : '.',
-                isprint(pdata[3]) ? pdata[3] : '.');
-            bytes_read += 4;
+    size_t data_apu2arm_mmap_size = 0;
+    void* data_apu2arm_ptr = MAP_FAILED;
+
+    for (int pattern = 3; pattern < 4; pattern++) {
+        const uint32_t expected_hash = write_arm2apu_data(data_arm2apu_ptr, data_arm2apu_offset, data_arm2apu_len, pattern);
+
+        // Tell the APU to calculate the hash, expect an 'o' message back with the address of the hash output
+        send_command(mbox, 'H');
+
+        if (receive_address(mbox, 'o') == -1) {
+            printf("Failed to receive_address");
+            return -1;
         }
 
-        printf("...done\n");
+        const uintptr_t data_apu2arm_phys_address = MessageIn[1];
+        const uint32_t data_apu2arm_len = MessageIn[2];
+        if (data_apu2arm_phys_address < ddr_phys_base) {
+            printf("Invalid APU2ARM Data at 0x%08x\n", data_apu2arm_phys_address);
+            return -1;
+        }
+        const uintptr_t data_apu2arm_offset = data_apu2arm_phys_address - ddr_phys_base;
+        printf("APU2ARM Data at 0x%08x, offset 0x%08x\n", data_apu2arm_phys_address, data_apu2arm_offset);
+
+        if (data_apu2arm_len != 4) {
+            printf("apu2arm len is %d!\n", data_apu2arm_len);
+            return -1;
+        }
+
+        if (data_apu2arm_ptr == MAP_FAILED)
+            data_apu2arm_ptr = mmap_apu_data(data_apu2arm_offset, &data_arm2apu_mmap_size);
+
+        if (data_apu2arm_ptr == MAP_FAILED)
+            return -1;
+
+        check_hash(data_apu2arm_ptr, expected_hash);
     }
 
-    close(fd_uio);
+    close(fd_dev_apu0);
+    munmap(data_apu2arm_ptr, data_apu2arm_mmap_size);
+    munmap(data_arm2apu_ptr, data_arm2apu_mmap_size);
     munmap(ptr, mmap_size);
 
     return 0;

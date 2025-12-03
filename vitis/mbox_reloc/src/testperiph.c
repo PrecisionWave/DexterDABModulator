@@ -1,66 +1,31 @@
-/*
- *
- * Xilinx, Inc.
- * XILINX IS PROVIDING THIS DESIGN, CODE, OR INFORMATION "AS IS" AS A
- * COURTESY TO YOU.  BY PROVIDING THIS DESIGN, CODE, OR INFORMATION AS
- * ONE POSSIBLE   IMPLEMENTATION OF THIS FEATURE, APPLICATION OR
- * STANDARD, XILINX IS MAKING NO REPRESENTATION THAT THIS IMPLEMENTATION
- * IS FREE FROM ANY CLAIMS OF INFRINGEMENT, AND YOU ARE RESPONSIBLE
- * FOR OBTAINING ANY RIGHTS YOU MAY REQUIRE FOR YOUR IMPLEMENTATION
- * XILINX EXPRESSLY DISCLAIMS ANY WARRANTY WHATSOEVER WITH RESPECT TO
- * THE ADEQUACY OF THE IMPLEMENTATION, INCLUDING BUT NOT LIMITED TO
- * ANY WARRANTIES OR REPRESENTATIONS THAT THIS IMPLEMENTATION IS FREE
- * FROM CLAIMS OF INFRINGEMENT, IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE.
- */
-
-/*
- *
- *
- * This file is a generated sample test application.
- *
- * This application is intended to test and/or illustrate some
- * functionality of your system.  The contents of this file may
- * vary depending on the IP in your system and may use existing
- * IP driver functions.  These drivers will be generated in your
- * SDK application project when you run the "Generate Libraries" menu item.
- *
- */
-
 #include <stdio.h>
 #include "xparameters.h"
 #include "xil_cache.h"
 #include "xmbox.h"
 
-/*
- * If the XPAR_CPU_ID != 0 for this instance, the only other option is 1
- * to make the example work. It is possible that there are more than
- * 2 processors in the system but there must always be a 0
- */
-#if XPAR_CPU_ID != 0
-#define MY_CPU_ID 1
-#else
-#define MY_CPU_ID XPAR_CPU_ID
-#endif /* XPAR_CPU_ID != 0 */
-
-#define MSGSIZ 128 /* Size of the buffer for received message */
-
-#define HELLO_SIZE 40
-
 #define TIMEOUT_MAX_COUNT 0xF0000000 /* Max count to wait for the message */
 
-static int MailboxExample_Send(XMbox* MboxInstancePtr, int CPU_Id);
-static int MailboxExample_Receive(XMbox* MboxInstancePtr, int CPU_Id);
+static int MailboxSendDataResponse(XMbox* MboxInstancePtr, char command, uintptr_t addr, uint32_t len);
+static int MailboxReceiveCommand(XMbox* MboxInstancePtr);
 
-static XMbox Mbox; /* Instance of the Mailbox driver */
+static XMbox Mbox;
 
-/* Buffer for storing received the message */
-static char RecvMsg[MSGSIZ] __attribute__((aligned(4)));
+static uint32_t received_command[4] __attribute__((aligned(4)));
 
-/* Sent Message */
-static char* ProducerHello = "Hello! The Producer greets the Consumer";
-static char* ConsumerHello = "Hello! The Consumer greets the Producer";
+#define DATA_APU2ARM_LEN 4
+static uint32_t volatile data_apu2arm[1];
 
+#define DATA_ARM2APU_LEN 64
+static uint8_t volatile data_arm2apu[DATA_ARM2APU_LEN];
+
+// A simple hash function from K&R C
+static uint32_t kr_hash(const volatile uint8_t *buf, uint32_t buflen) {
+    uint32_t h = 0;
+    while (buflen-- > 0) {
+        h += *(buf++) + 31 * h;
+    }
+    return h;
+}
 
 int main()
 {
@@ -69,7 +34,8 @@ int main()
 
     Xil_ICacheEnable();
     Xil_DCacheEnable();
-    print("---Entering main---\n");
+
+    printf("Entering main, data is at %p\n", data_arm2apu);
 
     XMbox_Config* ConfigPtr;
     int Status;
@@ -97,21 +63,37 @@ int main()
     print("XMbox_CfgInitialize OK\n");
 
     while (1) {
-        /* Send the hello */
-        Status = MailboxExample_Send(&Mbox, MY_CPU_ID);
+        Status = MailboxReceiveCommand(&Mbox);
         if (Status != XST_SUCCESS) {
-            print("MailboxExample_Send FAILED\n");
+            print("Mailbox Receive FAILED\n");
         }
+        else {
+            const char command = received_command[0] & 0xFF;
+            //const uint8_t *buf;
+            //buf = (uint8_t*)received_command[1];
+            //const uint32_t len = received_command[2];
+            const char period = received_command[3] & 0xFF;
 
-        print("MailboxExample_Send OK\n");
+            printf("Command: %c 0x%08lx 0x%08lx %c\n",
+                    command, received_command[1], received_command[2], period);
 
-        /* Receive the hello and verify the message */
-        Status = MailboxExample_Receive(&Mbox, MY_CPU_ID);
-        if (Status != XST_SUCCESS) {
-            print("MailboxExample_Receive FAILED\n");
+            if (command == 'H' && period == '.') {
+                Xil_DCacheInvalidateRange((UINTPTR)data_arm2apu, DATA_ARM2APU_LEN);
+                const uint32_t hash = kr_hash(data_arm2apu, DATA_ARM2APU_LEN);
+
+                printf("Hash at %p = %ld\n", data_apu2arm, hash);
+
+                data_apu2arm[0] = hash;
+                Xil_DCacheFlushRange((UINTPTR)data_apu2arm, DATA_APU2ARM_LEN);
+                MailboxSendDataResponse(&Mbox, 'o', (uintptr_t)data_apu2arm, DATA_APU2ARM_LEN);
+            }
+            else if (command == 'a' && period == '.') {
+                MailboxSendDataResponse(&Mbox, 'a', (uintptr_t)data_arm2apu, DATA_ARM2APU_LEN);
+            }
+            else {
+                printf("Unknown command\n");
+            }
         }
-
-        print("MailboxExample_Receive OK\n");
     }
 
     Xil_DCacheDisable();
@@ -119,31 +101,21 @@ int main()
     return 0;
 }
 
-/*****************************************************************************/
-/**
- *
- * This function sends the hello message to the other processor.
- *
- * @param	MboxInstancePtr is the instance pointer for the XMbox.
- * @param	CPU_Id is the CPU ID for the program that is running on.
- *
- * @return	- XST_SUCCESS if the send succeeds.
- *		- XST_FAILURE if the send fails.
- *
- * @note		None.
- *
- ******************************************************************************/
-static int MailboxExample_Send(XMbox* MboxInstancePtr, int CPU_Id)
+static int MailboxSendDataResponse(XMbox* MboxInstancePtr, char command, uintptr_t addr, uint32_t len)
 {
-    int Status;
-    u32 Nbytes;
-    u32 BytesSent;
+    uint32_t data[4];
+    data[0] = command;
+    data[1] = addr;
+    data[2] = len;
+    data[3] = '.';
+#define DATA_SIZE (4*4)
 
-    Nbytes = 0;
+    u32 Nbytes = 0;
+    int Status = 0;
+    u32 BytesSent = 0;
 
-    while (Nbytes != HELLO_SIZE) {
-        /* Write a message to the mbox */
-        Status = XMbox_Write(MboxInstancePtr, (u32*)((u8*)ProducerHello + Nbytes), HELLO_SIZE - Nbytes, &BytesSent);
+    while (Nbytes != DATA_SIZE) {
+        Status = XMbox_Write(MboxInstancePtr, (u32*)((u8*)data + Nbytes), DATA_SIZE - Nbytes, &BytesSent);
 
         if (Status == XST_SUCCESS)
             Nbytes += BytesSent;
@@ -152,46 +124,24 @@ static int MailboxExample_Send(XMbox* MboxInstancePtr, int CPU_Id)
     return XST_SUCCESS;
 }
 
-/*****************************************************************************/
-/**
- *
- * This function receives a message from the other processor and verifies that
- * it's the expected message.
- *
- * @param	MboxInstancePtr is the instance pointer for the XMbox.
- * @param	CPU_Id is the CPU ID for the program that is running on.
- *
- * @return	- XST_SUCCESS if the receive succeeds.
- *		- XST_FAILURE if the receive fails.
- *
- * @note		None.
- *
- ******************************************************************************/
-static int MailboxExample_Receive(XMbox* MboxInstancePtr, int CPU_Id)
+static int MailboxReceiveCommand(XMbox* MboxInstancePtr)
 {
     int Status;
-    u32 Nbytes;
+    u32 n = 0;
     u32 BytesRcvd;
-    int Timeout;
+    int Timeout = 0;
 
-    Nbytes = 0;
-    Timeout = 0;
+    while (n < 4) {
+        Status = XMbox_Read(MboxInstancePtr, (u32*)(received_command + n), 4, &BytesRcvd);
 
-    while (Nbytes < HELLO_SIZE) {
-        /* Read a message from the mbox */
-        Status = XMbox_Read(MboxInstancePtr, (u32*)(RecvMsg + Nbytes), HELLO_SIZE - Nbytes, &BytesRcvd);
-
-        if (Status == XST_SUCCESS)
-            Nbytes += BytesRcvd;
+        if (Status == XST_SUCCESS) {
+            if (BytesRcvd == 4) { n++; }
+            else return XST_FAILURE;
+        }
 
         if (Timeout++ > TIMEOUT_MAX_COUNT)
             return XST_FAILURE;
     }
 
-    /* Compare the recieved the message is the same as we expect */
-    if (memcmp(RecvMsg, ConsumerHello, HELLO_SIZE)) {
-        return XST_FAILURE;
-    } else {
-        return XST_SUCCESS;
-    }
+    return XST_SUCCESS;
 }

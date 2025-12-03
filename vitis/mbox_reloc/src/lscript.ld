@@ -50,7 +50,7 @@ SECTIONS
    *(.text)
    *(.text.*)
    *(.gnu.linkonce.t.*)
-} > sram
+} > ddr
 
 .note.gnu.build-id : {
    KEEP (*(.note.gnu.build-id))
@@ -119,7 +119,7 @@ SECTIONS
    *(.data.*)
    *(.gnu.linkonce.d.*)
    __data_end = .;
-} > sram
+} > ddr
 
 .got : {
    *(.got)
@@ -152,7 +152,7 @@ SECTIONS
    *(.sdata.*)
    *(.gnu.linkonce.s.*)
    __sdata_end = .;
-} > sram
+} > ddr
 
 .sbss (NOLOAD) : {
    . = ALIGN(4);
@@ -162,7 +162,7 @@ SECTIONS
    *(.gnu.linkonce.sb.*)
    . = ALIGN(8);
    __sbss_end = .;
-} > sram
+} > ddr
 
 .tdata : {
    __tdata_start = .;
@@ -178,7 +178,7 @@ SECTIONS
    *(.tbss.*)
    *(.gnu.linkonce.tb.*)
    __tbss_end = .;
-} > sram
+} > ddr
 
 .bss (NOLOAD) : {
    . = ALIGN(4);
@@ -189,7 +189,7 @@ SECTIONS
    *(COMMON)
    . = ALIGN(4);
    __bss_end = .;
-} > sram
+} > ddr
 
 _SDA_BASE_ = __sdata_start + ((__sbss_end - __sdata_start) / 2 );
 
