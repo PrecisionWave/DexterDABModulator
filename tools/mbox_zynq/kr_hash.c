@@ -1,6 +1,3 @@
-// Shared mailbox example
-// Zynq part
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -220,24 +217,25 @@ static int receive_address(mbox_t mbox, char expected_command)
     return 0;
 }
 
-static void* mmap_apu_data(uintptr_t data_offset, size_t *mmap_size)
+static void* mmap_apu_data(uintptr_t data_offset, size_t data_len, size_t *mmap_size)
 {
     size_t page_size = getpagesize();
 
-    *mmap_size = ((data_offset + page_size) / page_size) * page_size;
-    printf("Map arm2apu %zx with size:   %zu bytes (%zu pages)\n",
-            data_offset, *mmap_size, *mmap_size / page_size);
+    *mmap_size = data_offset + data_len;
 
-    void* ptr = mmap(NULL, *mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_dev_apu0, data_offset & ~(*mmap_size - 1));
+#define DEXTER_APU_MMAP_DDR 1
+
+    void* ptr = mmap(NULL, *mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_dev_apu0, DEXTER_APU_MMAP_DDR * page_size);
     if (ptr == MAP_FAILED) {
         fprintf(stderr, "MMAP Failed\n");
         return MAP_FAILED;
     }
+    printf("Mapped apu data %zx with %zu bytes to %p\n", data_offset, data_len, ptr);
     return ptr;
 }
 
 // This returns the expected K&R hash the APU computes
-static uint32_t write_arm2apu_data(void* ptr, uintptr_t data_offset, uint32_t len, int pattern)
+static uint32_t write_arm2apu_data(void* ptr, uint32_t len, int pattern)
 {
     printf("write_arm2apu_data %p\n", ptr);
 
@@ -250,7 +248,7 @@ static uint32_t write_arm2apu_data(void* ptr, uintptr_t data_offset, uint32_t le
         h += val + 31 * h;
 
         atomic_store(data + i, val);
-        printf("%02x %d\n", val, val);
+        //printf("%02x %d\n", val, val);
     }
 
     return h;
@@ -268,6 +266,15 @@ static int check_hash(void *ptr, uint32_t expected_hash)
         printf(".");
 
     return 0;
+}
+
+static void dump_data(const uint8_t * buf, size_t len)
+{
+    printf("DATA at %p (%zu)", buf, len);
+    for (size_t i = 0; i < len; i++) {
+        printf("%d ", buf[i]);
+    }
+    printf("\n ");
 }
 
 int main(int argc, char** argv)
@@ -345,14 +352,16 @@ int main(int argc, char** argv)
     printf("ARM2APU Data at 0x%08x, offset 0x%08x\n", data_arm2apu_phys_address, data_arm2apu_offset);
 
     size_t data_arm2apu_mmap_size;
-    void* data_arm2apu_ptr = mmap_apu_data(data_arm2apu_offset, &data_arm2apu_mmap_size);
+    void* data_arm2apu_ptr = mmap_apu_data(data_arm2apu_offset, data_arm2apu_len, &data_arm2apu_mmap_size);
     if (data_arm2apu_ptr == MAP_FAILED) return -1;
 
     size_t data_apu2arm_mmap_size = 0;
     void* data_apu2arm_ptr = MAP_FAILED;
 
-    for (int pattern = 3; pattern < 4; pattern++) {
-        const uint32_t expected_hash = write_arm2apu_data(data_arm2apu_ptr, data_arm2apu_offset, data_arm2apu_len, pattern);
+    for (int pattern = 3; pattern <= 6; pattern++) {
+        const uint32_t expected_hash = write_arm2apu_data(data_arm2apu_ptr + data_arm2apu_offset, data_arm2apu_len, pattern);
+
+        dump_data(data_arm2apu_ptr + data_arm2apu_offset, data_arm2apu_len);
 
         // Tell the APU to calculate the hash, expect an 'o' message back with the address of the hash output
         send_command(mbox, 'H');
@@ -376,13 +385,14 @@ int main(int argc, char** argv)
             return -1;
         }
 
-        if (data_apu2arm_ptr == MAP_FAILED)
-            data_apu2arm_ptr = mmap_apu_data(data_apu2arm_offset, &data_arm2apu_mmap_size);
+        if (data_apu2arm_ptr == MAP_FAILED) {
+            data_apu2arm_ptr = mmap_apu_data(data_apu2arm_offset, data_apu2arm_len, &data_arm2apu_mmap_size);
+        }
 
         if (data_apu2arm_ptr == MAP_FAILED)
             return -1;
 
-        check_hash(data_apu2arm_ptr, expected_hash);
+        check_hash(data_apu2arm_ptr + data_apu2arm_offset, expected_hash);
     }
 
     close(fd_dev_apu0);

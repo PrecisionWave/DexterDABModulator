@@ -81,7 +81,7 @@ int main()
                 Xil_DCacheInvalidateRange((UINTPTR)data_arm2apu, DATA_ARM2APU_LEN);
                 const uint32_t hash = kr_hash(data_arm2apu, DATA_ARM2APU_LEN);
 
-                printf("Hash at %p = %ld\n", data_apu2arm, hash);
+                printf("Hash at %p = %x\n", data_apu2arm, hash);
 
                 data_apu2arm[0] = hash;
                 Xil_DCacheFlushRange((UINTPTR)data_apu2arm, DATA_APU2ARM_LEN);
