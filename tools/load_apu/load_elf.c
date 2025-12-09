@@ -19,19 +19,34 @@ extern bool g_elf_force_reloc;
             printf((fmt), ##__VA_ARGS__); \
     }
 
-static bool load_mem(struct memory_map_entry* mme, const off_t offset, const void* data, size_t data_len)
+static bool
+load_mem(struct memory_map_entry* mme, const off_t offset, const void* data, size_t load_len, size_t mem_len)
 {
-    if (data_len > mme->length - offset) {
+    if (load_len > mme->length - offset) {
         fprintf(stderr, "Error: Binary file greater than %s\n", mme->name);
         fprintf(stderr, "       Mem  Size: %jd bytes\n", (intmax_t)mme->length - offset);
-        fprintf(stderr, "       File Size: %jd bytes\n", (intmax_t)data_len);
+        fprintf(stderr, "       File Size: %jd bytes\n", (intmax_t)load_len);
         return false;
     }
 
-    printf(
-        "Downloading %jd bytes to %s @ 0x%08x\n", (intmax_t)data_len, mme->name, (uint32_t)(mme->apu_loaded + offset));
+    if (load_len > 0) {
+        printf(
+            "Downloading %jd bytes to %s @ 0x%08x\n",
+            (intmax_t)load_len,
+            mme->name,
+            (uint32_t)(mme->apu_loaded + offset));
+        copytoio(mme->cpu_virtual, offset, data, load_len);
+    }
 
-    copytoio(mme->cpu_virtual, offset, data, data_len);
+    if (mem_len > load_len) {
+        printf(
+            "Filling remaining %jd bytes with 0 (%s @ 0x%08x)\n",
+            (intmax_t)mem_len - load_len,
+            mme->name,
+            (uint32_t)(mme->apu_loaded + offset + load_len));
+        iomemset(mme->cpu_virtual, offset + load_len, 0, mem_len - load_len);
+    }
+
     return true;
 }
 
@@ -43,8 +58,7 @@ bool load_bin(const void* data, const size_t data_len, struct memory_map* mm, co
         return false;
     }
 
-    iomemset(mme->cpu_virtual, 0, 0, mme->length);
-    return load_mem(mme, 0, data, data_len);
+    return load_mem(mme, 0, data, data_len, mme->length);
 }
 
 static const char* lookup_name(const char* names, int index)
@@ -253,7 +267,8 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
         bool success = false;
         struct memory_map_entry* mme = mm_lookup(mm, phdr->p_paddr);
         if (mme) {
-            success = load_mem(mme, phdr->p_paddr - mme->apu_linked, file + phdr->p_offset, phdr->p_filesz);
+            success =
+                load_mem(mme, phdr->p_paddr - mme->apu_linked, file + phdr->p_offset, phdr->p_filesz, phdr->p_memsz);
             need_relocation |= mme->apu_linked != mme->apu_loaded;
         }
         if (!success) {
