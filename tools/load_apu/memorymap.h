@@ -19,5 +19,6 @@ struct memory_map {
 };
 
 struct memory_map_entry* mm_lookup(struct memory_map* mm, uint32_t address);
+struct memory_map_entry* mm_lookup_loaded(struct memory_map* mm, uint32_t address);
 
 #endif // MEMORY_MAP_H__INCLUDED

@@ -265,11 +265,21 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
         local_debug(1, "       filesz 0x%08X memsz 0x%08x flags 0x%x\n", phdr->p_filesz, phdr->p_memsz, phdr->p_flags);
 
         bool success = false;
+        // Try virtual address first
         struct memory_map_entry* mme = mm_lookup(mm, phdr->p_paddr);
         if (mme) {
             success =
                 load_mem(mme, phdr->p_paddr - mme->apu_linked, file + phdr->p_offset, phdr->p_filesz, phdr->p_memsz);
             need_relocation |= mme->apu_linked != mme->apu_loaded;
+        }
+        // Try physical address (might be linked to correct address)
+        if (!success) {
+            mme = mm_lookup_loaded(mm, phdr->p_paddr);
+            if (mme) {
+                success = load_mem(
+                    mme, phdr->p_paddr - mme->apu_loaded, file + phdr->p_offset, phdr->p_filesz, phdr->p_memsz);
+                need_relocation |= mme->apu_linked != mme->apu_loaded;
+            }
         }
         if (!success) {
             fprintf(stderr, "Load failed!\n");
