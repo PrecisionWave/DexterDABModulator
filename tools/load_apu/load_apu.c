@@ -53,8 +53,92 @@ void axi_fw_status(int fd)
     if (!mmaxifw.cpu_virtual)
         return;
     printf("AXI Firewall status\n");
-    printf("MI_Fault_Status: %08x\n", ioread32(mmaxifw.cpu_virtual, 0x000));
-    printf("SI_Fault_Status: %08x\n", ioread32(mmaxifw.cpu_virtual, 0x100));
+    uint32_t MI_Fault_Status = ioread32(mmaxifw.cpu_virtual, 0x000);
+    printf("MI_Fault_Status: %08x\n", MI_Fault_Status);
+    if (MI_Fault_Status & (1 << 26))
+        printf("\tXILINX_WR_DECERR\n");
+    if (MI_Fault_Status & (1 << 25))
+        printf("\tXILINX_WR_SLVERR\n");
+    if (MI_Fault_Status & (1 << 24))
+        printf("\tERRM_WVALID_STABLE\n");
+    if (MI_Fault_Status & (1 << 23))
+        printf("\tERRM_AWVALID_STABLE\n");
+    if (MI_Fault_Status & (1 << 22))
+        printf("\tERRM_AWADDR_BOUNDARY\n");
+    if (MI_Fault_Status & (1 << 21))
+        printf("\tERRM_WDATA_NUM\n");
+    if (MI_Fault_Status & (1 << 20))
+        printf("\tERRM_AWSIZE\n");
+    if (MI_Fault_Status & (1 << 19))
+        printf("\tRECM_WVALID_TO_AWVALID_MAX_WAIT\n");
+    if (MI_Fault_Status & (1 << 18))
+        printf("\tRECM_CONTINUOUS_WTRANSFERS_MAX_WAIT\n");
+    if (MI_Fault_Status & (1 << 17))
+        printf("\tRECM_BREADY_MAX_WAIT\n");
+    if (MI_Fault_Status & (1 << 16))
+        printf("\tWRITE_RESPONSE_BUSY\n");
+    if (MI_Fault_Status & (1 << 6))
+        printf("\tXILINX_RD_DECERR\n");
+    if (MI_Fault_Status & (1 << 5))
+        printf("\tXILINX_RD_SLVERR\n");
+    if (MI_Fault_Status & (1 << 4))
+        printf("\tERRM_ARVALID_STABLE\n");
+    if (MI_Fault_Status & (1 << 3))
+        printf("\tERRM_ARADDR_BOUNDARY\n");
+    if (MI_Fault_Status & (1 << 2))
+        printf("\tERRM_ARSIZE\n");
+    if (MI_Fault_Status & (1 << 1))
+        printf("\tRECM_RREADY_MAX_WAIT\n");
+    if (MI_Fault_Status & (1 << 0))
+        printf("\tREAD_RESPONSE_BUSY\n");
+
+    uint32_t SI_Fault_Status = ioread32(mmaxifw.cpu_virtual, 0x100);
+    printf("SI_Fault_Status: %08x\n", SI_Fault_Status);
+    if (SI_Fault_Status & (1 << 26))
+        printf("\tXILINX_WR_DECERR\n");
+    if (SI_Fault_Status & (1 << 25))
+        printf("\tXILINX_WR_SLVERR\n");
+    if (SI_Fault_Status & (1 << 24))
+        printf("\tERRM_WVALID_STABLE\n");
+    if (SI_Fault_Status & (1 << 23))
+        printf("\tERRM_AWVALID_STABLE\n");
+    if (SI_Fault_Status & (1 << 22))
+        printf("\tERRM_AWADDR_BOUNDARY\n");
+    if (SI_Fault_Status & (1 << 21))
+        printf("\tERRM_WDATA_NUM\n");
+    if (SI_Fault_Status & (1 << 20))
+        printf("\tERRM_AWSIZE\n");
+    if (SI_Fault_Status & (1 << 19))
+        printf("\tRECM_WVALID_TO_AWVALID_MAX_WAIT\n");
+    if (SI_Fault_Status & (1 << 18))
+        printf("\tRECM_CONTINUOUS_WTRANSFERS_MAX_WAIT\n");
+    if (SI_Fault_Status & (1 << 17))
+        printf("\tRECM_BREADY_MAX_WAIT\n");
+    if (SI_Fault_Status & (1 << 16))
+        printf("\tWRITE_RESPONSE_BUSY\n");
+    if (SI_Fault_Status & (1 << 6))
+        printf("\tXILINX_RD_DECERR\n");
+    if (SI_Fault_Status & (1 << 5))
+        printf("\tXILINX_RD_SLVERR\n");
+    if (SI_Fault_Status & (1 << 4))
+        printf("\tERRM_ARVALID_STABLE\n");
+    if (SI_Fault_Status & (1 << 3))
+        printf("\tERRM_ARADDR_BOUNDARY\n");
+    if (SI_Fault_Status & (1 << 2))
+        printf("\tERRM_ARSIZE\n");
+    if (SI_Fault_Status & (1 << 1))
+        printf("\tRECM_RREADY_MAX_WAIT\n");
+    if (SI_Fault_Status & (1 << 0))
+        printf("\tREAD_RESPONSE_BUSY\n");
+
+    uint32_t Final_ARADDR_Low = ioread32(mmaxifw.cpu_virtual, 0x210);
+    uint32_t Final_ARADDR_High = ioread32(mmaxifw.cpu_virtual, 0x214);
+    uint32_t Final_AWADDR_Low = ioread32(mmaxifw.cpu_virtual, 0x218);
+    uint32_t Final_AWADDR_High = ioread32(mmaxifw.cpu_virtual, 0x21c);
+    printf("Final_ARADDR_Low: %08x\n", Final_ARADDR_Low);
+    printf("Final_ARADDR_High: %08x\n", Final_ARADDR_High);
+    printf("Final_AWADDR_Low: %08x\n", Final_AWADDR_Low);
+    printf("Final_AWADDR_High: %08x\n", Final_AWADDR_High);
 }
 
 static const char ELF_SIGNATURE[] = {0x7f, 'E', 'L', 'F'};
