@@ -37,6 +37,13 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 # To test this script, run the following commands from Vivado Tcl console:
 # source system_script.tcl
 
+
+# The design that will be created by this Tcl script contains the following 
+# module references:
+# axi_cache_bypass
+
+# Please add the sources of those modules before sourcing this Tcl script.
+
 # If there is no project opened, this script will create a
 # project, but make sure you do not have an existing project
 # <./myproj/project_1.xpr> in the current working folder.
@@ -162,6 +169,31 @@ xilinx.com:ip:fifo_generator:13.2\
       set bCheckIPsPassed 0
    }
 
+}
+
+##################################################################
+# CHECK Modules
+##################################################################
+set bCheckModules 1
+if { $bCheckModules == 1 } {
+   set list_check_mods "\ 
+axi_cache_bypass\
+"
+
+   set list_mods_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2020 -severity "INFO" "Checking if the following modules exist in the project's sources: $list_check_mods ."
+
+   foreach mod_vlnv $list_check_mods {
+      if { [can_resolve_reference $mod_vlnv] == 0 } {
+         lappend list_mods_missing $mod_vlnv
+      }
+   }
+
+   if { $list_mods_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2021 -severity "ERROR" "The following module(s) are not found in the project: $list_mods_missing" }
+      common::send_gid_msg -ssname BD::TCL -id 2022 -severity "INFO" "Please add source files for the missing module(s) above."
+      set bCheckIPsPassed 0
+   }
 }
 
 if { $bCheckIPsPassed != 1 } {
@@ -515,6 +547,17 @@ proc create_hier_cell_accel { parentCell nameHier } {
   create_bd_pin -dir I -type clk sys_clk
   create_bd_pin -dir I -type rst sys_rstn
 
+  # Create instance: axi_cache_bypass_0, and set properties
+  set block_name axi_cache_bypass
+  set block_cell_name axi_cache_bypass_0
+  if { [catch {set axi_cache_bypass_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $axi_cache_bypass_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
   # Create instance: axi_firewall_0, and set properties
   set axi_firewall_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_firewall:1.1 axi_firewall_0 ]
   set_property -dict [ list \
@@ -554,7 +597,7 @@ proc create_hier_cell_accel { parentCell nameHier } {
   set mb_axi_cache [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 mb_axi_cache ]
   set_property -dict [ list \
    CONFIG.NUM_MI {2} \
-   CONFIG.NUM_SI {2} \
+   CONFIG.NUM_SI {3} \
  ] $mb_axi_cache
 
   # Create instance: mb_axi_intc, and set properties
@@ -566,7 +609,7 @@ proc create_hier_cell_accel { parentCell nameHier } {
   # Create instance: mb_axi_per, and set properties
   set mb_axi_per [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 mb_axi_per ]
   set_property -dict [ list \
-   CONFIG.NUM_MI {3} \
+   CONFIG.NUM_MI {4} \
  ] $mb_axi_per
 
   # Create instance: mb_int_concat, and set properties
@@ -696,6 +739,7 @@ proc create_hier_cell_accel { parentCell nameHier } {
   connect_bd_intf_net -intf_net apu_axi_1 [get_bd_intf_pins cpu2apu_axi] [get_bd_intf_pins cpu_cpu2apu_axi/S00_AXI]
   connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_pins mb_shared_bram_ctrl/BRAM_PORTA] [get_bd_intf_pins shared_mem/BRAM_PORTA]
   connect_bd_intf_net -intf_net axi_bram_ctrl_1_BRAM_PORTA [get_bd_intf_pins cpu_shared_bram_ctrl/BRAM_PORTA] [get_bd_intf_pins shared_mem/BRAM_PORTB]
+  connect_bd_intf_net -intf_net axi_cache_bypass_0_M_AXI_DP [get_bd_intf_pins axi_cache_bypass_0/M_AXI_DP] [get_bd_intf_pins mb_axi_cache/S02_AXI]
   connect_bd_intf_net -intf_net axi_firewall_0_M_AXI [get_bd_intf_pins apu2cpu_axi] [get_bd_intf_pins axi_firewall_0/M_AXI]
   connect_bd_intf_net -intf_net cpu2apu_axi_M00_AXI [get_bd_intf_pins cpu_cpu2apu_axi/M00_AXI] [get_bd_intf_pins shared_mailbox/S0_AXI]
   connect_bd_intf_net -intf_net cpu2apu_axi_M03_AXI [get_bd_intf_pins cpu_cpu2apu_axi/M03_AXI] [get_bd_intf_pins cpu_shared_bram_ctrl/S_AXI]
@@ -705,6 +749,7 @@ proc create_hier_cell_accel { parentCell nameHier } {
   connect_bd_intf_net -intf_net mb_axi_c_M00_AXI [get_bd_intf_pins mb_axi_cache/M00_AXI] [get_bd_intf_pins mb_shared_bram_ctrl/S_AXI]
   connect_bd_intf_net -intf_net mb_axi_cache_M01_AXI [get_bd_intf_pins axi_firewall_0/S_AXI] [get_bd_intf_pins mb_axi_cache/M01_AXI]
   connect_bd_intf_net -intf_net mb_axi_per_M02_AXI [get_bd_intf_pins mb_axi_per/M02_AXI] [get_bd_intf_pins mb_uartlite/S_AXI]
+  connect_bd_intf_net -intf_net mb_axi_per_M03_AXI [get_bd_intf_pins axi_cache_bypass_0/S_AXI_DP] [get_bd_intf_pins mb_axi_per/M03_AXI]
   connect_bd_intf_net -intf_net mdm_1_MBDEBUG_0 [get_bd_intf_pins mb_mdm/MBDEBUG_0] [get_bd_intf_pins microblaze_0/DEBUG]
   connect_bd_intf_net -intf_net microblaze_0_M_AXI_DC [get_bd_intf_pins mb_axi_cache/S00_AXI] [get_bd_intf_pins microblaze_0/M_AXI_DC]
   connect_bd_intf_net -intf_net microblaze_0_M_AXI_IC [get_bd_intf_pins mb_axi_cache/S01_AXI] [get_bd_intf_pins microblaze_0/M_AXI_IC]
@@ -714,7 +759,7 @@ proc create_hier_cell_accel { parentCell nameHier } {
   connect_bd_intf_net -intf_net microblaze_0_interrupt [get_bd_intf_pins mb_axi_intc/interrupt] [get_bd_intf_pins microblaze_0/INTERRUPT]
 
   # Create port connections
-  connect_bd_net -net ARESETN_1 [get_bd_pins mb_axi_cache/ARESETN] [get_bd_pins mb_axi_cache/M00_ARESETN] [get_bd_pins mb_axi_cache/M01_ARESETN] [get_bd_pins mb_axi_cache/S00_ARESETN] [get_bd_pins mb_axi_cache/S01_ARESETN] [get_bd_pins mb_axi_per/ARESETN] [get_bd_pins mb_axi_per/M00_ARESETN] [get_bd_pins mb_axi_per/M01_ARESETN] [get_bd_pins mb_axi_per/M02_ARESETN] [get_bd_pins mb_axi_per/S00_ARESETN] [get_bd_pins mb_rstgen/interconnect_aresetn]
+  connect_bd_net -net ARESETN_1 [get_bd_pins axi_cache_bypass_0/arstn] [get_bd_pins mb_axi_cache/ARESETN] [get_bd_pins mb_axi_cache/M00_ARESETN] [get_bd_pins mb_axi_cache/M01_ARESETN] [get_bd_pins mb_axi_cache/S00_ARESETN] [get_bd_pins mb_axi_cache/S01_ARESETN] [get_bd_pins mb_axi_cache/S02_ARESETN] [get_bd_pins mb_axi_per/ARESETN] [get_bd_pins mb_axi_per/M00_ARESETN] [get_bd_pins mb_axi_per/M01_ARESETN] [get_bd_pins mb_axi_per/M02_ARESETN] [get_bd_pins mb_axi_per/M03_ARESETN] [get_bd_pins mb_axi_per/S00_ARESETN] [get_bd_pins mb_rstgen/interconnect_aresetn]
   connect_bd_net -net M03_ARESETN_1 [get_bd_pins sys_rstn] [get_bd_pins axi_firewall_0/aresetn] [get_bd_pins cpu_apuuart/s_axi_aresetn] [get_bd_pins cpu_cpu2apu_axi/ARESETN] [get_bd_pins cpu_cpu2apu_axi/M00_ARESETN] [get_bd_pins cpu_cpu2apu_axi/M01_ARESETN] [get_bd_pins cpu_cpu2apu_axi/M02_ARESETN] [get_bd_pins cpu_cpu2apu_axi/M03_ARESETN] [get_bd_pins cpu_cpu2apu_axi/M04_ARESETN] [get_bd_pins cpu_cpu2apu_axi/S00_ARESETN] [get_bd_pins cpu_mb_control/s_axi_aresetn] [get_bd_pins cpu_shared_bram_ctrl/s_axi_aresetn] [get_bd_pins shared_mailbox/S0_AXI_ARESETN]
   connect_bd_net -net Net [get_bd_pins mb_axi_intc/processor_rst] [get_bd_pins mb_rstgen/mb_reset] [get_bd_pins microblaze_0/Reset]
   connect_bd_net -net axi_gpio_0_gpio2_io_o [get_bd_pins cpu_mb_control/gpio2_io_o] [get_bd_pins mb_rstgen/aux_reset_in]
@@ -727,7 +772,7 @@ proc create_hier_cell_accel { parentCell nameHier } {
   connect_bd_net -net mb_uartlite_interrupt [get_bd_pins mb_int_concat/In1] [get_bd_pins mb_uartlite/interrupt]
   connect_bd_net -net mb_uartlite_tx [get_bd_pins cpu_apuuart/sin] [get_bd_pins mb_uartlite/tx]
   connect_bd_net -net mdm_1_Debug_SYS_Rst [get_bd_pins mb_mdm/Debug_SYS_Rst] [get_bd_pins mb_rstgen/mb_debug_sys_rst]
-  connect_bd_net -net microblaze_0_Clk [get_bd_pins sys_clk] [get_bd_pins axi_firewall_0/aclk] [get_bd_pins cpu_apuuart/s_axi_aclk] [get_bd_pins cpu_cpu2apu_axi/ACLK] [get_bd_pins cpu_cpu2apu_axi/M00_ACLK] [get_bd_pins cpu_cpu2apu_axi/M01_ACLK] [get_bd_pins cpu_cpu2apu_axi/M02_ACLK] [get_bd_pins cpu_cpu2apu_axi/M03_ACLK] [get_bd_pins cpu_cpu2apu_axi/M04_ACLK] [get_bd_pins cpu_cpu2apu_axi/S00_ACLK] [get_bd_pins cpu_mb_control/s_axi_aclk] [get_bd_pins cpu_shared_bram_ctrl/s_axi_aclk] [get_bd_pins mb_axi_cache/ACLK] [get_bd_pins mb_axi_cache/M00_ACLK] [get_bd_pins mb_axi_cache/M01_ACLK] [get_bd_pins mb_axi_cache/S00_ACLK] [get_bd_pins mb_axi_cache/S01_ACLK] [get_bd_pins mb_axi_intc/processor_clk] [get_bd_pins mb_axi_intc/s_axi_aclk] [get_bd_pins mb_axi_per/ACLK] [get_bd_pins mb_axi_per/M00_ACLK] [get_bd_pins mb_axi_per/M01_ACLK] [get_bd_pins mb_axi_per/M02_ACLK] [get_bd_pins mb_axi_per/S00_ACLK] [get_bd_pins mb_rstgen/slowest_sync_clk] [get_bd_pins mb_shared_bram_ctrl/s_axi_aclk] [get_bd_pins mb_uartlite/s_axi_aclk] [get_bd_pins microblaze_0/Clk] [get_bd_pins shared_mailbox/S0_AXI_ACLK] [get_bd_pins shared_mailbox/S1_AXI_ACLK]
+  connect_bd_net -net microblaze_0_Clk [get_bd_pins sys_clk] [get_bd_pins axi_cache_bypass_0/aclk] [get_bd_pins axi_firewall_0/aclk] [get_bd_pins cpu_apuuart/s_axi_aclk] [get_bd_pins cpu_cpu2apu_axi/ACLK] [get_bd_pins cpu_cpu2apu_axi/M00_ACLK] [get_bd_pins cpu_cpu2apu_axi/M01_ACLK] [get_bd_pins cpu_cpu2apu_axi/M02_ACLK] [get_bd_pins cpu_cpu2apu_axi/M03_ACLK] [get_bd_pins cpu_cpu2apu_axi/M04_ACLK] [get_bd_pins cpu_cpu2apu_axi/S00_ACLK] [get_bd_pins cpu_mb_control/s_axi_aclk] [get_bd_pins cpu_shared_bram_ctrl/s_axi_aclk] [get_bd_pins mb_axi_cache/ACLK] [get_bd_pins mb_axi_cache/M00_ACLK] [get_bd_pins mb_axi_cache/M01_ACLK] [get_bd_pins mb_axi_cache/S00_ACLK] [get_bd_pins mb_axi_cache/S01_ACLK] [get_bd_pins mb_axi_cache/S02_ACLK] [get_bd_pins mb_axi_intc/processor_clk] [get_bd_pins mb_axi_intc/s_axi_aclk] [get_bd_pins mb_axi_per/ACLK] [get_bd_pins mb_axi_per/M00_ACLK] [get_bd_pins mb_axi_per/M01_ACLK] [get_bd_pins mb_axi_per/M02_ACLK] [get_bd_pins mb_axi_per/M03_ACLK] [get_bd_pins mb_axi_per/S00_ACLK] [get_bd_pins mb_rstgen/slowest_sync_clk] [get_bd_pins mb_shared_bram_ctrl/s_axi_aclk] [get_bd_pins mb_uartlite/s_axi_aclk] [get_bd_pins microblaze_0/Clk] [get_bd_pins shared_mailbox/S0_AXI_ACLK] [get_bd_pins shared_mailbox/S1_AXI_ACLK]
   connect_bd_net -net microblaze_0_intr [get_bd_pins mb_axi_intc/intr] [get_bd_pins mb_int_concat/dout]
   connect_bd_net -net sys_rstgen1_peripheral_aresetn [get_bd_pins mb_axi_intc/s_axi_aresetn] [get_bd_pins mb_rstgen/peripheral_aresetn] [get_bd_pins mb_shared_bram_ctrl/s_axi_aresetn] [get_bd_pins mb_uartlite/s_axi_aresetn] [get_bd_pins shared_mailbox/S1_AXI_ARESETN]
   connect_bd_net -net xlconstant_0_dout [get_bd_pins mb_reset_mode_sleep/dout] [get_bd_pins microblaze_0/Reset_Mode]
@@ -1804,7 +1849,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   connect_bd_net -net dexter_dsp_tx_1_tx_enable [get_bd_pins dexter_dsp_tx_1/tx_enable] [get_bd_pins duc_if/tx_en_in]
   connect_bd_net -net dexter_dsp_tx_1_valid_out [get_bd_pins dexter_dsp_tx_1/valid_out] [get_bd_pins duc_if/valid]
   connect_bd_net -net ext_pps_in_0_1 [get_bd_ports ext_pps_in] [get_bd_pins dexter_dsp_tx_1/ext_pps_in]
-  connect_bd_net -net gnd_dout [get_bd_pins gnd/dout] [get_bd_pins sys_concat_intc/In5] [get_bd_pins sys_concat_intc/In6] [get_bd_pins sys_concat_intc/In7] [get_bd_pins sys_concat_intc/In8] [get_bd_pins sys_concat_intc/In9] [get_bd_pins sys_concat_intc/In10] [get_bd_pins sys_concat_intc/In11] [get_bd_pins sys_concat_intc/In12] [get_bd_pins sys_concat_intc/In13] [get_bd_pins sys_concat_intc/In14] [get_bd_pins sys_concat_intc/In15]
+  connect_bd_net -net gnd_dout [get_bd_pins gnd/dout] [get_bd_pins sys_concat_intc/In3] [get_bd_pins sys_concat_intc/In5] [get_bd_pins sys_concat_intc/In6] [get_bd_pins sys_concat_intc/In7] [get_bd_pins sys_concat_intc/In8] [get_bd_pins sys_concat_intc/In9] [get_bd_pins sys_concat_intc/In10] [get_bd_pins sys_concat_intc/In11] [get_bd_pins sys_concat_intc/In12] [get_bd_pins sys_concat_intc/In13] [get_bd_pins sys_concat_intc/In14] [get_bd_pins sys_concat_intc/In15]
   connect_bd_net -net gpio_i_1 [get_bd_ports gpio_i] [get_bd_pins sys_ps7/GPIO_I]
   connect_bd_net -net gpio_io_i_0_1 [get_bd_ports axss_reg] [get_bd_pins axss_gpio/gpio_io_i]
   connect_bd_net -net gps_pps_in_0_1 [get_bd_ports gps_pps_in] [get_bd_pins dexter_dsp_tx_1/gps_pps_in]
@@ -1854,6 +1899,9 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   assign_bd_address -offset 0x55550000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs debug_bridge_0/S_AXI/Reg0] -force
   assign_bd_address -offset 0x43D00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs dexter_dsp_tx_1/dexter_dsp_tx_s_axi/reg0] -force
   assign_bd_address -offset 0x44020000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps7/Data] [get_bd_addr_segs accel/shared_mailbox/S0_AXI/Reg] -force
+  assign_bd_address -offset 0x20000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces accel/axi_cache_bypass_0/M_AXI_DP] [get_bd_addr_segs accel/mb_shared_bram_ctrl/S_AXI/Mem0] -force
+  assign_bd_address -offset 0x00000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces accel/axi_cache_bypass_0/M_AXI_DP] [get_bd_addr_segs sys_ps7/S_AXI_HP2/HP2_DDR_LOWOCM] -force
+  assign_bd_address -offset 0x80000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/axi_cache_bypass_0/S_AXI_DP/reg0] -force
   assign_bd_address -offset 0x41200000 -range 0x00010000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/mb_axi_intc/S_AXI/Reg] -force
   assign_bd_address -offset 0x20000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Data] [get_bd_addr_segs accel/mb_shared_bram_ctrl/S_AXI/Mem0] -force
   assign_bd_address -offset 0x20000000 -range 0x00004000 -target_address_space [get_bd_addr_spaces accel/microblaze_0/Instruction] [get_bd_addr_segs accel/mb_shared_bram_ctrl/S_AXI/Mem0] -force
