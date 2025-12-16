@@ -44,6 +44,19 @@ void apu_reset(int fd, bool assert)
     ioctl(fd, DEXTER_APU_IOCTL_APU_RESET, &val);
 }
 
+static struct memory_map_entry mmaxifw = {
+    0,
+};
+
+void axi_fw_status(int fd)
+{
+    if (!mmaxifw.cpu_virtual)
+        return;
+    printf("AXI Firewall status\n");
+    printf("MI_Fault_Status: %08x\n", ioread32(mmaxifw.cpu_virtual, 0x000));
+    printf("SI_Fault_Status: %08x\n", ioread32(mmaxifw.cpu_virtual, 0x100));
+}
+
 static const char ELF_SIGNATURE[] = {0x7f, 'E', 'L', 'F'};
 
 static struct memory_map mm = {
@@ -76,6 +89,7 @@ void usage(const char* progname)
     fprintf(stderr, "  -v               Increase debug level\n");
     fprintf(stderr, "  -a               Force elf relocation\n");
     fprintf(stderr, "  -x basename      Dump RAM contents after download\n");
+    fprintf(stderr, "  -S               Show status of AXI Firewall\n");
 }
 
 struct APU_LDR {
@@ -89,12 +103,13 @@ int main(int argc, char** argv)
     int c;
     opterr = 0;
     bool do_reset = false;
+    bool do_axifw_status = false;
     const char* download_file = NULL;
     const char* dump_file = NULL;
     const char* dev = "/dev/apu0";
     printf("Page size: %zu bytes\n", getpagesize());
 
-    while ((c = getopt(argc, argv, "d:rf:vx:a")) != -1) {
+    while ((c = getopt(argc, argv, "d:rf:vx:aS")) != -1) {
         switch (c) {
             case 'd':
                 dev = optarg;
@@ -115,13 +130,16 @@ int main(int argc, char** argv)
             case 'a':
                 g_elf_force_reloc = true;
                 break;
+            case 'S':
+                do_axifw_status = true;
+                break;
             case '?':
                 usage(argv[0]);
                 return 1;
         }
     }
 
-    if (!download_file && !do_reset) {
+    if (!download_file && !do_reset && !do_axifw_status) {
         usage(argv[0]);
         return 42;
     }
@@ -138,6 +156,11 @@ int main(int argc, char** argv)
             return 3;
         }
     }
+
+    mmap_reg(fd, APU_REGISTERS2, &mmaxifw);
+
+    if (do_axifw_status)
+        axi_fw_status(fd);
 
     if (do_reset) {
         printf("Assert APU Reset\n");
@@ -163,7 +186,7 @@ int main(int argc, char** argv)
 
         if (download_success) {
             uint64_t ldr_signature = 0x10adcba987654321ULL;
-            uint64_t ldr_complete =  0x10ad123456789abcULL;
+            uint64_t ldr_complete = 0x10ad123456789abcULL;
             struct memory_map_entry* mme = mm_lookup(&mm, ELF_FILE_SRAM_BASE);
             struct memory_map_entry* mme_ddr = mm_lookup(&mm, ELF_FILE_DDR_BASE);
             for (size_t i = 0; i < mme->length - sizeof(struct APU_LDR); i++) {

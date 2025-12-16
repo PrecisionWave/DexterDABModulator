@@ -101,6 +101,53 @@ bool mmap_apu(int fd, enum device_index index, struct memory_map_entry* mme)
     return true;
 }
 
+bool mmap_reg(int fd, enum register_index index, struct memory_map_entry* mme)
+{
+    assert(mme != NULL);
+
+    int page_size = getpagesize();
+
+    uint32_t map_length = 0;
+    uint32_t map_offset = 0;
+    switch (index) {
+        case APU_REGISTERS:
+            map_offset = DEXTER_APU_MMAP_REGS * page_size;
+            map_length = 0x30000;
+            break;
+
+        case APU_REGISTERS2:
+            map_offset = DEXTER_APU_MMAP_REGS2 * page_size;
+            map_length = 0x10000;
+            break;
+
+        default:
+            return NULL;
+    }
+
+    assert(map_length % page_size == 0);
+
+    void* ptr = mmap(NULL, map_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, map_offset);
+    if (ptr == MAP_FAILED) {
+        return false;
+    }
+
+    mme->length = map_length;
+    mme->cpu_virtual = ptr;
+
+    if (mmap_list == NULL) {
+        atexit(mmap_cleanup);
+    }
+
+    struct mmap* next = mmap_list;
+    mmap_list = malloc(sizeof(struct mmap));
+    mmap_list->next = next;
+    mmap_list->ptr = ptr;
+    mmap_list->length = map_length;
+
+    return true;
+}
+
+
 void* mmap_dev(const char* dev, size_t offset, size_t length)
 {
     int fd = open(dev, O_RDWR | O_SYNC);

@@ -13,6 +13,7 @@
 #define DEXTER_APU_MMAP_REGS                0
 #define DEXTER_APU_MMAP_DDR                 1
 #define DEXTER_APU_MMAP_SRAM                2
+#define DEXTER_APU_MMAP_REGS2               3
 
 // IOCTL calls
 #define DEXTER_APU_IOCTL_APU_RESET          _IOW(0, 1, int)
