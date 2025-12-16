@@ -8,7 +8,7 @@ clean:
 	-@rm *.o
 
 %.o: %.c
-	$(CROSS_CC) -c -Wall -o $@ $<
+	$(CROSS_CC) -c -Wall -march=armv7 -o $@ $<
 
 load_apu: load_apu.o mmio.o mmap.o memorymap.o load_elf.o
 	$(CROSS_CC) -static -o $@ $^
