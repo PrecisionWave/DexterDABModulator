@@ -49,3 +49,9 @@ platform clean
 platform clean
 platform generate
 bsp reload
+platform active {dexter_apu}
+platform config -updatehw {/home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu/dexter_apu.xsa}
+platform generate
+platform clean
+platform generate
+bsp reload
