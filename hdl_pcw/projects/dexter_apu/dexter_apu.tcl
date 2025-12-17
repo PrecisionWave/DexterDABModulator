@@ -63,6 +63,8 @@ set adi_library     ../../../hdl_adi/library
 set pcw_library     ../../library
 set pcw_hdl_files   [list system_top.v]
 lappend pcw_hdl_files {axi_cache_bypass.vhd}
+lappend pcw_hdl_files {empty_axi.vhd}
+lappend pcw_hdl_files {axi_mpu.vhd}
 
 # Use script file location as working directory
 cd [file dirname [file normalize [info script]]]
