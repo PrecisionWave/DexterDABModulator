@@ -16,6 +16,6 @@
 #ifndef BSPCONFIG_H  /* prevent circular inclusions */
 #define BSPCONFIG_H  /* by using protection macros */
 
-#define MICROBLAZE_PVR_NONE
+#define MICROBLAZE_PVR_FULL
 
 #endif /*end of __BSPCONFIG_H_*/

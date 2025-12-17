@@ -6,6 +6,8 @@ BEGIN OS
  PARAMETER OS_NAME = standalone
  PARAMETER OS_VER = 7.5
  PARAMETER PROC_INSTANCE = accel_microblaze_0
+ PARAMETER microblaze_exceptions = true
+ PARAMETER predecode_fpu_exceptions = true
  PARAMETER stdin = accel_mb_uartlite
  PARAMETER stdout = accel_mb_uartlite
 END
@@ -52,6 +54,12 @@ BEGIN DRIVER
  PARAMETER DRIVER_NAME = generic
  PARAMETER DRIVER_VER = 3.0
  PARAMETER HW_INSTANCE = ps7_ram_0
+END
+
+BEGIN DRIVER
+ PARAMETER DRIVER_NAME = generic
+ PARAMETER DRIVER_VER = 3.0
+ PARAMETER HW_INSTANCE = accel_axi_cache_bypass_0
 END
 
 

@@ -55,3 +55,20 @@ platform generate
 platform clean
 platform generate
 bsp reload
+platform active {dexter_apu}
+platform config -updatehw {/home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu/dexter_apu.xsa}
+bsp reload
+bsp config microblaze_exceptions "false"
+bsp config microblaze_exceptions "true"
+bsp config predecode_fpu_exceptions "true"
+bsp write
+bsp reload
+catch {bsp regenerate}
+platform clean
+platform generate
+platform config -updatehw {/home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu/dexter_apu.xsa}
+platform clean
+platform clean
+bsp reload
+bsp reload
+platform generate
