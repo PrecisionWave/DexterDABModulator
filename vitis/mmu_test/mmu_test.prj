@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ASCII"?>
+<sdkproject:SdkProject xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sdkproject="http://www.xilinx.com/sdkproject" name="mmu_test" location="/home/badc0ded/DexterDABModulator/vitis/mmu_test" platform="/home/badc0ded/DexterDABModulator/vitis/dexter_apu/export/dexter_apu/dexter_apu.xpfm" platformUID="xilinx:::0.0(custom)" systemProject="mmu_test_system" sysConfig="dexter_apu" runtime="C/C++" cpu="standalone_accel_microblaze_0" cpuInstance="accel_microblaze_0" os="standalone" mssSignature="5e80e5dab792a1cf747e03cc9c8c4dad">
+  <configuration name="Debug" id="xilinx.gnu.mb.exe.debug.1644867168">
+    <configBuildOptions xsi:type="sdkproject:SdkOptions"/>
+    <lastBuildOptions xsi:type="sdkproject:SdkOptions"/>
+  </configuration>
+  <configuration name="Release" id="xilinx.gnu.mb.exe.release.1991108212" dirty="true">
+    <configBuildOptions xsi:type="sdkproject:SdkOptions"/>
+  </configuration>
+  <template appTemplateName="hello_world"/>
+</sdkproject:SdkProject>
