@@ -654,58 +654,59 @@ proc create_hier_cell_accel { parentCell nameHier } {
   # Create instance: microblaze_0, and set properties
   set microblaze_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:microblaze:11.0 microblaze_0 ]
   set_property -dict [ list \
-   CONFIG.C_ADDR_TAG_BITS {18} \
+   CONFIG.C_ADDR_TAG_BITS {15} \
    CONFIG.C_AREA_OPTIMIZED {0} \
    CONFIG.C_BASE_VECTORS {0x0000000020000000} \
    CONFIG.C_BRANCH_TARGET_CACHE_SIZE {0} \
-   CONFIG.C_CACHE_BYTE_SIZE {4096} \
-   CONFIG.C_DCACHE_ADDR_TAG {18} \
-   CONFIG.C_DCACHE_BYTE_SIZE {4096} \
+   CONFIG.C_CACHE_BYTE_SIZE {32768} \
+   CONFIG.C_DCACHE_ADDR_TAG {15} \
+   CONFIG.C_DCACHE_BYTE_SIZE {32768} \
+   CONFIG.C_DCACHE_LINE_LEN {4} \
    CONFIG.C_DCACHE_USE_WRITEBACK {1} \
-   CONFIG.C_DEBUG_COUNTER_WIDTH {48} \
-   CONFIG.C_DEBUG_ENABLED {2} \
-   CONFIG.C_DEBUG_EVENT_COUNTERS {6} \
-   CONFIG.C_DEBUG_LATENCY_COUNTERS {3} \
-   CONFIG.C_DEBUG_PROFILE_SIZE {4096} \
+   CONFIG.C_DEBUG_COUNTER_WIDTH {32} \
+   CONFIG.C_DEBUG_ENABLED {1} \
+   CONFIG.C_DEBUG_EVENT_COUNTERS {5} \
+   CONFIG.C_DEBUG_LATENCY_COUNTERS {1} \
+   CONFIG.C_DEBUG_PROFILE_SIZE {0} \
    CONFIG.C_DIV_ZERO_EXCEPTION {1} \
    CONFIG.C_D_AXI {1} \
    CONFIG.C_D_LMB {0} \
    CONFIG.C_ENABLE_DISCRETE_PORTS {1} \
-   CONFIG.C_FPU_EXCEPTION {0} \
+   CONFIG.C_FPU_EXCEPTION {1} \
    CONFIG.C_FSL_EXCEPTION {0} \
    CONFIG.C_FSL_LINKS {0} \
-   CONFIG.C_ICACHE_LINE_LEN {4} \
-   CONFIG.C_ICACHE_STREAMS {0} \
-   CONFIG.C_ICACHE_VICTIMS {0} \
+   CONFIG.C_ICACHE_LINE_LEN {8} \
+   CONFIG.C_ICACHE_STREAMS {1} \
+   CONFIG.C_ICACHE_VICTIMS {8} \
    CONFIG.C_ILL_OPCODE_EXCEPTION {1} \
    CONFIG.C_I_AXI {0} \
    CONFIG.C_I_LMB {0} \
-   CONFIG.C_MMU_DTLB_SIZE {2} \
-   CONFIG.C_MMU_ITLB_SIZE {1} \
+   CONFIG.C_MMU_DTLB_SIZE {4} \
+   CONFIG.C_MMU_ITLB_SIZE {2} \
    CONFIG.C_MMU_ZONES {2} \
    CONFIG.C_M_AXI_D_BUS_EXCEPTION {1} \
    CONFIG.C_M_AXI_I_BUS_EXCEPTION {1} \
-   CONFIG.C_NUMBER_OF_PC_BRK {8} \
-   CONFIG.C_NUMBER_OF_RD_ADDR_BRK {2} \
-   CONFIG.C_NUMBER_OF_WR_ADDR_BRK {2} \
+   CONFIG.C_NUMBER_OF_PC_BRK {2} \
+   CONFIG.C_NUMBER_OF_RD_ADDR_BRK {1} \
+   CONFIG.C_NUMBER_OF_WR_ADDR_BRK {1} \
    CONFIG.C_OPCODE_0x0_ILLEGAL {1} \
-   CONFIG.C_PVR {0} \
+   CONFIG.C_PVR {2} \
    CONFIG.C_TRACE {0} \
    CONFIG.C_UNALIGNED_EXCEPTIONS {1} \
    CONFIG.C_USE_BARREL {1} \
-   CONFIG.C_USE_BRANCH_TARGET_CACHE {1} \
+   CONFIG.C_USE_BRANCH_TARGET_CACHE {0} \
    CONFIG.C_USE_DCACHE {1} \
    CONFIG.C_USE_DIV {1} \
    CONFIG.C_USE_EXTENDED_FSL_INSTR {0} \
-   CONFIG.C_USE_FPU {0} \
+   CONFIG.C_USE_FPU {1} \
    CONFIG.C_USE_HW_MUL {2} \
    CONFIG.C_USE_ICACHE {1} \
-   CONFIG.C_USE_MMU {0} \
+   CONFIG.C_USE_MMU {3} \
    CONFIG.C_USE_MSR_INSTR {1} \
    CONFIG.C_USE_PCMP_INSTR {1} \
    CONFIG.C_USE_REORDER_INSTR {1} \
    CONFIG.C_USE_STACK_PROTECTION {1} \
-   CONFIG.G_TEMPLATE_LIST {9} \
+   CONFIG.G_TEMPLATE_LIST {10} \
    CONFIG.G_USE_EXCEPTIONS {1} \
  ] $microblaze_0
 
@@ -736,10 +737,10 @@ proc create_hier_cell_accel { parentCell nameHier } {
 
   # Create interface connections
   connect_bd_intf_net -intf_net Conn2 [get_bd_intf_pins BSCAN] [get_bd_intf_pins mb_mdm/BSCAN]
+  connect_bd_intf_net -intf_net S01_AXI_1 [get_bd_intf_pins axi_cache_bypass_0/M_AXI_DP] [get_bd_intf_pins mb_axi_cache/S01_AXI]
   connect_bd_intf_net -intf_net apu_axi_1 [get_bd_intf_pins cpu2apu_axi] [get_bd_intf_pins cpu_cpu2apu_axi/S00_AXI]
   connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_pins mb_shared_bram_ctrl/BRAM_PORTA] [get_bd_intf_pins shared_mem/BRAM_PORTA]
   connect_bd_intf_net -intf_net axi_bram_ctrl_1_BRAM_PORTA [get_bd_intf_pins cpu_shared_bram_ctrl/BRAM_PORTA] [get_bd_intf_pins shared_mem/BRAM_PORTB]
-  connect_bd_intf_net -intf_net axi_cache_bypass_0_M_AXI_DP [get_bd_intf_pins axi_cache_bypass_0/M_AXI_DP] [get_bd_intf_pins mb_axi_cache/S02_AXI]
   connect_bd_intf_net -intf_net axi_firewall_0_M_AXI [get_bd_intf_pins apu2cpu_axi] [get_bd_intf_pins axi_firewall_0/M_AXI]
   connect_bd_intf_net -intf_net cpu2apu_axi_M00_AXI [get_bd_intf_pins cpu_cpu2apu_axi/M00_AXI] [get_bd_intf_pins shared_mailbox/S0_AXI]
   connect_bd_intf_net -intf_net cpu2apu_axi_M03_AXI [get_bd_intf_pins cpu_cpu2apu_axi/M03_AXI] [get_bd_intf_pins cpu_shared_bram_ctrl/S_AXI]
@@ -752,7 +753,7 @@ proc create_hier_cell_accel { parentCell nameHier } {
   connect_bd_intf_net -intf_net mb_axi_per_M03_AXI [get_bd_intf_pins axi_cache_bypass_0/S_AXI_DP] [get_bd_intf_pins mb_axi_per/M03_AXI]
   connect_bd_intf_net -intf_net mdm_1_MBDEBUG_0 [get_bd_intf_pins mb_mdm/MBDEBUG_0] [get_bd_intf_pins microblaze_0/DEBUG]
   connect_bd_intf_net -intf_net microblaze_0_M_AXI_DC [get_bd_intf_pins mb_axi_cache/S00_AXI] [get_bd_intf_pins microblaze_0/M_AXI_DC]
-  connect_bd_intf_net -intf_net microblaze_0_M_AXI_IC [get_bd_intf_pins mb_axi_cache/S01_AXI] [get_bd_intf_pins microblaze_0/M_AXI_IC]
+  connect_bd_intf_net -intf_net microblaze_0_M_AXI_IC [get_bd_intf_pins mb_axi_cache/S02_AXI] [get_bd_intf_pins microblaze_0/M_AXI_IC]
   connect_bd_intf_net -intf_net microblaze_0_axi_dp [get_bd_intf_pins mb_axi_per/S00_AXI] [get_bd_intf_pins microblaze_0/M_AXI_DP]
   connect_bd_intf_net -intf_net microblaze_0_axi_periph_M01_AXI [get_bd_intf_pins mb_axi_per/M01_AXI] [get_bd_intf_pins shared_mailbox/S1_AXI]
   connect_bd_intf_net -intf_net microblaze_0_intc_axi [get_bd_intf_pins mb_axi_intc/s_axi] [get_bd_intf_pins mb_axi_per/M00_AXI]
