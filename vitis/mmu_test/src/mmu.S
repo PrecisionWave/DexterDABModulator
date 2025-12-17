@@ -184,8 +184,8 @@ MSR_C       = (1<<2)
 MSR_IE      = (1<<1)
 MSR_RES     = (1<<0)
 // MSR - Machine Status Register
-//   Manual    | 31 |             |  17 | 18 |  19 | 20 |  21 |  22 | 23 |  24 |  25 |  26 |  27 |  28 | 29 | 30 |  31 |
-//   Bit       |  0 |  Reserved   |  14 | 13 |  12 | 11 |  10 |   9 |  8 |   7 |   6 |   5 |   4 |   3 |  2 |  1 |   0 |
+//   Manual    |  0 |  1       16 |  17 | 18 |  19 | 20 |  21 |  22 | 23 |  24 |  25 |  26 |  27 |  28 | 29 | 30 |  31 |
+//   Bit       | 31 | 30       15 |  14 | 13 |  12 | 11 |  10 |   9 |  8 |   7 |   6 |   5 |   4 |   3 |  2 |  1 |   0 |
 //   Field     | CC |  Reserved   | VMS | VM | UMS | UM | PVR | EIP | EE | DCE | DZO | ICE | FSL | BIP |  C | IE | RES |
 //
 //   - VMS   Virtual Protected Mode Save
@@ -242,12 +242,17 @@ MSR_RES     = (1<<0)
 .type enable_mmu, @function
 
 enable_mmu:
+    // save r15
+    addik   r1, r1, -4
+    swi     r15, r1, 0
+
     addik   r5, r0, _message1
     brlid   r15, print
     nop
 
     addik   r5, r0, _messageV
-    lwi     r6, r0, _apu_ldr_ddr_start
+//  lwi     r6, r0, _apu_ldr_ddr_start      // OK
+    addik   r6, r0, TLB_ADDR_MASK_16MB
     brlid   r15, xil_printf
     nop
 
@@ -280,7 +285,7 @@ _setup_mapping:
     mts     rtlbhi, r3
 
     // TLBLO
-    lwi     r3, r0, 0
+    addik   r3, r0, 0
     andi    r3, r3, TLB_ADDR_MASK_16MB
     ori     r3, r3, (TLBLO_G)
     mts     rtlblo, r3
@@ -306,13 +311,13 @@ _setup_mapping:
     mts     rtlbx, r3
 
     // TLBHI
-    lwi     r3, r0, XPAR_BRAM_0_BASEADDR
+    addik   r3, r0, XPAR_BRAM_0_BASEADDR
     andi    r3, r3, TLB_ADDR_MASK_64KB
     ori     r3, r3, (TLBHI_SIZE_64KB | TLBHI_V)
     mts     rtlbhi, r3
 
     // TLBLO
-    lwi     r3, r0, XPAR_BRAM_0_BASEADDR
+    addik   r3, r0, XPAR_BRAM_0_BASEADDR
     andi    r3, r3, TLB_ADDR_MASK_64KB
     ori     r3, r3, (TLBLO_WR | TLBLO_EX)
     mts     rtlblo, r3
@@ -363,8 +368,10 @@ _enable_vm:
     nop
 
 
-    rtsd	r15, 8
-    nop
+    // Retrun
+    lwi     r15, r1, 0
+    rtsd    r15, 8
+    addik   r1, r1, 4       // delay slot!!!
 
 _endless_loop:
     bri     _endless_loop

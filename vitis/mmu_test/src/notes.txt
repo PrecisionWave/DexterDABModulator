@@ -1,0 +1,47 @@
+XSCT
+
+connect
+targets
+target 3
+
+xsct% help running
+Category commands
+backtrace - Stack back trace.
+bt        - Stack back trace.
+con       - Resume active target.
+dis       - Disassemble Instructions.
+locals    - Get or set the value of a local variable.
+mbprofile - Configure and run the MB profiler.
+mbtrace   - Configure and run MB trace.
+nxt       - Step over a line of source code.
+nxti      - Step over a machine instruction.
+print     - Get or set the value of an expression.
+profile   - Configure and run the GNU profiler.
+state     - Display the current state of the target.
+stop      - Stop active target.
+stp       - Step into a line of source code.
+stpi      - Execute a machine instruction.
+stpout    - Step out from current function.
+
+xsct% help registers
+Category commands
+rrd - Read register for active target.
+rwr - Write to register.
+
+rrd
+ r0: 00000000   r1: 20002c00   r2: 20001ec0   r3: 00000000   r4: 40600008
+ r5: 00000000   r6: 0000000a   r7: 00000000   r8: 00000001   r9: 00000008
+r10: 00000000  r11: 00000000  r12: 00000000  r13: 20002048  r14: 00000000
+r15: 20000448  r16: 00000000  r17: 2000045c  r18: 00000000  r19: 20002c00
+r20: 00000000  r21: 00000000  r22: 00000000  r23: 00000000  r24: 00000000
+r25: 00000000  r26: 00000000  r27: 00000000  r28: 00000000  r29: 00000000
+r30: 00000000  r31: 00000000   pc: 20000020  msr: 00004600  ear: 2000045c
+esr: 00000013  fsr: 00000000  btr: 200005e4  pvr            mmu          
+slr: 00000000  shr: ffffffff  dcr: 00000009  dsr: 21010000
+
+
+esr: 00000013 -> 0x13 = 10011 -> Instruction TLB miss exception
+ear: 2000045c -> _enable_vm in mmu.S
+
+msr: 00004600 -> Bit 9 and 10 -> EIP and PVR
+
