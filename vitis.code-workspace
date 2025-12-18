@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "Vitis projects",
+			"path": "vitis"
+		},
+		{
+			"name": "EDK sources",
+			"path": "/tools/Xilinx/Vivado/2021.1/data/embeddedsw/lib/microblaze"
+		},
+		{
+			"name": "Tools",
+			"path": "tools"
+		}
+	]
+}
