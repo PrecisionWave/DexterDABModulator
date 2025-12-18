@@ -72,3 +72,18 @@ platform clean
 bsp reload
 bsp reload
 platform generate
+platform active {dexter_apu}
+bsp reload
+bsp config microblaze_exceptions "false"
+bsp config microblaze_exceptions "true"
+bsp config predecode_fpu_exceptions "false"
+bsp config microblaze_exceptions "false"
+bsp write
+bsp reload
+catch {bsp regenerate}
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate

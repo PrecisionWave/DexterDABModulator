@@ -6,8 +6,6 @@ BEGIN OS
  PARAMETER OS_NAME = standalone
  PARAMETER OS_VER = 7.5
  PARAMETER PROC_INSTANCE = accel_microblaze_0
- PARAMETER microblaze_exceptions = true
- PARAMETER predecode_fpu_exceptions = true
  PARAMETER stdin = accel_mb_uartlite
  PARAMETER stdout = accel_mb_uartlite
 END

@@ -370,18 +370,82 @@ _enable_vm:
 
     // Retrun
     lwi     r15, r1, 0
+    addik   r1, r1, 4
     rtsd    r15, 8
-    addik   r1, r1, 4       // delay slot!!!
-
-_endless_loop:
-    bri     _endless_loop
-
+    nop
 
 _apu_ldr_signature:  .quad 0x10adcba987654321
 _apu_ldr_ddr_start:  .long 0
 _apu_ldr_ddr_length:  .long 0
 _message1: .ascii "Hello from assembler 1!\n\0"
 _messageV: .ascii "ASM: Value is %08x!\n\0"
-
 _message2: .ascii "Hello from assembler 2!\n\0"
 _message3: .ascii "Hello from assembler 3!\n\0"
+
+_endless_loop:
+    bri     _endless_loop
+
+.section .text
+.globl _hw_exception_handler
+.align 2
+.type _hw_exception_handler, @function
+_hw_exception_handler:
+    addik   r5, r0, _ex_message_1
+    brlid   r15, print
+    nop
+    bri     _ex_common
+
+.section .text
+.globl _exception_handler
+.align 2
+.type _exception_handler, @function
+_exception_handler:
+    addik   r5, r0, _ex_message_2
+    brlid   r15, print
+    nop
+    bri     _ex_common
+_ex_common:
+    addik   r5, r0, _ex_message_ear
+    mfs     r6, rear
+    nop
+    brlid   r15, xil_printf
+    nop
+
+    addik   r5, r0, _ex_message_esr
+    mfs     r6, resr
+    nop
+    brlid   r15, xil_printf
+    nop
+
+    addik   r5, r0, _ex_message_ec
+    mfs     r6, resr
+    nop
+    andi    r6, r6, 0x1f
+    brlid   r15, xil_printf
+    nop
+
+    addik   r5, r0, _ex_message_ess
+    mfs     r6, resr
+    nop
+    bsrli   r6, r6, 5
+    andi    r6, r6, 0x7f
+    brlid   r15, xil_printf
+    nop
+
+    addik   r5, r0, _ex_message_ds
+    mfs     r6, resr
+    nop
+    bsrli   r6, r6, 11
+    andi    r6, r6, 0x1
+    brlid   r15, xil_printf
+    nop
+
+    bri     0
+
+_ex_message_1:      .ascii "HW Exception!\n\0"
+_ex_message_2:      .ascii "User Exception!\n\0"
+_ex_message_ear:    .ascii " EAR = %08x\n\0"
+_ex_message_esr:    .ascii " ESR = %08x\n\0"
+_ex_message_ec:     .ascii "    EC  = %x\n\0"
+_ex_message_ess:    .ascii "    ESS = %x\n\0"
+_ex_message_ds:     .ascii "    DS  = %x\n\0"
