@@ -440,6 +440,18 @@ _ex_common:
     brlid   r15, xil_printf
     nop
 
+    addik   r5, r0, _ex_message_rbtr
+    mfs     r6, rbtr
+    nop
+    brlid   r15, xil_printf
+    nop
+
+    addik   r5, r0, _ex_message_r17
+    addik   r6, r17, 0
+    nop
+    brlid   r15, xil_printf
+    nop
+
     bri     0
 
 _ex_message_1:      .ascii "HW Exception!\n\0"
@@ -449,3 +461,5 @@ _ex_message_esr:    .ascii " ESR = %08x\n\0"
 _ex_message_ec:     .ascii "    EC  = %x\n\0"
 _ex_message_ess:    .ascii "    ESS = %x\n\0"
 _ex_message_ds:     .ascii "    DS  = %x\n\0"
+_ex_message_rbtr:   .ascii " BTR = %08x\n\0"
+_ex_message_r17:    .ascii " R17 = %08x\n\0"
