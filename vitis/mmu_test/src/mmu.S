@@ -385,6 +385,75 @@ _message3: .ascii "Hello from assembler 3!\n\0"
 _endless_loop:
     bri     _endless_loop
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+//
+// Exceptions
+//
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Ordinary exceptions: Return to next instruction
+// MMU exceptions: Redo instruction when returning from exception
+
+// EAR - Exception Address Register
+//      The Exception Address Register (EAR) stores the full load/store address that caused the
+//      exception for the following:
+//      - An unaligned access exception that specifies the unaligned access data address
+//      - An M_AXI_DP exception that specifies the failing AXI4 data access address
+//      - A data storage exception that specifies the (virtual) effective address accessed
+//      - An instruction storage exception that specifies the (virtual) effective address read
+//      - A data TLB miss exception that specifies the (virtual) effective address accessed
+//      - An instruction TLB miss exception that specifies the (virtual) effective address read
+//      The contents of this register are undefined for all other exceptions.
+
+// ESR - Exception Status Register
+//   Manual    | 0                18 | 19 | 20     26 | 27     31 |
+//   Bit       | 31               13 | 12 | 11      5 |  4      0 |
+//   Field     |       Reserved      | DS |    ESS    |    EC     |
+//
+// - DS     Delay Slot Exception    Read-only
+//              0 = not caused by delay slot instruction
+//              1 = caused by delay slot instruction
+// - ESS    Exception Specific Status
+//              For details refer to UG984, Table 13: Exception Specific Status (ESS).
+// - EC     Exception Cause         Read-only
+//              - Common Exceptions
+//                  00000 = Stream exception
+//                  00001 = Unaligned data access exception
+//                  00010 = Illegal op-code exception
+//                  00011 = Instruction bus error exception
+//                  00100 = Data bus error exception
+//                  00101 = Divide exception
+//                  00110 = Floating point unit exception
+//                  00111 = Privileged instruction exception
+//              - Uncommon Exceptions
+//                  01001 = Debug
+//                  01010 = Interrupt
+//                  01011 = EXT_NM_BRK Pin
+//                  01100 = EXT_BRK Pin
+//              - MMU Common Exceptions
+//                  10000 = Data storage exception
+//                  10001 = Instruction storage exception
+//                  10010 = Data TLB miss exception
+//                  10011 = Instruction TLB miss exception
+
+// BTR - Branch Target Register
+//      The register stores the branch target address for all delay slot branch instructions
+//      executed while MSR[EIP] = 0. If an exception is caused by an instruction in a delay slot (that is,
+//      ESR[DS]=1), the exception handler should return execution to the address stored in BTR instead
+//      of the normal exception return address stored in R17
+
+// FSR - Floating-Point Status Register
+//   Manual    | 0                26 | 27 | 28 | 29 | 30 | 31 |
+//   Bit       | 31                5 |  4 |  3 |  2 |  1 |  0 |
+//   Field     |       Reserved      | IO | DZ | OF | UF | DO |
+//
+// - IO     Invalid operation
+// - DZ     Divide-by-zero 
+// - OF     Overflow
+// - UF     Underflow
+// - DO     Denormalized operand error
+
 .section .text
 .globl _hw_exception_handler
 .align 2
