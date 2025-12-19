@@ -4,29 +4,29 @@
 ![apu_v2](./diagrams/apu2.png)
 
 Implementation details:
-- [Block Design](./apu_v3.pdf)
+- [Block Design](./apu_v4.pdf)
 
 ### Microblaze core
-The Microblaze core is fully featured for Real-time applications: 32 bit core wit no MMU and no FPU.
+The Microblaze core is fully featured for Applications: 32 bit core wit MMU and FPU.
 
 #### Configuration
-- Real-time Preset
+- Application Preset
 - 32-Bit implementation
 
 #### General settings
-- Area optimization
+- Performance optimization
 - Use I and D cache
 - Enable Exceptions
+- Use MMU
 
 #### Instructions
 - Barrel Shifter
-- No FPU
+- Basic FPU
 - MUL64 integer multiplier
 - Integer divider
 - Additional MSR instructions
 - Pattern comparator
 - Reversed load/store and swap instructions
-- Stream instructions
 
 #### Exceptions
 - Integer division exception
@@ -34,25 +34,31 @@ The Microblaze core is fully featured for Real-time applications: 32 bit core wi
 - Illegal instruction exception
 - Unaligned data exception
 - Treat 0 as illegal instruction
-- Stream exception
-- Stack protection
 
 #### Cache
-- 4kB I Cache with line length of 4
-- 4kB D Cache with line length of 4 and write-back policy
+- 32kB I Cache with line length of 8
+- 32kB D Cache with line length of 4 and write-back policy
+
+#### MMU
+- Virtual Memory
+- Shadow DTLB Size: 4
+- Shadow ITLB Size: 2
+- Access to MMU special registers: Full
+- 2 Memory Protection Zones
+- Full protection
 
 #### Debug
 - Basic debug module
 - 2 PC break points
-- 2 write address watch points
-- 2 read address watch points
+- 1 write address watch points
+- 1 read address watch points
 - 5 performance monitor event counters (32-Bit)
 - 1 performance latency counter  (32-Bit)
 
 #### Buses
 - Peripheral Data AXI
 - *I/D-Cache AXI*
-- 1 Stream link
+- 0 Stream link
 
 ### Interfaces
 #### UART
@@ -115,6 +121,42 @@ All addresses listed below are physical addresses as seen by the device.
 | `0x4405 0000` | n/a                | 64k  | CPU 16550 UART             |
 | `0x4401 0000` | n/a                | 64k  | Reset control GPIO         |
 
+## MMU
+| TLB index | Virtual       | Physical      | Size | EX  | WR  | W   | I   | G   | Description             |
+| --------- | ------------- | ------------- | ---- | --- | --- | --- | --- | --- | ----------------------- |
+| 0         | `0x00xx xxxx` | `0x00xx xxxx` | 16M  |     |     |     |     | y   | Null pointer protection |
+| 1         | `0x169x xxxx` | `0x169x xxxx` | 4M   | y   | y   |     |     |     | DDR (dynamic)           |
+| 2         | `0x2000 xxxx` | `0x2000 xxxx` | 64k  | y   | y   |     |     |     | SRAM                    |
+| 3         | `0x40xx xxxx` | `0x40xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 1      |
+| 4         | `0x41xx xxxx` | `0x41xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 2      |
+| 5         | `0x42xx xxxx` | `0x42xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 3      |
+| 6         | `0x43xx xxxx` | `0x43xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 4      |
+
+### EX - Executable
+When bit is set to 1, the page contains executable code, and instructions can be fetched from the page.
+When bit is cleared to 0, instructions cannot be fetched from the page. Attempts to fetch instructions
+from a page with a clear EX bit cause an instructionstorage exception.
+
+### WR - Writable
+When bit is set to 1, the page is writable and store instructions can be used to store data at addresses
+within the page. When bit is cleared to 0, the page is read-only (not writable).
+Attempts to store data into a page with a clear WR bit cause a data storage exception.
+
+### W - Write Through
+When the parameter C_DCACHE_USE_WRITEBACK is set to 1, this bit controls caching policy. A write-through
+policy is selected when set to 1, and a write-back policy is selected otherwise.
+This bit is fixed to 1, and write-through is always used, when C_DCACHE_USE_WRITEBACK is cleared to 0.
+
+### I - Inhibit Caching
+When bit is set to 1, accesses to the page are not cached (caching is inhibited).
+When cleared to 0, accesses to the page are cacheable.
+
+### G - Guarded
+When bit is set to 1, speculative page accesses are not allowed (memory is guarded).
+When cleared to 0, speculative page accesses are allowed.
+The G attribute can be used to protect memory-mapped I/O devices
+from inappropriate instruction accesses.
+
 ### Vectors
 C_BASE_ADDRESS in the CPU configuration is set to `0x2000 0000` which puts all vectors inside SRAM.
 
@@ -157,10 +199,3 @@ Recheck:
 $ ps aux | grep ttyS0
 root       787  0.0  0.1   4880   508 pts/1    S+   04:39   0:00 grep ttyS0
 ```
-
-## Utilization
-
-| Name                 | Slice LUTs | Slice Registers | F7 Muxes | Slice | LUT as Logic | LUT as Memory | Block RAM Tile | DSPs | BUFGCTRL |
-| -------------------- | ---------- | --------------- | -------- | ----- | ------------ | ------------- | -------------- | ---- | -------- |
-| FPGA xc7z020clg400-2 | 53200      | 106400          | 26600    | 13300 | 53200        | 17400         | 140            | 220  | 32       |
-| APU (accel)          | 9933       | 10803           | 96       | 3900  | 9031         | 902           | 9              | 4    | 2        |
