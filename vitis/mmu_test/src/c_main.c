@@ -64,7 +64,6 @@ void set_tlb(int index, uint32_t virtual, uint32_t physical, size_t length, uint
             break;
         default:
             xil_printf("set_tlb: Invalid size %u requested!\n", length);
-            // assert(0);
             for (;;)
                 ;
     }
@@ -72,12 +71,22 @@ void set_tlb(int index, uint32_t virtual, uint32_t physical, size_t length, uint
     // Set RPN to physical address
     tlblo &= ~TLBLO_RPN_MASK;
     tlblo |= physical & mask;
-    // assert((physical & mask) != physical);
+    if ((physical & mask) != physical) {
+        xil_printf("set_tlb: Physical address not correctly aligned!\n");
+        xil_printf("  0x%08x & 0x%08x != 0x%08x\n", physical, mask, physical & mask);
+        for (;;)
+            ;
+    }
 
     // Set TAG to virtual address
     tlbhi &= ~TLBHI_TAG_MASK;
     tlbhi |= virtual & mask;
-    // assert((virtual & mask) != virtual);
+    if ((virtual & mask) != virtual) {
+        xil_printf("set_tlb: Virtual address not correctly aligned!\n");
+        xil_printf("  0x%08x & 0x%08x != 0x%08x\n", virtual, mask, virtual & mask);
+        for (;;)
+            ;
+    }
 
     // xil_printf("set_tlb_entry(0x%x, 0x%08x 0x%08x\n", index, tlbhi, tlblo);
     set_tlb_entry(index, tlbhi, tlblo);
@@ -119,7 +128,7 @@ int main()
     set_pid(0);
 
     // Clear all TLBs, especially the V flag.
-    for (int i = 0; i < 64; i++)
+    for (int i = 0; i < MICROBLAZE_TLB_ENTRIES; i++)
         set_tlb_entry(i, 0, 0);
 
     int tlb_i = 0;
