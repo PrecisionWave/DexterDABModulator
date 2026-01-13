@@ -1,4 +1,5 @@
-#include "xparameters.h"
+#ifndef MMU_H_DEFINED
+#define MMU_H_DEFINED
 
 //  Yes, it is possible to disable/enable the MMU. When MicroBlaze is configured to use the MMU by setting C_USE_MMU to 3
 //  (Virtual), the processor is in real privileged mode after reset, which means that the MMU is disabled. All addresses
@@ -14,43 +15,41 @@
 //  handler with "rtbd r16, 4", VM and UM are set from the saved values in VMS and UMS, which will normally return to
 //  virtual user mode at the instruction following the system call.
 
-MICROBLAZE_TLB_ENTRIES  = 64
+#define MICROBLAZE_TLB_ENTRIES  64
 
 // TLBHI Register Bits
-TLBHI_TAG_POS           = 10
-TLBHI_TAG_MASK          = ((1<<22) - 1)
-TLB_ADDR_MASK_1KB      = (((1<<22) - 1) << 10)
-TLB_ADDR_MASK_4KB      = (((1<<20) - 1) << 12)
-TLB_ADDR_MASK_16KB     = (((1<<18) - 1) << 14)
-TLB_ADDR_MASK_64KB     = (((1<<16) - 1) << 16)
-TLB_ADDR_MASK_256KB    = (((1<<14) - 1) << 18)
-TLB_ADDR_MASK_1MB      = (((1<<12) - 1) << 20)
-TLB_ADDR_MASK_4MB      = (((1<<10) - 1) << 22)
-TLB_ADDR_MASK_16MB     = (((1<<8) - 1) << 24)
+#define TLBHI_TAG_MASK          (((1<<22) - 1) << 10)
+#define TLB_ADDR_MASK_1KB       (((1<<22) - 1) << 10)
+#define TLB_ADDR_MASK_4KB       (((1<<20) - 1) << 12)
+#define TLB_ADDR_MASK_16KB      (((1<<18) - 1) << 14)
+#define TLB_ADDR_MASK_64KB      (((1<<16) - 1) << 16)
+#define TLB_ADDR_MASK_256KB     (((1<<14) - 1) << 18)
+#define TLB_ADDR_MASK_1MB       (((1<<12) - 1) << 20)
+#define TLB_ADDR_MASK_4MB       (((1<<10) - 1) << 22)
+#define TLB_ADDR_MASK_16MB      (((1<<8) - 1) << 24)
 
-TLBHI_SIZE_1KB          = (0 << 7)
-TLBHI_SIZE_4KB          = (1 << 7)
-TLBHI_SIZE_16KB         = (2 << 7)
-TLBHI_SIZE_64KB         = (3 << 7)
-TLBHI_SIZE_256KB        = (4 << 7)
-TLBHI_SIZE_1MB          = (5 << 7)
-TLBHI_SIZE_4MB          = (6 << 7)
-TLBHI_SIZE_16MB         = (7 << 7)
-TLBHI_SIZE_MASK         = ((1<<3) - 1)
-TLBHI_V                 = (1<<6)
-TLBHI_E                 = (1<<5)
+#define TLBHI_SIZE_1KB          (0 << 7)
+#define TLBHI_SIZE_4KB          (1 << 7)
+#define TLBHI_SIZE_16KB         (2 << 7)
+#define TLBHI_SIZE_64KB         (3 << 7)
+#define TLBHI_SIZE_256KB        (4 << 7)
+#define TLBHI_SIZE_1MB          (5 << 7)
+#define TLBHI_SIZE_4MB          (6 << 7)
+#define TLBHI_SIZE_16MB         (7 << 7)
+#define TLBHI_SIZE_MASK         ((1<<3) - 1)
+#define TLBHI_V                 (1<<6)
+#define TLBHI_E                 (1<<5)
 
 // TLBLO Register Bits
-TLBLO_G                 = (1<<0)
-TLBLO_M                 = (1<<1)
-TLBLO_I                 = (1<<2)
-TLBLO_W                 = (1<<3)
-TLBLO_ZSEL_POS          = 4
-TLBLO_ZSEL_MASK         = ((1<<4) - 1)
-TLBLO_WR                = (1<<8)
-TLBLO_EX                = (1<<9)
-TLBLO_RPN_POS           = 10
-TLBLO_RPN_MASK          = ((1<<22) - 1)
+#define TLBLO_G                 (1<<0)
+#define TLBLO_M                 (1<<1)
+#define TLBLO_I                 (1<<2)
+#define TLBLO_W                 (1<<3)
+#define TLBLO_ZSEL_POS          4
+#define TLBLO_ZSEL_MASK         ((1<<4) - 1)
+#define TLBLO_WR                (1<<8)
+#define TLBLO_EX                (1<<9)
+#define TLBLO_RPN_MASK          (((1<<22) - 1) << 10)
 
 // TLBHI - Translation Look-Aside Buffer High Register
 //   Manual    | 0                21 | 22   24 | 25 | 26 | 27 | 28  31 |
@@ -167,22 +166,7 @@ TLBLO_RPN_MASK          = ((1<<22) - 1)
 //    - PID   Peiocess ID     Read/Write
 //            Used to uniquely identify a software process during MMU address translation.
 
-MSR_CC      = (1<<31)
-MSR_VMS     = (1<<14)
-MSR_VM      = (1<<13)
-MSR_UMS     = (1<<12)
-MSR_UM      = (1<<11)
-MSR_PVR     = (1<<10)
-MSR_EIP     = (1<<9)
-MSR_EE      = (1<<8)
-MSR_DCE     = (1<<7)
-MSR_DZO     = (1<<6)
-MSR_ICE     = (1<<5)
-MSR_FSL     = (1<<4)
-MSR_BIP     = (1<<3)
-MSR_C       = (1<<2)
-MSR_IE      = (1<<1)
-MSR_RES     = (1<<0)
+
 // MSR - Machine Status Register
 //   Manual    |  0 |  1       16 |  17 | 18 |  19 | 20 |  21 |  22 | 23 |  24 |  25 |  26 |  27 |  28 | 29 | 30 |  31 |
 //   Bit       | 31 | 30       15 |  14 | 13 |  12 | 11 |  10 |   9 |  8 |   7 |   6 |   5 |   4 |   3 |  2 |  1 |   0 |
@@ -235,300 +219,22 @@ MSR_RES     = (1<<0)
 //   - IE    Interrupt Enable
 //               0 = Interrupts disabled
 //               1 = Interrupts enabled
-.section .text
-.globl enable_mmu
-.align 2
-
-.type enable_mmu, @function
-
-enable_mmu:
-    // save r15
-    addik   r1, r1, -4
-    swi     r15, r1, 0
-
-    addik   r5, r0, _message1
-    brlid   r15, print
-    nop
-
-    addik   r5, r0, _messageV
-//  lwi     r6, r0, _apu_ldr_ddr_start      // OK
-    addik   r6, r0, TLB_ADDR_MASK_16MB
-    brlid   r15, xil_printf
-    nop
-
-    // Set PID to 0 (will be used as TID when writing TLB entries
-_set_pid_0:
-    mts     rpid, r0
-    nop
-    bri     4
-
-    // Clear all TLBs, especially the V flag.
-_clear_tlb:
-    addik   r3, r0, (MICROBLAZE_TLB_ENTRIES - 1)
-_clear_tlb_loop:
-    mts     rtlbx, r3
-    mts     rtlbhi, r0
-    mts     rtlblo, r0
-    addik   r3, r3, -1
-    bgti    r3, _clear_tlb_loop
-
-    // Try to set up 1:1 mapping for DDR, SRAM and peripherals
-_setup_mapping:
-    // Index 0 - Null pointer protection
-    addik   r3, r0, 0
-    mts     rtlbx, r3
-
-    // TLBHI
-    addik   r3, r0, 0
-    andi    r3, r3, TLB_ADDR_MASK_16MB
-    ori     r3, r3, (TLBHI_SIZE_16MB | TLBHI_V)
-    mts     rtlbhi, r3
-
-    // TLBLO
-    addik   r3, r0, 0
-    andi    r3, r3, TLB_ADDR_MASK_16MB
-    ori     r3, r3, (TLBLO_G)
-    mts     rtlblo, r3
-
-    // Index 1 - DDR
-    addik   r3, r0, 1
-    mts     rtlbx, r3
-
-    // TLBHI
-    lwi     r3, r0, _apu_ldr_ddr_start
-    andi    r3, r3, TLB_ADDR_MASK_1MB
-    ori     r3, r3, (TLBHI_SIZE_1MB | TLBHI_V)
-    mts     rtlbhi, r3
-
-    // TLBLO
-    lwi     r3, r0, _apu_ldr_ddr_start
-    andi    r3, r3, TLB_ADDR_MASK_1MB
-    ori     r3, r3, (TLBLO_WR | TLBLO_EX)
-    mts     rtlblo, r3
-
-    // Index 2 - SRAM
-    addik   r3, r0, 2
-    mts     rtlbx, r3
-
-    // TLBHI
-    addik   r3, r0, XPAR_BRAM_0_BASEADDR
-    andi    r3, r3, TLB_ADDR_MASK_64KB
-    ori     r3, r3, (TLBHI_SIZE_64KB | TLBHI_V)
-    mts     rtlbhi, r3
-
-    // TLBLO
-    addik   r3, r0, XPAR_BRAM_0_BASEADDR
-    andi    r3, r3, TLB_ADDR_MASK_64KB
-    ori     r3, r3, (TLBLO_WR | TLBLO_EX)
-    mts     rtlblo, r3
-
-    // Index 3 - Peripheral 1
-    addik   r3, r0, 3
-    mts     rtlbx, r3
-
-    // TLBHI
-    addik   r3, r0, 0x40000000
-    andi    r3, r3, TLB_ADDR_MASK_16MB
-    ori     r3, r3, (TLBHI_SIZE_16MB | TLBHI_V)
-    mts     rtlbhi, r3
-
-    // TLBLO
-    addik   r3, r0, 0x40000000
-    andi    r3, r3, TLB_ADDR_MASK_16MB
-    ori     r3, r3, (TLBLO_WR | TLBLO_EX)
-    mts     rtlblo, r3
-
-    // Index 4 - Peripheral 2
-    addik   r3, r0, 4
-    mts     rtlbx, r3
-
-    // TLBHI
-    addik   r3, r0, 0x41000000
-    andi    r3, r3, TLB_ADDR_MASK_16MB
-    ori     r3, r3, (TLBHI_SIZE_16MB | TLBHI_V)
-    mts     rtlbhi, r3
-
-    // TLBLO
-    addik   r3, r0, 0x41000000
-    andi    r3, r3, TLB_ADDR_MASK_16MB
-    ori     r3, r3, (TLBLO_WR | TLBLO_EX)
-    mts     rtlblo, r3
-
-    addik   r5, r0, _message2
-    brlid   r15, print
-    nop
-
-_enable_vm:
-    msrset  r0, MSR_VM
-    nop
-    bri     4
-
-    addik   r5, r0, _message3
-    brlid   r15, print
-    nop
+#define MSR_CC  (1<<31)
+#define MSR_VMS (1<<14)
+#define MSR_VM  (1<<13)
+#define MSR_UMS (1<<12)
+#define MSR_UM  (1<<11)
+#define MSR_PVR (1<<10)
+#define MSR_EIP (1<<9)
+#define MSR_EE  (1<<8)
+#define MSR_DCE (1<<7)
+#define MSR_DZO (1<<6)
+#define MSR_ICE (1<<5)
+#define MSR_FSL (1<<4)
+#define MSR_BIP (1<<3)
+#define MSR_C   (1<<2)
+#define MSR_IE  (1<<1)
+#define MSR_RES (1<<0)
 
 
-    // Retrun
-    lwi     r15, r1, 0
-    addik   r1, r1, 4
-    rtsd    r15, 8
-    nop
-
-_apu_ldr_signature:  .quad 0x10adcba987654321
-_apu_ldr_ddr_start:  .long 0
-_apu_ldr_ddr_length:  .long 0
-_message1: .ascii "Hello from assembler 1!\n\0"
-_messageV: .ascii "ASM: Value is %08x!\n\0"
-_message2: .ascii "Hello from assembler 2!\n\0"
-_message3: .ascii "Hello from assembler 3!\n\0"
-
-_endless_loop:
-    bri     _endless_loop
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Exceptions
-//
-// ---------------------------------------------------------------------------------------------------------------------
-
-// Ordinary exceptions: Return to next instruction
-// MMU exceptions: Redo instruction when returning from exception
-
-// EAR - Exception Address Register
-//      The Exception Address Register (EAR) stores the full load/store address that caused the
-//      exception for the following:
-//      - An unaligned access exception that specifies the unaligned access data address
-//      - An M_AXI_DP exception that specifies the failing AXI4 data access address
-//      - A data storage exception that specifies the (virtual) effective address accessed
-//      - An instruction storage exception that specifies the (virtual) effective address read
-//      - A data TLB miss exception that specifies the (virtual) effective address accessed
-//      - An instruction TLB miss exception that specifies the (virtual) effective address read
-//      The contents of this register are undefined for all other exceptions.
-
-// ESR - Exception Status Register
-//   Manual    | 0                18 | 19 | 20     26 | 27     31 |
-//   Bit       | 31               13 | 12 | 11      5 |  4      0 |
-//   Field     |       Reserved      | DS |    ESS    |    EC     |
-//
-// - DS     Delay Slot Exception    Read-only
-//              0 = not caused by delay slot instruction
-//              1 = caused by delay slot instruction
-// - ESS    Exception Specific Status
-//              For details refer to UG984, Table 13: Exception Specific Status (ESS).
-// - EC     Exception Cause         Read-only
-//              - Common Exceptions
-//                  00000 = Stream exception
-//                  00001 = Unaligned data access exception
-//                  00010 = Illegal op-code exception
-//                  00011 = Instruction bus error exception
-//                  00100 = Data bus error exception
-//                  00101 = Divide exception
-//                  00110 = Floating point unit exception
-//                  00111 = Privileged instruction exception
-//              - Uncommon Exceptions
-//                  01001 = Debug
-//                  01010 = Interrupt
-//                  01011 = EXT_NM_BRK Pin
-//                  01100 = EXT_BRK Pin
-//              - MMU Common Exceptions
-//                  10000 = Data storage exception
-//                  10001 = Instruction storage exception
-//                  10010 = Data TLB miss exception
-//                  10011 = Instruction TLB miss exception
-
-// BTR - Branch Target Register
-//      The register stores the branch target address for all delay slot branch instructions
-//      executed while MSR[EIP] = 0. If an exception is caused by an instruction in a delay slot (that is,
-//      ESR[DS]=1), the exception handler should return execution to the address stored in BTR instead
-//      of the normal exception return address stored in R17
-
-// FSR - Floating-Point Status Register
-//   Manual    | 0                26 | 27 | 28 | 29 | 30 | 31 |
-//   Bit       | 31                5 |  4 |  3 |  2 |  1 |  0 |
-//   Field     |       Reserved      | IO | DZ | OF | UF | DO |
-//
-// - IO     Invalid operation
-// - DZ     Divide-by-zero 
-// - OF     Overflow
-// - UF     Underflow
-// - DO     Denormalized operand error
-
-.section .text
-.globl _hw_exception_handler
-.align 2
-.type _hw_exception_handler, @function
-_hw_exception_handler:
-    addik   r5, r0, _ex_message_1
-    brlid   r15, print
-    nop
-    bri     _ex_common
-
-.section .text
-.globl _exception_handler
-.align 2
-.type _exception_handler, @function
-_exception_handler:
-    addik   r5, r0, _ex_message_2
-    brlid   r15, print
-    nop
-    bri     _ex_common
-_ex_common:
-    addik   r5, r0, _ex_message_ear
-    mfs     r6, rear
-    nop
-    brlid   r15, xil_printf
-    nop
-
-    addik   r5, r0, _ex_message_esr
-    mfs     r6, resr
-    nop
-    brlid   r15, xil_printf
-    nop
-
-    addik   r5, r0, _ex_message_ec
-    mfs     r6, resr
-    nop
-    andi    r6, r6, 0x1f
-    brlid   r15, xil_printf
-    nop
-
-    addik   r5, r0, _ex_message_ess
-    mfs     r6, resr
-    nop
-    bsrli   r6, r6, 5
-    andi    r6, r6, 0x7f
-    brlid   r15, xil_printf
-    nop
-
-    addik   r5, r0, _ex_message_ds
-    mfs     r6, resr
-    nop
-    bsrli   r6, r6, 11
-    andi    r6, r6, 0x1
-    brlid   r15, xil_printf
-    nop
-
-    addik   r5, r0, _ex_message_rbtr
-    mfs     r6, rbtr
-    nop
-    brlid   r15, xil_printf
-    nop
-
-    addik   r5, r0, _ex_message_r17
-    addik   r6, r17, 0
-    nop
-    brlid   r15, xil_printf
-    nop
-
-    bri     0
-
-_ex_message_1:      .ascii "HW Exception!\n\0"
-_ex_message_2:      .ascii "User Exception!\n\0"
-_ex_message_ear:    .ascii " EAR = 0x%08x\n\0"
-_ex_message_esr:    .ascii " ESR = 0x%08x\n\0"
-_ex_message_ec:     .ascii "    EC  = 0x%x\n\0"
-_ex_message_ess:    .ascii "    ESS = 0x%x\n\0"
-_ex_message_ds:     .ascii "    DS  = 0x%x\n\0"
-_ex_message_rbtr:   .ascii " BTR = 0x%08x\n\0"
-_ex_message_r17:    .ascii " R17 = 0x%08x\n\0"
+#endif // #define MMU_H_DEFINED
