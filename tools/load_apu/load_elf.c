@@ -218,23 +218,62 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
         case R_MICROBLAZE_GOTPC_64:
             // A 64 bit GOTPC relocation.       G+A–P (#imm)
             // Added hint to rebuild ELF without this
+            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
+            local_debug(2, "R_MICROBLAZE_GOTPC_64 (+0): %08x, ", old_value);
+            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
+            local_debug(2, "(+4): %08x\n", old_value);
             return false;
 
         case R_MICROBLAZE_GOT_64:
             // A 64 bit GOT relocation.         G+A (#imm)
             // Added hint to rebuild ELF without this
+            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
+            local_debug(2, "R_MICROBLAZE_GOT_64 (+0): %08x, ", old_value);
+            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
+            local_debug(2, "(+4): %08x\n", old_value);
             return false;
 
         case R_MICROBLAZE_PLT_64:
             // A 64 bit PLT relocation.         L+A (#imm)
             // Added hint to rebuild ELF without this
+            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
+            local_debug(2, "R_MICROBLAZE_PLT_64 (+0): %08x, ", old_value);
+            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
+            local_debug(2, "(+4): %08x\n", old_value);
             return false;
 
         case R_MICROBLAZE_32_PCREL_LO:
+            // The low half of a PCREL 32 bit relocation. (S+A-P)&0xFFFF
+            value -= offset;
+            value -= mme_offset->apu_loaded;
+
+            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
+            new_value = (old_value & 0xffff0000ULL) | (value & 0xffff);
+            iowrite32(mme_offset->cpu_virtual, offset + 0, new_value);
+            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "R_MICROBLAZE_32_PCREL_LO: %08x -> %08x\n", old_value, new_value);
+
+            return true;
+
         case R_MICROBLAZE_NONE:
+            // This relocation does nothing.    none
+            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "R_MICROBLAZE_NONE\n");
+            return true;
+
         case R_MICROBLAZE_64_NONE:
+            // This relocation does nothing.    none
+            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "R_MICROBLAZE_64_NONE\n");
+            return true;
+
         case 33: /* R_MICROBLAZE_32_NONE.  */
             // This relocation does nothing.    none
+            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "R_MICROBLAZE_32_NONE\n");
             return true;
 
         default:
