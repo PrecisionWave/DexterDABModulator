@@ -4,6 +4,11 @@
 #include <assert.h>
 #include <string.h>
 
+// open
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
 #include <elf.h>
 
 #include "memorymap.h"
@@ -12,6 +17,7 @@
 
 extern int g_elf_debug_level;
 extern bool g_elf_force_reloc;
+extern char* g_dump_file;
 
 #define local_debug(level, fmt, ...)      \
     {                                     \
@@ -36,6 +42,21 @@ load_mem(struct memory_map_entry* mme, const off_t offset, const void* data, siz
             mme->name,
             (uint32_t)(mme->apu_loaded + offset));
         copytoio(mme->cpu_virtual, offset, data, load_len);
+
+        if (g_dump_file) {
+            char dump_file_name[1024];
+            memset(dump_file_name, 0, sizeof(dump_file_name));
+            snprintf(dump_file_name, sizeof(dump_file_name) - 1, "%s.ELF.%s", g_dump_file, mme->name);
+            printf("Dumping ELF %s to %s...\n", mme->name, dump_file_name);
+            int dfd = open(dump_file_name, O_CREAT | O_RDWR | O_TRUNC, 0666);
+            if (load_len != write(dfd, (const uint8_t*)(data) + offset, load_len)) {
+                int tmp_errno = errno;
+                fprintf(stderr, "Error: Failed to write %d bytes to file. errno was %d\n", load_len, tmp_errno);
+                return 10;
+            }
+            printf("Wrote %d bytes\n", load_len);
+            close(dfd);
+        }
     }
 
     if (mem_len > load_len) {

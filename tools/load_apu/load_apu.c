@@ -198,6 +198,8 @@ void apply_apu_ldr_header(struct memory_map_entry* mme, struct memory_map_entry*
     }
 }
 
+const char* g_dump_file = NULL;
+
 int main(int argc, char** argv)
 {
     int c;
@@ -205,7 +207,6 @@ int main(int argc, char** argv)
     bool do_reset = false;
     bool do_axifw_status = false;
     const char* download_file = NULL;
-    const char* dump_file = NULL;
     const char* dev = "/dev/apu0";
     printf("Page size: %zu bytes\n", getpagesize());
 
@@ -225,7 +226,7 @@ int main(int argc, char** argv)
                 g_elf_debug_level++;
                 break;
             case 'x':
-                dump_file = optarg;
+                g_dump_file = optarg;
                 break;
             case 'a':
                 g_elf_force_reloc = true;
@@ -295,11 +296,11 @@ int main(int argc, char** argv)
         }
     }
 
-    if (dump_file) {
+    if (g_dump_file) {
         for (size_t i = 0; i < mm.count; i++) {
             char dump_file_name[1024];
             memset(dump_file_name, 0, sizeof(dump_file_name));
-            snprintf(dump_file_name, sizeof(dump_file_name) - 1, "%s.%s", dump_file, mm.entries[i].name);
+            snprintf(dump_file_name, sizeof(dump_file_name) - 1, "%s.%s", g_dump_file, mm.entries[i].name);
             printf("Dumping %s to %s...\n", mm.entries[i].name, dump_file_name);
             int dfd = open(dump_file_name, O_CREAT | O_RDWR | O_TRUNC, 0666);
             if (mm.entries[i].length != write(dfd, mm.entries[i].cpu_virtual, mm.entries[i].length)) {
