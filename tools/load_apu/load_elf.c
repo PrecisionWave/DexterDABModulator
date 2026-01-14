@@ -391,57 +391,69 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
 
         if (sym && shdr->sh_type == SHT_REL) {
-            local_debug(
-                1, "  REL in section %2d: flags %04x %s\n", section, shdr->sh_flags, lookup_name(names, shdr->sh_name));
+            Elf32_Shdr* shdrL = (Elf32_Shdr*)(file + ehdr->e_shoff + shdr->sh_info * ehdr->e_shentsize);
+            if (shdrL->sh_flags & SHF_ALLOC) {
+                local_debug(
+                    1,
+                    "  REL in section %2d: flags %04x %s\n",
+                    section,
+                    shdr->sh_flags,
+                    lookup_name(names, shdr->sh_name));
 
-            for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
-                Elf32_Rel* rel = (Elf32_Rel*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
+                for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
+                    Elf32_Rel* rel = (Elf32_Rel*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
 
-                struct memory_map_entry* mme = mm_lookup(mm, rel->r_offset);
-                if (mme) {
-                    Elf32_Sym* symbol = &sym[ELF32_R_SYM(rel->r_info)];
-                    if (!do_rel(mm, symbol, rel->r_offset, ELF32_R_TYPE(rel->r_info), 0)) {
-                        relocation_error_count++;
-                        fprintf(
-                            stderr,
-                            "Relocation failed for symbol %d in section %d (type %d)\n",
-                            entry,
-                            section,
-                            ELF32_R_TYPE(rel->r_info));
+                    struct memory_map_entry* mme = mm_lookup(mm, rel->r_offset);
+                    if (mme) {
+                        Elf32_Sym* symbol = &sym[ELF32_R_SYM(rel->r_info)];
+                        if (!do_rel(mm, symbol, rel->r_offset, ELF32_R_TYPE(rel->r_info), 0)) {
+                            relocation_error_count++;
+                            fprintf(
+                                stderr,
+                                "Relocation failed for symbol %d in section %d (type %d)\n",
+                                entry,
+                                section,
+                                ELF32_R_TYPE(rel->r_info));
+                        }
+                        relocation_total_count++;
                     }
-                    relocation_total_count++;
                 }
+                if ((relocation_error_count > 0) || (g_elf_debug_level > 1))
+                    printf(
+                        "  Relocation stats: Total %zu, Errors: %zu\n", relocation_total_count, relocation_error_count);
             }
-            if ((relocation_error_count > 0) || (g_elf_debug_level > 1))
-                printf("  Relocation stats: Total %zu, Errors: %zu\n", relocation_total_count, relocation_error_count);
         }
 
         if (sym && shdr->sh_type == SHT_RELA) {
-            local_debug(
-                1,
-                "  RELA in section %2d: flags %04x %s\n",
-                section,
-                shdr->sh_flags,
-                lookup_name(names, shdr->sh_name));
-            for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
-                Elf32_Rela* rela = (Elf32_Rela*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
-                struct memory_map_entry* mme = mm_lookup(mm, rela->r_offset);
-                if (mme) {
-                    Elf32_Sym* symbol = &sym[ELF32_R_SYM(rela->r_info)];
-                    if (!do_rel(mm, symbol, rela->r_offset, ELF32_R_TYPE(rela->r_info), rela->r_addend)) {
-                        relocation_error_count++;
-                        fprintf(
-                            stderr,
-                            "Relocation failed for symbol %d in section %d (type %d)\n",
-                            entry,
-                            section,
-                            ELF32_R_TYPE(rela->r_info));
+            Elf32_Shdr* shdrL = (Elf32_Shdr*)(file + ehdr->e_shoff + shdr->sh_info * ehdr->e_shentsize);
+            if (shdrL->sh_flags & SHF_ALLOC) {
+                local_debug(
+                    1,
+                    "  RELA in section %2d: flags %04x %s\n",
+                    section,
+                    shdr->sh_flags,
+                    lookup_name(names, shdr->sh_name));
+                for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
+                    Elf32_Rela* rela = (Elf32_Rela*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
+                    struct memory_map_entry* mme = mm_lookup(mm, rela->r_offset);
+                    if (mme) {
+                        Elf32_Sym* symbol = &sym[ELF32_R_SYM(rela->r_info)];
+                        if (!do_rel(mm, symbol, rela->r_offset, ELF32_R_TYPE(rela->r_info), rela->r_addend)) {
+                            relocation_error_count++;
+                            fprintf(
+                                stderr,
+                                "Relocation failed for symbol %d in section %d (type %d)\n",
+                                entry,
+                                section,
+                                ELF32_R_TYPE(rela->r_info));
+                        }
+                        relocation_total_count++;
                     }
-                    relocation_total_count++;
                 }
+                if ((relocation_error_count > 0) || (g_elf_debug_level > 1))
+                    printf(
+                        "  Relocation stats: Total %zu, Errors: %zu\n", relocation_total_count, relocation_error_count);
             }
-            if ((relocation_error_count > 0) || (g_elf_debug_level > 1))
-                printf("  Relocation stats: Total %zu, Errors: %zu\n", relocation_total_count, relocation_error_count);
         }
     }
 
