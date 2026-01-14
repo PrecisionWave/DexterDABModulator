@@ -163,10 +163,11 @@ static struct memory_map mm = {
 
 int g_elf_debug_level = 0;
 bool g_elf_force_reloc = false;
+bool g_elf_ignore_unaligned = false;
 
 void usage(const char* progname)
 {
-    fprintf(stderr, "usage: %s [-d /dev/apuX] [-r] [-f file] [-x dumpfile] [-a]\n", progname);
+    fprintf(stderr, "usage: %s [-d /dev/apuX] [-r] [-f file] [-x dumpfile] [-a] [-S] [-U]\n", progname);
     fprintf(stderr, "  -d /dev/apu0     Device to use\n");
     fprintf(stderr, "  -f file.elf      Download elf file\n");
     fprintf(stderr, "  -f file.bin      Download bin file\n");
@@ -175,6 +176,7 @@ void usage(const char* progname)
     fprintf(stderr, "  -a               Force elf relocation\n");
     fprintf(stderr, "  -x basename      Dump RAM contents after download\n");
     fprintf(stderr, "  -S               Show status of AXI Firewall\n");
+    fprintf(stderr, "  -U               allow Unaligned relocations\n");
 }
 
 struct APU_LDR {
@@ -210,7 +212,7 @@ int main(int argc, char** argv)
     const char* dev = "/dev/apu0";
     printf("Page size: %zu bytes\n", getpagesize());
 
-    while ((c = getopt(argc, argv, "d:rf:vx:aS")) != -1) {
+    while ((c = getopt(argc, argv, "d:rf:vx:aSU")) != -1) {
         switch (c) {
             case 'd':
                 dev = optarg;
@@ -233,6 +235,9 @@ int main(int argc, char** argv)
                 break;
             case 'S':
                 do_axifw_status = true;
+                break;
+            case 'U':
+                g_elf_ignore_unaligned = true;
                 break;
             case '?':
                 usage(argv[0]);

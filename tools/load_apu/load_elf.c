@@ -17,6 +17,7 @@
 
 extern int g_elf_debug_level;
 extern bool g_elf_force_reloc;
+extern bool g_elf_ignore_unaligned;
 extern char* g_dump_file;
 
 #define local_debug(level, fmt, ...)      \
@@ -169,6 +170,18 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
         symbol->st_value,
         r_offset,
         r_addend);
+
+    if (((offset & 0x3) != 0)) {
+        fprintf(
+            stderr,
+            "%s: Relocation of unaligned data requested for: %s @ %04x",
+            g_elf_ignore_unaligned ? "Critical" : "Error",
+            mme_offset->name,
+            offset);
+
+        if (!g_elf_ignore_unaligned)
+            return false;
+    }
 
     value += r_addend;
     uint32_t old_value;
