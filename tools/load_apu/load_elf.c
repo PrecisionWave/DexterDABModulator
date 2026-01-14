@@ -361,14 +361,14 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
 
     /* relocation */
     local_debug(1, "Sections:\n");
-    local_debug(1, "  Idx Type Name                        Size      ADDR      File off  Flags Align\n");
+    local_debug(1, "  Idx Type Name                        Size      ADDR      File off  Flags Link Info Align\n");
     Elf32_Sym* sym = NULL;
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
         const char* name = lookup_name(names, shdr->sh_name);
         local_debug(
             1,
-            "  %3d %4d %-27s %08x  %08x  %08x  %04x  2**%u\n",
+            "  %3d %4d %-27s %08x  %08x  %08x  %04x  %04x %04x 2**%u\n",
             section,
             shdr->sh_type,
             name,
@@ -376,6 +376,8 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
             shdr->sh_addr,
             shdr->sh_offset,
             shdr->sh_flags,
+            shdr->sh_link,
+            shdr->sh_info,
             shdr->sh_addralign);
         if (shdr->sh_type == SHT_SYMTAB && strcmp(name, ".symtab") == 0) {
             sym = (Elf32_Sym*)(file + shdr->sh_offset);
