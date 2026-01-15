@@ -98,7 +98,7 @@ int main ()
    }
 
    volatile uint32_t* pTscLo = (volatile uint32_t*)(0x40000000);
-   volatile uint32_t* pTscHi = (volatile uint32_t*)(0x40000020);
+   volatile uint32_t* pTscHi = (volatile uint32_t*)(0x40000008);
    for(int i=0; i<15; i++) {
 	   xil_printf("Timestamp counter: 0x%04x%08x\r\n", *pTscHi , *pTscLo);
    }
@@ -120,23 +120,29 @@ int main ()
          print("TmrCtrSelfTestExample FAILED\r\n");
       }
    }
-   {
-      int Status;
 
-      print("\r\n Running Interrupt Test  for accel_mb_axi_timer...\r\n");
-      
-      Status = TmrCtrIntrExample(&intc, &accel_mb_axi_timer_Timer, \
-                                 XPAR_ACCEL_MB_AXI_TIMER_DEVICE_ID, \
-                                 XPAR_ACCEL_MB_AXI_INTC_ACCEL_MB_AXI_TIMER_INTERRUPT_INTR, 0);
+   for(int i=0; i<15; i++) {
+	   {
+		  int Status;
+
+		  print("\r\n Running Interrupt Test  for accel_mb_axi_timer...\r\n");
+
+		  Status = TmrCtrIntrExample(&intc, &accel_mb_axi_timer_Timer, \
+									 XPAR_ACCEL_MB_AXI_TIMER_DEVICE_ID, \
+									 XPAR_ACCEL_MB_AXI_INTC_ACCEL_MB_AXI_TIMER_INTERRUPT_INTR, 0);
+
+		  if (Status == 0) {
+			 print("Timer Interrupt Test PASSED\r\n");
+		  }
+		  else {
+			 print("Timer Interrupt Test FAILED\r\n");
+		  }
 	
-      if (Status == 0) {
-         print("Timer Interrupt Test PASSED\r\n");
-      } 
-      else {
-         print("Timer Interrupt Test FAILED\r\n");
-      }
+	   }
 
+	   xil_printf("Timestamp counter: 0x%04x%08x\r\n", *pTscHi , *pTscLo);
    }
+
 
    print("---Exiting main---\n\r");
    for(;;);
