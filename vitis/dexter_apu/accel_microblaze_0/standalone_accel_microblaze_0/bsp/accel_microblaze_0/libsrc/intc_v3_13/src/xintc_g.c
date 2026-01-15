@@ -5,7 +5,7 @@
 * Version: 2021.1.1
 * DO NOT EDIT.
 *
-* Copyright (C) 2010-2025 Xilinx, Inc. All Rights Reserved.
+* Copyright (C) 2010-2026 Xilinx, Inc. All Rights Reserved.
 * SPDX-License-Identifier: MIT 
 
 * 
@@ -36,6 +36,10 @@ XIntc_Config XIntc_ConfigTable[] =
 		XIN_SVC_SGL_ISR_OPTION,
 		XPAR_ACCEL_MB_AXI_INTC_TYPE,
 		{
+			{
+				XNullHandler,
+				(void *) XNULL
+			},
 			{
 				XNullHandler,
 				(void *) XNULL
