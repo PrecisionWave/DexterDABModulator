@@ -1,10 +1,10 @@
 # Microblaze Application Processor Unit for Dexter
 
 ## System overview
-![apu_v2](./diagrams/apu2.png)
+![s](./diagrams/apu_v5.png)
 
 Implementation details:
-- [Block Design](./apu_v4.pdf)
+- [Block Design](./apu_v5.pdf)
 
 ### Microblaze core
 The Microblaze core is fully featured for Applications: 32 bit core wit MMU and FPU.
@@ -118,10 +118,9 @@ All addresses listed below are physical addresses as seen by the device.
 | `0x4400 0000` | `0x2000 0000`      | 16k  | APU SRAM                   |
 | `0x4402 0000` | `0x4360 0000`      | 64k  | Shared mailbox             |
 | n/a           | `0x4000 0000`      | 64k  | Timestamp GPIO             |
-| n/a           | `0x4000 0000`      | 64k  | Timestamp GPIO             |
 | n/a           | `0x4060 0000`      | 64k  | APU uartlite UART          |
 | n/a           | `0x4120 0000`      | 64k  | APU interrupt controller   |
-| n/a           | `0x41C00000`       | 64k  | AXI Timer                  |
+| n/a           | `0x41C0 0000`       | 64k  | AXI Timer                  |
 | `0x4405 0000` | n/a                | 64k  | CPU 16550 UART             |
 | `0x4401 0000` | n/a                | 64k  | Reset control GPIO         |
 
