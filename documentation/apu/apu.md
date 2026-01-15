@@ -21,7 +21,7 @@ The Microblaze core is fully featured for Applications: 32 bit core wit MMU and 
 
 #### Instructions
 - Barrel Shifter
-- Basic FPU
+- No FPU
 - MUL64 integer multiplier
 - Integer divider
 - Additional MSR instructions
@@ -48,12 +48,14 @@ The Microblaze core is fully featured for Applications: 32 bit core wit MMU and 
 - Full protection
 
 #### Debug
-- Basic debug module
+- Extended debug module
 - 2 PC break points
 - 1 write address watch points
 - 1 read address watch points
-- 5 performance monitor event counters (32-Bit)
-- 1 performance latency counter  (32-Bit)
+- 5 performance monitor event counters (64-Bit)
+- 1 performance latency counter  (64-Bit)
+- 8 kB Trace Buffer
+- 4 kB Profile Buffer
 
 #### Buses
 - Peripheral Data AXI
@@ -70,10 +72,11 @@ It runs with a fixed bad rate of 115200 and is suitable for debug output.
 The mailbox is a more elaborate way for data exchange. It is intended for synchronization of two independent running
 systems. It is basically two FIFOs with control logic on either side.
 
-#### Streaming DMA
-The streaming DMA is the intended high throughput data transfer between the CPU and APU. The DMA part is entirely
-controlled by the CPU. For the APU it looks like two FIFOs with a control bit attached to it. The APU has special
-instructions to interact with the data streams. see  [Stream instructions](./stream_instructions.md).
+#### Timer
+An AXI timer with interrupt was added for timing purposes.
+
+#### Timestamp counter
+An 48-Bit free running incrementing counter that runs at cpu clock is attached to a dual GPIO block.
 
 #### Shared Memory
 There are two kind of shared memory intended for program loading and execution available;
@@ -114,23 +117,28 @@ All addresses listed below are physical addresses as seen by the device.
 | `0x0000 0000` | `0x0000 0000`      | 512M | CPU DDR (Zynq main memory) |
 | `0x4400 0000` | `0x2000 0000`      | 16k  | APU SRAM                   |
 | `0x4402 0000` | `0x4360 0000`      | 64k  | Shared mailbox             |
-| `0x4403 0000` | Stream 0 (M0_AXIS) | 64k  | AXI DMA APU -> CPU         |
-| `0x4404 0000` | Stream 0 (S0_AXIS) | 64k  | AXI DMA CPU -> APU         |
+| n/a           | `0x4000 0000`      | 64k  | Timestamp GPIO             |
+| n/a           | `0x4000 0000`      | 64k  | Timestamp GPIO             |
 | n/a           | `0x4060 0000`      | 64k  | APU uartlite UART          |
 | n/a           | `0x4120 0000`      | 64k  | APU interrupt controller   |
+| n/a           | `0x41C00000`       | 64k  | AXI Timer                  |
 | `0x4405 0000` | n/a                | 64k  | CPU 16550 UART             |
 | `0x4401 0000` | n/a                | 64k  | Reset control GPIO         |
 
 ## MMU
-| TLB index | Virtual       | Physical      | Size | EX  | WR  | W   | I   | G   | Description             |
-| --------- | ------------- | ------------- | ---- | --- | --- | --- | --- | --- | ----------------------- |
-| 0         | `0x00xx xxxx` | `0x00xx xxxx` | 16M  |     |     |     |     | y   | Null pointer protection |
-| 1         | `0x169x xxxx` | `0x169x xxxx` | 4M   | y   | y   |     |     |     | DDR (dynamic)           |
-| 2         | `0x2000 xxxx` | `0x2000 xxxx` | 64k  | y   | y   |     |     |     | SRAM                    |
-| 3         | `0x40xx xxxx` | `0x40xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 1      |
-| 4         | `0x41xx xxxx` | `0x41xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 2      |
-| 5         | `0x42xx xxxx` | `0x42xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 3      |
-| 6         | `0x43xx xxxx` | `0x43xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 4      |
+| TLB index | Virtual       | Physical      | Size | EX  | WR  | W   | I   | G   | Description                         |
+| --------- | ------------- | ------------- | ---- | --- | --- | --- | --- | --- | ----------------------------------- |
+| 0         | `0x00xx xxxx` | `0x00xx xxxx` | 16M  |     |     |     |     | y   | Null pointer protection             |
+| 1         | `0xFFxx xxxx` | `0xFFxx xxxx` | 16M  |     |     |     |     | y   | Null pointer protection (underflow) |
+| 2         | `0x40xx xxxx` | `0x40xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 1                  |
+| 3         | `0x41xx xxxx` | `0x41xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 2                  |
+| 4         | `0x42xx xxxx` | `0x42xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 3                  |
+| 5         | `0x43xx xxxx` | `0x43xx xxxx` | 16M  |     | y   |     | y   |     | Peripheral Range 4                  |
+| 6         | `0x2000 xxxx` | `0x2000 xxxx` | 64k  | y   | y   |     |     |     | SRAM                                |
+| 7         | `0x169x xxxx` | `0x169x xxxx` | 1M   | y   | y   |     |     |     | DDR (dynamic) 0 - 1MB               |
+| 8         | `0x16Ax xxxx` | `0x16Ax xxxx` | 1M   | y   | y   |     |     |     | DDR (dynamic) 1 - 2MB               |
+| 9         | `0x16Bx xxxx` | `0x16Bx xxxx` | 1M   | y   | y   |     |     |     | DDR (dynamic) 2 - 3MB               |
+| 10        | `0x16Cx xxxx` | `0x16Cx xxxx` | 1M   | y   | y   |     |     |     | DDR (dynamic) 3 - 4MB               |
 
 ### EX - Executable
 When bit is set to 1, the page contains executable code, and instructions can be fetched from the page.
@@ -163,7 +171,6 @@ C_BASE_ADDRESS in the CPU configuration is set to `0x2000 0000` which puts all v
 ## Demos
 - [Mailbox Demo](./mbox.md)
 - [Relocation test](./reloc_test.md)
-- [Stream test](./stream_test.md)
 
 ## Tipps and tricks
 
