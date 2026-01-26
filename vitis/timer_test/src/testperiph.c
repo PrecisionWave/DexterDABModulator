@@ -77,45 +77,8 @@ int main ()
    }
 
 
-
-   {
-      u32 status;
-      u32 DataRead;
-      
-      print("\r\nRunning GpioInputExample() for accel_mb_axi_gpio_tsc...\r\n");
-
-      
-      for(int i=0; i<15; i++) {
-		  status = GpioInputExample(XPAR_ACCEL_MB_AXI_GPIO_TSC_DEVICE_ID, &DataRead);
-
-		  if (status == 0) {
-			 xil_printf("GpioInputExample PASSED. Read data:0x%X\r\n", DataRead);
-		  }
-		  else {
-			 print("GpioInputExample FAILED.\r\n");
-		  }
-      }
-   }
-
    volatile uint32_t* pTscLo = (volatile uint32_t*)(0x40000000);
    volatile uint32_t* pTscHi = (volatile uint32_t*)(0x40000008);
-   for(int i=0; i<15; i++) {
-        xil_printf("Timestamp counter: 0x%04x%08x\r\n", *pTscHi , *pTscLo);
-   }
-
-   {
-        xil_printf("\r\nTimestamp counter test #2\r\n");
-
-        uint32_t tsc_vals[16];
-
-        for(int i=0; i<15; i++) {
-            tsc_vals[i] = *pTscLo;
-        }
-
-        for(int i=0; i<14; i++) {
-            xil_printf("Timestamp counter: 0x%08x - 0x%08x = %d\r\n", tsc_vals[i+1], tsc_vals[i], tsc_vals[i+1] - tsc_vals[i]);
-        }
-    }
 
     {
         xil_printf("\r\nTimestamp counter test #3\r\n");
@@ -160,6 +123,43 @@ int main ()
         for(int i=0; i<14; i++) {
             xil_printf("Timestamp counter: 0x%08x - 0x%08x = %d\r\n", tsc_vals[i+1], tsc_vals[i], tsc_vals[i+1] - tsc_vals[i]);
         }
+    }
+
+    {
+         xil_printf("\r\nTimestamp counter test #2\r\n");
+
+         uint32_t tsc_vals[16];
+
+         for(int i=0; i<15; i++) {
+             tsc_vals[i] = *pTscLo;
+         }
+
+         for(int i=0; i<14; i++) {
+             xil_printf("Timestamp counter: 0x%08x - 0x%08x = %d\r\n", tsc_vals[i+1], tsc_vals[i], tsc_vals[i+1] - tsc_vals[i]);
+         }
+     }
+
+    for(int i=0; i<15; i++) {
+         xil_printf("Timestamp counter: 0x%04x%08x\r\n", *pTscHi , *pTscLo);
+    }
+
+    {
+      u32 status;
+      u32 DataRead;
+      
+      print("\r\nRunning GpioInputExample() for accel_mb_axi_gpio_tsc...\r\n");
+
+      
+      for(int i=0; i<15; i++) {
+		  status = GpioInputExample(XPAR_ACCEL_MB_AXI_GPIO_TSC_DEVICE_ID, &DataRead);
+
+		  if (status == 0) {
+			 xil_printf("GpioInputExample PASSED. Read data:0x%X\r\n", DataRead);
+		  }
+		  else {
+			 print("GpioInputExample FAILED.\r\n");
+		  }
+      }
     }
 
    {
