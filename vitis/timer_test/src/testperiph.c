@@ -100,11 +100,67 @@ int main ()
    volatile uint32_t* pTscLo = (volatile uint32_t*)(0x40000000);
    volatile uint32_t* pTscHi = (volatile uint32_t*)(0x40000008);
    for(int i=0; i<15; i++) {
-	   xil_printf("Timestamp counter: 0x%04x%08x\r\n", *pTscHi , *pTscLo);
+        xil_printf("Timestamp counter: 0x%04x%08x\r\n", *pTscHi , *pTscLo);
    }
 
+   {
+        xil_printf("\r\nTimestamp counter test #2\r\n");
 
+        uint32_t tsc_vals[16];
 
+        for(int i=0; i<15; i++) {
+            tsc_vals[i] = *pTscLo;
+        }
+
+        for(int i=0; i<14; i++) {
+            xil_printf("Timestamp counter: 0x%08x - 0x%08x = %d\r\n", tsc_vals[i+1], tsc_vals[i], tsc_vals[i+1] - tsc_vals[i]);
+        }
+    }
+
+    {
+        xil_printf("\r\nTimestamp counter test #3\r\n");
+
+        uint32_t tsc_vals[16];
+        asm volatile(
+            "lwi r5, %0, 0\n"
+            "lwi r6, %0, 0\n"
+            "swi r5, %1, 0\n"
+            "swi r6, %1, 4\n"
+            "lwi r5, %0, 0\n"
+            "lwi r6, %0, 0\n"
+            "swi r5, %1, 8\n"
+            "swi r6, %1, 12\n"
+            "lwi r5, %0, 0\n"
+            "lwi r6, %0, 0\n"
+            "swi r5, %1, 16\n"
+            "swi r6, %1, 20\n"
+            "lwi r5, %0, 0\n"
+            "lwi r6, %0, 0\n"
+            "swi r5, %1, 24\n"
+            "swi r6, %1, 28\n"
+            "lwi r5, %0, 0\n"
+            "lwi r6, %0, 0\n"
+            "swi r5, %1, 32\n"
+            "swi r6, %1, 36\n"
+            "lwi r5, %0, 0\n"
+            "lwi r6, %0, 0\n"
+            "swi r5, %1, 40\n"
+            "swi r6, %1, 44\n"
+            "lwi r5, %0, 0\n"
+            "lwi r6, %0, 0\n"
+            "swi r5, %1, 48\n"
+            "swi r6, %1, 52\n"
+            "lwi r5, %0, 0\n"
+            "lwi r6, %0, 0\n"
+            "swi r5, %1, 56\n"
+            "swi r6, %1, 60\n"
+            : : "r"(0x40000000), "r"(&tsc_vals[0])
+            );
+
+        for(int i=0; i<14; i++) {
+            xil_printf("Timestamp counter: 0x%08x - 0x%08x = %d\r\n", tsc_vals[i+1], tsc_vals[i], tsc_vals[i+1] - tsc_vals[i]);
+        }
+    }
 
    {
       int status;
