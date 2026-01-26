@@ -146,6 +146,7 @@ xilinx.com:ip:axi_uartlite:2.0\
 xilinx.com:ip:microblaze:11.0\
 xilinx.com:ip:mailbox:2.1\
 xilinx.com:ip:blk_mem_gen:8.4\
+xilinx.com:ip:system_ila:1.1\
 xilinx.com:ip:fifo_generator:13.2\
 "
 
@@ -717,6 +718,17 @@ proc create_hier_cell_accel { parentCell nameHier } {
    CONFIG.use_bram_block {BRAM_Controller} \
  ] $shared_mem
 
+  # Create instance: system_ila_0, and set properties
+  set system_ila_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila:1.1 system_ila_0 ]
+  set_property -dict [ list \
+   CONFIG.ALL_PROBE_SAME_MU_CNT {2} \
+   CONFIG.C_BRAM_CNT {6} \
+   CONFIG.C_EN_STRG_QUAL {1} \
+   CONFIG.C_NUM_MONITOR_SLOTS {2} \
+   CONFIG.C_PROBE0_MU_CNT {2} \
+   CONFIG.C_SLOT {1} \
+ ] $system_ila_0
+
   # Create instance: xlslice_0, and set properties
   set xlslice_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_0 ]
   set_property -dict [ list \
@@ -750,10 +762,12 @@ proc create_hier_cell_accel { parentCell nameHier } {
   connect_bd_intf_net -intf_net mb_axi_cache_M01_AXI [get_bd_intf_pins axi_firewall_0/S_AXI] [get_bd_intf_pins mb_axi_cache/M01_AXI]
   connect_bd_intf_net -intf_net mb_axi_per_M02_AXI [get_bd_intf_pins mb_axi_per/M02_AXI] [get_bd_intf_pins mb_uartlite/S_AXI]
   connect_bd_intf_net -intf_net mb_axi_per_M03_AXI [get_bd_intf_pins mb_axi_gpio_tsc/S_AXI] [get_bd_intf_pins mb_axi_per/M03_AXI]
+  connect_bd_intf_net -intf_net [get_bd_intf_nets mb_axi_per_M03_AXI] [get_bd_intf_pins mb_axi_per/M03_AXI] [get_bd_intf_pins system_ila_0/SLOT_1_AXI]
   connect_bd_intf_net -intf_net mb_axi_per_M04_AXI [get_bd_intf_pins mb_axi_per/M04_AXI] [get_bd_intf_pins mb_axi_timer/S_AXI]
   connect_bd_intf_net -intf_net mdm_1_MBDEBUG_0 [get_bd_intf_pins mb_mdm/MBDEBUG_0] [get_bd_intf_pins microblaze_0/DEBUG]
   connect_bd_intf_net -intf_net microblaze_0_M_AXI_DC [get_bd_intf_pins mb_axi_cache/S00_AXI] [get_bd_intf_pins microblaze_0/M_AXI_DC]
   connect_bd_intf_net -intf_net microblaze_0_axi_dp [get_bd_intf_pins mb_axi_per/S00_AXI] [get_bd_intf_pins microblaze_0/M_AXI_DP]
+  connect_bd_intf_net -intf_net [get_bd_intf_nets microblaze_0_axi_dp] [get_bd_intf_pins microblaze_0/M_AXI_DP] [get_bd_intf_pins system_ila_0/SLOT_0_AXI]
   connect_bd_intf_net -intf_net microblaze_0_axi_periph_M01_AXI [get_bd_intf_pins mb_axi_per/M01_AXI] [get_bd_intf_pins shared_mailbox/S1_AXI]
   connect_bd_intf_net -intf_net microblaze_0_intc_axi [get_bd_intf_pins mb_axi_intc/s_axi] [get_bd_intf_pins mb_axi_per/M00_AXI]
   connect_bd_intf_net -intf_net microblaze_0_interrupt [get_bd_intf_pins mb_axi_intc/interrupt] [get_bd_intf_pins microblaze_0/INTERRUPT]
@@ -774,9 +788,9 @@ proc create_hier_cell_accel { parentCell nameHier } {
   connect_bd_net -net mb_uartlite_interrupt [get_bd_pins mb_int_concat/In1] [get_bd_pins mb_uartlite/interrupt]
   connect_bd_net -net mb_uartlite_tx [get_bd_pins cpu_apuuart/sin] [get_bd_pins mb_uartlite/tx]
   connect_bd_net -net mdm_1_Debug_SYS_Rst [get_bd_pins mb_mdm/Debug_SYS_Rst] [get_bd_pins mb_rstgen/mb_debug_sys_rst]
-  connect_bd_net -net microblaze_0_Clk [get_bd_pins sys_clk] [get_bd_pins axi_firewall_0/aclk] [get_bd_pins c_counter_binary_0/CLK] [get_bd_pins cpu_apuuart/s_axi_aclk] [get_bd_pins cpu_cpu2apu_axi/ACLK] [get_bd_pins cpu_cpu2apu_axi/M00_ACLK] [get_bd_pins cpu_cpu2apu_axi/M01_ACLK] [get_bd_pins cpu_cpu2apu_axi/M02_ACLK] [get_bd_pins cpu_cpu2apu_axi/M03_ACLK] [get_bd_pins cpu_cpu2apu_axi/M04_ACLK] [get_bd_pins cpu_cpu2apu_axi/S00_ACLK] [get_bd_pins cpu_mb_control/s_axi_aclk] [get_bd_pins cpu_shared_bram_ctrl/s_axi_aclk] [get_bd_pins mb_axi_cache/ACLK] [get_bd_pins mb_axi_cache/M00_ACLK] [get_bd_pins mb_axi_cache/M01_ACLK] [get_bd_pins mb_axi_cache/S00_ACLK] [get_bd_pins mb_axi_cache/S01_ACLK] [get_bd_pins mb_axi_gpio_tsc/s_axi_aclk] [get_bd_pins mb_axi_intc/processor_clk] [get_bd_pins mb_axi_intc/s_axi_aclk] [get_bd_pins mb_axi_per/ACLK] [get_bd_pins mb_axi_per/M00_ACLK] [get_bd_pins mb_axi_per/M01_ACLK] [get_bd_pins mb_axi_per/M02_ACLK] [get_bd_pins mb_axi_per/M03_ACLK] [get_bd_pins mb_axi_per/M04_ACLK] [get_bd_pins mb_axi_per/S00_ACLK] [get_bd_pins mb_axi_timer/s_axi_aclk] [get_bd_pins mb_rstgen/slowest_sync_clk] [get_bd_pins mb_shared_bram_ctrl/s_axi_aclk] [get_bd_pins mb_uartlite/s_axi_aclk] [get_bd_pins microblaze_0/Clk] [get_bd_pins shared_mailbox/S0_AXI_ACLK] [get_bd_pins shared_mailbox/S1_AXI_ACLK]
+  connect_bd_net -net microblaze_0_Clk [get_bd_pins sys_clk] [get_bd_pins axi_firewall_0/aclk] [get_bd_pins c_counter_binary_0/CLK] [get_bd_pins cpu_apuuart/s_axi_aclk] [get_bd_pins cpu_cpu2apu_axi/ACLK] [get_bd_pins cpu_cpu2apu_axi/M00_ACLK] [get_bd_pins cpu_cpu2apu_axi/M01_ACLK] [get_bd_pins cpu_cpu2apu_axi/M02_ACLK] [get_bd_pins cpu_cpu2apu_axi/M03_ACLK] [get_bd_pins cpu_cpu2apu_axi/M04_ACLK] [get_bd_pins cpu_cpu2apu_axi/S00_ACLK] [get_bd_pins cpu_mb_control/s_axi_aclk] [get_bd_pins cpu_shared_bram_ctrl/s_axi_aclk] [get_bd_pins mb_axi_cache/ACLK] [get_bd_pins mb_axi_cache/M00_ACLK] [get_bd_pins mb_axi_cache/M01_ACLK] [get_bd_pins mb_axi_cache/S00_ACLK] [get_bd_pins mb_axi_cache/S01_ACLK] [get_bd_pins mb_axi_gpio_tsc/s_axi_aclk] [get_bd_pins mb_axi_intc/processor_clk] [get_bd_pins mb_axi_intc/s_axi_aclk] [get_bd_pins mb_axi_per/ACLK] [get_bd_pins mb_axi_per/M00_ACLK] [get_bd_pins mb_axi_per/M01_ACLK] [get_bd_pins mb_axi_per/M02_ACLK] [get_bd_pins mb_axi_per/M03_ACLK] [get_bd_pins mb_axi_per/M04_ACLK] [get_bd_pins mb_axi_per/S00_ACLK] [get_bd_pins mb_axi_timer/s_axi_aclk] [get_bd_pins mb_rstgen/slowest_sync_clk] [get_bd_pins mb_shared_bram_ctrl/s_axi_aclk] [get_bd_pins mb_uartlite/s_axi_aclk] [get_bd_pins microblaze_0/Clk] [get_bd_pins shared_mailbox/S0_AXI_ACLK] [get_bd_pins shared_mailbox/S1_AXI_ACLK] [get_bd_pins system_ila_0/clk]
   connect_bd_net -net microblaze_0_intr [get_bd_pins mb_axi_intc/intr] [get_bd_pins mb_int_concat/dout]
-  connect_bd_net -net sys_rstgen1_peripheral_aresetn [get_bd_pins mb_axi_gpio_tsc/s_axi_aresetn] [get_bd_pins mb_axi_intc/s_axi_aresetn] [get_bd_pins mb_axi_timer/s_axi_aresetn] [get_bd_pins mb_rstgen/peripheral_aresetn] [get_bd_pins mb_shared_bram_ctrl/s_axi_aresetn] [get_bd_pins mb_uartlite/s_axi_aresetn] [get_bd_pins shared_mailbox/S1_AXI_ARESETN]
+  connect_bd_net -net sys_rstgen1_peripheral_aresetn [get_bd_pins mb_axi_gpio_tsc/s_axi_aresetn] [get_bd_pins mb_axi_intc/s_axi_aresetn] [get_bd_pins mb_axi_timer/s_axi_aresetn] [get_bd_pins mb_rstgen/peripheral_aresetn] [get_bd_pins mb_shared_bram_ctrl/s_axi_aresetn] [get_bd_pins mb_uartlite/s_axi_aresetn] [get_bd_pins shared_mailbox/S1_AXI_ARESETN] [get_bd_pins system_ila_0/resetn]
   connect_bd_net -net xlconstant_0_dout [get_bd_pins mb_reset_mode_sleep/dout] [get_bd_pins microblaze_0/Reset_Mode]
   connect_bd_net -net xlslice_0_Dout [get_bd_pins mb_axi_gpio_tsc/gpio_io_i] [get_bd_pins xlslice_0/Dout]
   connect_bd_net -net xlslice_1_Dout [get_bd_pins mb_axi_gpio_tsc/gpio2_io_i] [get_bd_pins xlslice_1/Dout]
@@ -1917,6 +1931,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   # Restore current instance
   current_bd_instance $oldCurInst
 
+  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -1928,6 +1943,4 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
 
 create_root_design ""
 
-
-common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
