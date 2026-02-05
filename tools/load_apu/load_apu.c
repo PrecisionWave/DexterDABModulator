@@ -121,7 +121,7 @@ int main(int argc, char** argv)
     uint32_t start_address = 0;
     printf("Page size: %zu bytes\n", getpagesize());
 
-    while ((c = getopt(argc, argv, "d:rf:vx:asU")) != -1) {
+    while ((c = getopt(argc, argv, "d:rf:vx:as:U")) != -1) {
         switch (c) {
             case 'd':
                 dev = optarg;
