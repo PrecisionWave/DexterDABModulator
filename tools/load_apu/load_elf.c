@@ -9,11 +9,13 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <elf.h>
-
 #include "memorymap.h"
 #include "mmio.h"
 #include "apu.h"
+
+#ifndef EM_RISCV
+#define EM_RISCV 243
+#endif
 
 extern int g_elf_debug_level;
 extern bool g_elf_force_reloc;
@@ -88,212 +90,9 @@ static const char* lookup_name(const char* names, int index)
     return names ? names + index : "?";
 }
 
-
-// From UG984: Relocations
-//
-// Relocation information is used by linkers in order to bind symbols and addresses that could not be determined when
-// the initial object was generated. Relocation entries describe how to alter the instruction and data relocation fields
-// Relocations applied to executable or shared object files are similar and accomplish the same result. All relocations
-// are listed and described in the following table, including the operation performed to compute the value of the
-// relocation.
-//
-// Relocation Entries
-// Code Name                        64?    Description                                         Operation
-//  0   R_MICROBLAZE_NONE                  This relocation does nothing.                       none
-//  1   R_MICROBLAZE_32                    A standard 32 bit relocation.                       S+A
-//  2   R_MICROBLAZE_32_PCREL              A standard PCREL 32 bit relocation.                 S+A-P
-//  3   R_MICROBLAZE_64_PCREL       yes    A 64 bit PCREL relocation.                          (S+A-P)&0xFFFF (#imm)
-//  4   R_MICROBLAZE_32_PCREL_LO           The low half of a PCREL 32 bit relocation.          (S+A-P)&0xFFFF
-//  5   R_MICROBLAZE_64             yes    A 64 bit relocation.                                (S+A)&0xFFFF (#imm)
-//  6   R_MICROBLAZE_32_LO                 The low half of a 32 bit relocation.                (S+A)&0xFFFF
-//  7   R_MICROBLAZE_SRO32                 Read-only small data section relocation.            (S+A - _SDA_BASE_)
-//  8   R_MICROBLAZE_SRW32                 Read-write small data area relocation.              (S+A - _SDA_BASE_)
-//  9   R_MICROBLAZE_64_NONE               This relocation does nothing. Used for relaxation.  none
-// 10   R_MICROBLAZE_32_SYM_OP_SYM         Symbol Op Symbol relocation.                        none
-// 11   R_MICROBLAZE_GNU_VTINHERIT         GNU extension to record C++ vtable hierarchy.
-// 12   R_MICROBLAZE_GNU_VTENTRY           GNU extension to record C++ vtable member usage.
-// 13   R_MICROBLAZE_GOTPC_64       yes    A 64 bit GOTPC relocation.                          G+A–P (#imm)
-// 14   R_MICROBLAZE_GOT_64                A 64 bit GOT relocation.                            G+A (#imm)
-// 15   R_MICROBLAZE_PLT_64                A 64 bit PLT relocation.                            L+A (#imm)
-// 16   R_MICROBLAZE_REL                   Table-entry not used.                               ((B + A)>>16) & 0xFFFF
-// 17   R_MICROBLAZE_JUMP_SLOT             Table-entry not used.                               (S >> 16) & 0xFFFF
-// 18   R_MICROBLAZE_GLOB_DAT              Table-entry not used.                               (S >> 16) & 0xFFFF
-// 19   R_MICROBLAZE_GOTOFF_64             A 64 bit GOT relative relocation.                   (S+A-GOT)&0xFFFF
-// 20   R_MICROBLAZE_GOTOFF_32             A 32 bit GOT relative relocation.                   (S+A-GOT)&0xFFFF
-// 21   R_MICROBLAZE_COPY                  COPY relocation.                                    none
-// 22   R_MICROBLAZE_TLS                   TLS relocations for TLS.                            none
-// 23   R_MICROBLAZE_TLSGD                 TLSGD relocations for TLS.                          @got@tlsgd
-// 24   R_MICROBLAZE_TLSLD                 TLSLD relocations for TLS.                          @got@tlsld
-// 25   R_MICROBLAZE_TLSDTPMOD32           Computes the load module.                           @got@dtpmod
-// 26   R_MICROBLAZE_TLSDTPREL32           Computes a dtv-relative displacement.               @got@dtprel
-// 27   R_MICROBLAZE_TLSDTPREL64           Computes a dtv-relative displacement.               @got@dtprel
-// 28   R_MICROBLAZE_TLSGOTTPREL32         Computes a tp-relative displacement.                @got@prel
-// 29   R_MICROBLAZE_TLSTPREL32            Computes a tp-relative displacement.                @got@prel
-// 33   R_MICROBLAZE_32_NONE               Standard 32-bit relocation.                         none
-
-//  A   The addend used to compute the value of the relocatable field.
-//  B   The base address at which a shared object is loaded into memory during execution.
-//      Generally, a shared object file is built with a 0 base virtual address,
-//      but the execution address is different. See "Program Header".
-//  G   The offset into the global offset table at which the address of the relocation entry's
-//      symbol resides during execution. See "Global Offset Table (Processor-Specific)".
-// GOT  The address of the global offset table. See "Global Offset Table (Processor-Specific)".
-//  L   The section offset or address of the procedure linkage table entry for a symbol.
-//      See "Procedure Linkage Table (Processor-Specific)".
-//  P   The section offset or address of the storage unit being relocated, computed using r_offset.
-//  S   The value of the symbol whose index resides in the relocation entry.
-
-static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend)
+static bool
+do_rel_fail(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend)
 {
-    struct memory_map_entry* mme_offset = mm_lookup(mm, r_offset);
-
-    // noting to do?
-    if (!mme_offset)
-        return true;
-
-    uint32_t offset = r_offset - mme_offset->apu_linked;
-
-    struct memory_map_entry* mme_value = mm_lookup(mm, symbol->st_value);
-    uint32_t value = symbol->st_value;
-    if (mme_value) {
-        value -= mme_value->apu_linked;
-        value += mme_value->apu_loaded;
-    }
-
-    local_debug(
-        2,
-        "%s symbol: bind %d, type %d, other:%d, value: %08x, r_offset: %08x, r_addend: %08x\n",
-        mme_offset != mme_value ? "Foreign" : "Local",
-        ELF32_ST_BIND(symbol->st_info),
-        ELF32_ST_TYPE(symbol->st_info),
-        symbol->st_other,
-        symbol->st_value,
-        r_offset,
-        r_addend);
-
-    if (((offset & 0x3) != 0)) {
-        fprintf(
-            stderr,
-            "%s: Relocation of unaligned data requested for: %s @ %04x",
-            g_elf_ignore_unaligned ? "Critical" : "Error",
-            mme_offset->name,
-            offset);
-
-        if (!g_elf_ignore_unaligned)
-            return false;
-    }
-
-    value += r_addend;
-    uint32_t old_value;
-    uint32_t new_value;
-
-    switch (type) {
-        case R_MICROBLAZE_32:
-            // A standard 32 bit relocation.    (S + A)
-            old_value = ioread32(mme_offset->cpu_virtual, offset);
-            iowrite32(mme_offset->cpu_virtual, offset, value);
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_MICROBLAZE_32: %08x -> %08x\n", old_value, value);
-            return true;
-
-        case R_MICROBLAZE_64_PCREL:
-            // Really needed if PC relative?
-            // A 64 bit PCREL relocation.       (S+A-P)&0xFFFF (#imm)
-            value -= offset + 4;
-            value -= mme_offset->apu_loaded;
-
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
-            new_value = (old_value & 0xffff0000ULL) | ((value >> 16) & 0xffff);
-            iowrite32(mme_offset->cpu_virtual, offset + 0, new_value);
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_MICROBLAZE_64_PCREL (+0): %08x -> %08x, ", old_value, new_value);
-
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
-            new_value = (old_value & 0xffff0000ULL) | (value & 0xffff);
-            iowrite32(mme_offset->cpu_virtual, offset + 4, new_value);
-            local_debug(2, "(+4): %08x -> %08x\n", old_value, new_value);
-            return true;
-
-        case R_MICROBLAZE_64:
-            // A 64 bit relocation.             (S+A)&0xFFFF (#imm)
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
-            new_value = (old_value & 0xffff0000ULL) | ((value >> 16) & 0xffff);
-            iowrite32(mme_offset->cpu_virtual, offset + 0, new_value);
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_MICROBLAZE_64 (+0): %08x -> %08x, ", old_value, new_value);
-
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
-            new_value = (old_value & 0xffff0000ULL) | (value & 0xffff);
-            iowrite32(mme_offset->cpu_virtual, offset + 4, new_value);
-            local_debug(2, "(+4): %08x -> %08x\n", old_value, new_value);
-            return true;
-
-        case R_MICROBLAZE_GOTPC_64:
-            // A 64 bit GOTPC relocation.       G+A–P (#imm)
-            // Added hint to rebuild ELF without this
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
-            local_debug(2, "R_MICROBLAZE_GOTPC_64 (+0): %08x, ", old_value);
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
-            local_debug(2, "(+4): %08x\n", old_value);
-            return false;
-
-        case R_MICROBLAZE_GOT_64:
-            // A 64 bit GOT relocation.         G+A (#imm)
-            // Added hint to rebuild ELF without this
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
-            local_debug(2, "R_MICROBLAZE_GOT_64 (+0): %08x, ", old_value);
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
-            local_debug(2, "(+4): %08x\n", old_value);
-            return false;
-
-        case R_MICROBLAZE_PLT_64:
-            // A 64 bit PLT relocation.         L+A (#imm)
-            // Added hint to rebuild ELF without this
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
-            local_debug(2, "R_MICROBLAZE_PLT_64 (+0): %08x, ", old_value);
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
-            local_debug(2, "(+4): %08x\n", old_value);
-            return false;
-
-        case R_MICROBLAZE_32_PCREL_LO:
-            // The low half of a PCREL 32 bit relocation. (S+A-P)&0xFFFF
-            value -= offset;
-            value -= mme_offset->apu_loaded;
-
-            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
-            new_value = (old_value & 0xffff0000ULL) | (value & 0xffff);
-            iowrite32(mme_offset->cpu_virtual, offset + 0, new_value);
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_MICROBLAZE_32_PCREL_LO: %08x -> %08x\n", old_value, new_value);
-
-            return true;
-
-        case R_MICROBLAZE_NONE:
-            // This relocation does nothing.    none
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_MICROBLAZE_NONE\n");
-            return true;
-
-        case R_MICROBLAZE_64_NONE:
-            // This relocation does nothing.    none
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_MICROBLAZE_64_NONE\n");
-            return true;
-
-        case 33: /* R_MICROBLAZE_32_NONE.  */
-            // This relocation does nothing.    none
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_MICROBLAZE_32_NONE\n");
-            return true;
-
-        default:
-            fprintf(stderr, "Unknown relocation type %d\n", type);
-            break;
-    }
-
     return false;
 }
 
@@ -301,19 +100,42 @@ static bool do_rel(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset
 bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
 {
     Elf32_Ehdr* ehdr = (Elf32_Ehdr*)file;
+    do_rel_t do_rel = do_rel_fail;
 
     // Check all assumptions
-    assert(ehdr->e_ident[EI_MAG0] == ELFMAG0);
-    assert(ehdr->e_ident[EI_MAG1] == ELFMAG1);
-    assert(ehdr->e_ident[EI_MAG2] == ELFMAG2);
-    assert(ehdr->e_ident[EI_MAG3] == ELFMAG3);
+    if (!((ehdr->e_ident[EI_MAG0] == ELFMAG0) && (ehdr->e_ident[EI_MAG1] == ELFMAG1) &&
+          (ehdr->e_ident[EI_MAG2] == ELFMAG2) && (ehdr->e_ident[EI_MAG3] == ELFMAG3))) {
+        fprintf(stderr, "Error: ELF magic check failed!\n");
+        return false;
+    }
 
-    assert(ehdr->e_ident[EI_CLASS] == ELFCLASS32);
-    assert(ehdr->e_ident[EI_DATA] == ELFDATA2LSB);
+    if (!(ehdr->e_type == ET_EXEC)) {
+        fprintf(stderr, "Error: ELF type not ET_EXEC!\n");
+        return false;
+    }
 
-    assert(ehdr->e_machine == EM_MICROBLAZE);
+    if (!(ehdr->e_ident[EI_DATA] == ELFDATA2LSB)) {
+        fprintf(stderr, "Error: ELF type not LE!\n");
+        return false;
+    }
 
-    assert(ehdr->e_type == ET_EXEC);
+    // Microblaze
+    if (ehdr->e_machine == EM_MICROBLAZE) {
+        if (ehdr->e_ident[EI_CLASS] != ELFCLASS32) {
+            fprintf(stderr, "Warning: Not 32-Bit ELF. Untested!");
+        }
+
+        do_rel = do_rel_mb;
+    }
+
+    // RISC-V
+    if (ehdr->e_machine == EM_RISCV) {
+        if (ehdr->e_ident[EI_CLASS] != ELFCLASS32) {
+            fprintf(stderr, "Warning: Not 32-Bit ELF. Untested!");
+        }
+
+        do_rel = do_rel_rv;
+    }
 
     printf("Zeroing memory...\n");
     for (size_t i = 0; i < mm->count; i++) {

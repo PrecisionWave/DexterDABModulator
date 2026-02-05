@@ -44,101 +44,10 @@ void apu_reset(int fd, bool assert)
     ioctl(fd, DEXTER_APU_IOCTL_APU_RESET, &val);
 }
 
-static struct memory_map_entry mmaxifw = {
-    0,
-};
 
-void axi_fw_status(int fd)
+void apu_start(int fd, uint32_t start_address)
 {
-    if (!mmaxifw.cpu_virtual)
-        return;
-    printf("AXI Firewall status\n");
-    uint32_t MI_Fault_Status = ioread32(mmaxifw.cpu_virtual, 0x000);
-    printf("MI_Fault_Status: %08x\n", MI_Fault_Status);
-    if (MI_Fault_Status & (1 << 26))
-        printf("\tXILINX_WR_DECERR\n");
-    if (MI_Fault_Status & (1 << 25))
-        printf("\tXILINX_WR_SLVERR\n");
-    if (MI_Fault_Status & (1 << 24))
-        printf("\tERRM_WVALID_STABLE\n");
-    if (MI_Fault_Status & (1 << 23))
-        printf("\tERRM_AWVALID_STABLE\n");
-    if (MI_Fault_Status & (1 << 22))
-        printf("\tERRM_AWADDR_BOUNDARY\n");
-    if (MI_Fault_Status & (1 << 21))
-        printf("\tERRM_WDATA_NUM\n");
-    if (MI_Fault_Status & (1 << 20))
-        printf("\tERRM_AWSIZE\n");
-    if (MI_Fault_Status & (1 << 19))
-        printf("\tRECM_WVALID_TO_AWVALID_MAX_WAIT\n");
-    if (MI_Fault_Status & (1 << 18))
-        printf("\tRECM_CONTINUOUS_WTRANSFERS_MAX_WAIT\n");
-    if (MI_Fault_Status & (1 << 17))
-        printf("\tRECM_BREADY_MAX_WAIT\n");
-    if (MI_Fault_Status & (1 << 16))
-        printf("\tWRITE_RESPONSE_BUSY\n");
-    if (MI_Fault_Status & (1 << 6))
-        printf("\tXILINX_RD_DECERR\n");
-    if (MI_Fault_Status & (1 << 5))
-        printf("\tXILINX_RD_SLVERR\n");
-    if (MI_Fault_Status & (1 << 4))
-        printf("\tERRM_ARVALID_STABLE\n");
-    if (MI_Fault_Status & (1 << 3))
-        printf("\tERRM_ARADDR_BOUNDARY\n");
-    if (MI_Fault_Status & (1 << 2))
-        printf("\tERRM_ARSIZE\n");
-    if (MI_Fault_Status & (1 << 1))
-        printf("\tRECM_RREADY_MAX_WAIT\n");
-    if (MI_Fault_Status & (1 << 0))
-        printf("\tREAD_RESPONSE_BUSY\n");
-
-    uint32_t SI_Fault_Status = ioread32(mmaxifw.cpu_virtual, 0x100);
-    printf("SI_Fault_Status: %08x\n", SI_Fault_Status);
-    if (SI_Fault_Status & (1 << 26))
-        printf("\tXILINX_WR_DECERR\n");
-    if (SI_Fault_Status & (1 << 25))
-        printf("\tXILINX_WR_SLVERR\n");
-    if (SI_Fault_Status & (1 << 24))
-        printf("\tERRM_WVALID_STABLE\n");
-    if (SI_Fault_Status & (1 << 23))
-        printf("\tERRM_AWVALID_STABLE\n");
-    if (SI_Fault_Status & (1 << 22))
-        printf("\tERRM_AWADDR_BOUNDARY\n");
-    if (SI_Fault_Status & (1 << 21))
-        printf("\tERRM_WDATA_NUM\n");
-    if (SI_Fault_Status & (1 << 20))
-        printf("\tERRM_AWSIZE\n");
-    if (SI_Fault_Status & (1 << 19))
-        printf("\tRECM_WVALID_TO_AWVALID_MAX_WAIT\n");
-    if (SI_Fault_Status & (1 << 18))
-        printf("\tRECM_CONTINUOUS_WTRANSFERS_MAX_WAIT\n");
-    if (SI_Fault_Status & (1 << 17))
-        printf("\tRECM_BREADY_MAX_WAIT\n");
-    if (SI_Fault_Status & (1 << 16))
-        printf("\tWRITE_RESPONSE_BUSY\n");
-    if (SI_Fault_Status & (1 << 6))
-        printf("\tXILINX_RD_DECERR\n");
-    if (SI_Fault_Status & (1 << 5))
-        printf("\tXILINX_RD_SLVERR\n");
-    if (SI_Fault_Status & (1 << 4))
-        printf("\tERRM_ARVALID_STABLE\n");
-    if (SI_Fault_Status & (1 << 3))
-        printf("\tERRM_ARADDR_BOUNDARY\n");
-    if (SI_Fault_Status & (1 << 2))
-        printf("\tERRM_ARSIZE\n");
-    if (SI_Fault_Status & (1 << 1))
-        printf("\tRECM_RREADY_MAX_WAIT\n");
-    if (SI_Fault_Status & (1 << 0))
-        printf("\tREAD_RESPONSE_BUSY\n");
-
-    uint32_t Final_ARADDR_Low = ioread32(mmaxifw.cpu_virtual, 0x210);
-    uint32_t Final_ARADDR_High = ioread32(mmaxifw.cpu_virtual, 0x214);
-    uint32_t Final_AWADDR_Low = ioread32(mmaxifw.cpu_virtual, 0x218);
-    uint32_t Final_AWADDR_High = ioread32(mmaxifw.cpu_virtual, 0x21c);
-    printf("Final_ARADDR_Low: %08x\n", Final_ARADDR_Low);
-    printf("Final_ARADDR_High: %08x\n", Final_ARADDR_High);
-    printf("Final_AWADDR_Low: %08x\n", Final_AWADDR_Low);
-    printf("Final_AWADDR_High: %08x\n", Final_AWADDR_High);
+    ioctl(fd, DEXTER_APU_IOCTL_APU_START, &start_address);
 }
 
 
@@ -175,8 +84,8 @@ void usage(const char* progname)
     fprintf(stderr, "  -v               Increase debug level\n");
     fprintf(stderr, "  -a               Force elf relocation\n");
     fprintf(stderr, "  -x basename      Dump RAM contents after download\n");
-    fprintf(stderr, "  -S               Show status of AXI Firewall\n");
     fprintf(stderr, "  -U               allow Unaligned relocations\n");
+    fprintf(stderr, "  -s <address>     Set CPU start address\n");
 }
 
 struct APU_LDR {
@@ -207,12 +116,12 @@ int main(int argc, char** argv)
     int c;
     opterr = 0;
     bool do_reset = false;
-    bool do_axifw_status = false;
     const char* download_file = NULL;
     const char* dev = "/dev/apu0";
+    uint32_t start_address = 0;
     printf("Page size: %zu bytes\n", getpagesize());
 
-    while ((c = getopt(argc, argv, "d:rf:vx:aSU")) != -1) {
+    while ((c = getopt(argc, argv, "d:rf:vx:asU")) != -1) {
         switch (c) {
             case 'd':
                 dev = optarg;
@@ -233,8 +142,8 @@ int main(int argc, char** argv)
             case 'a':
                 g_elf_force_reloc = true;
                 break;
-            case 'S':
-                do_axifw_status = true;
+            case 's':
+                start_address = strtoul(optarg, NULL, 16);
                 break;
             case 'U':
                 g_elf_ignore_unaligned = true;
@@ -245,7 +154,7 @@ int main(int argc, char** argv)
         }
     }
 
-    if (!download_file && !do_reset && !do_axifw_status) {
+    if (!download_file && !do_reset) {
         usage(argv[0]);
         return 42;
     }
@@ -263,12 +172,7 @@ int main(int argc, char** argv)
         }
     }
 
-    mmap_reg(fd, APU_REGISTERS2, &mmaxifw);
-
-    if (do_axifw_status)
-        axi_fw_status(fd);
-
-    if (do_reset) {
+    if (do_reset || start_address > 0) {
         printf("Assert APU Reset\n");
         apu_reset(fd, true);
     }
@@ -319,9 +223,9 @@ int main(int argc, char** argv)
         }
     }
 
-    if (do_reset) {
+    if (do_reset || start_address > 0) {
         printf("Release APU Reset\n");
-        apu_reset(fd, false);
+        apu_start(fd, start_address);
     }
 
     return 0;

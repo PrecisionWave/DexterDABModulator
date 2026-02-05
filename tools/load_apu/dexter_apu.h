@@ -22,6 +22,7 @@
 #define DEXTER_APU_IOCTL_GET_DDR_PHYS       _IOR(0, 4, uint32_t)
 #define DEXTER_APU_IOCTL_SYNC_FOR_CPU       _IOW(0, 5, int)
 #define DEXTER_APU_IOCTL_SYNC_FOR_DEVICE    _IOW(0, 6, int)
+#define DEXTER_APU_IOCTL_APU_START          _IOW(0, 7, uint32_t)
 
 #define DEXTER_APU_DMA_FROM_DEVICE          0
 #define DEXTER_APU_DMA_TO_DEVICE            1
