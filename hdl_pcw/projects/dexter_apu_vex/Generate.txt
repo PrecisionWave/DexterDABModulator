@@ -1,0 +1,144 @@
+[info] welcome to sbt 1.10.0 (Ubuntu Java 21.0.10)
+[info] loading settings for project vexiiriscv-build from plugins.sbt ...
+[info] loading project definition from /home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu_rv/VexiiRiscv/project
+[info] loading settings for project ret from build.sbt ...
+[info] loading settings for project spinalhdl-build from plugin.sbt ...
+[info] loading project definition from /home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu_rv/VexiiRiscv/ext/SpinalHDL/project
+[info] loading settings for project all from build.sbt ...
+[info] set current project to VexiiRiscv (in build file:/home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu_rv/VexiiRiscv/)
+[info] running (fork) vexiiriscv.Generate --help
+[info] Usage: VexiiRiscv [options]
+[info]   --help                   prints this usage text
+[info]   --report-model
+[info]   --xlen <value>
+[info]   --decoders <value>
+[info]   --lanes <value>
+[info]   --decoder-at <value>
+[info]   --dispatcher-at <value>
+[info]   --reset-vector <value>
+[info]   --relaxed-div
+[info]   --relaxed-mul-inputs
+[info]   --relaxed-branch
+[info]   --relaxed-shift
+[info]   --relaxed-src
+[info]   --relaxed-btb
+[info]   --relaxed-btb-hit
+[info]   --stressed-btb
+[info]   --stressed-div
+[info]   --stressed-branch
+[info]   --stressed-shift
+[info]   --stressed-src
+[info]   --stressed-fpu
+[info]   --with-mul
+[info]   --with-div
+[info]   --with-rvm
+[info]   --with-rve
+[info]   --with-rva
+[info]   --with-rvf
+[info]   --with-rvd
+[info]   --with-rvc
+[info]   --with-rvZb
+[info]   --with-rvZba
+[info]   --with-rvZbb
+[info]   --with-rvZbc
+[info]   --with-rvZbs
+[info]   --with-rvZcbm
+[info]   --with-rvZcbm-llc
+[info]   --with-rvZknAes
+[info]   --with-sxaia
+[info]   --imsic-interrupt-number <value>
+[info]   --with-whiteboxer-outputs
+[info]   --with-hart-id-input
+[info]   --with-hart-id-input-defaulted
+[info]   --fma-reduced-accuracy
+[info]   --fpu-ignore-subnormal
+[info]   --with-aligner-buffer
+[info]   --with-dispatcher-buffer
+[info]   --with-supervisor
+[info]   --with-user
+[info]   --without-mmu
+[info]   --without-mul
+[info]   --without-div
+[info]   --with-tester-plugin
+[info]   --with-mul
+[info]   --with-div
+[info]   --with-gshare
+[info]   --with-btb
+[info]   --with-ras
+[info]   --without-ras
+[info]   --gshare-banks <value>
+[info]   --btb-single-port-ram
+[info]   --with-late-alu
+[info]   --with-store-rs2-late
+[info]   --without-late-alu
+[info]   --btb-sets <value>
+[info]   --btb-hash-width <value>
+[info]   --regfile-async
+[info]   --regfile-sync
+[info]   --regfile-dual-ports
+[info]   --regfile-infer-ports
+[info]   --regfile-reg-based
+[info]   --allow-bypass-from <value>
+[info]   --with-indirect-csr
+[info]   --performance-counters <value>
+[info]   --without-performance-scountovf
+[info]   --with-fetch-l1
+[info]   --with-lsu-l1
+[info]   --fetch-axi4
+[info]   --fetch-wishbone
+[info]   --lsu-axi4
+[info]   --lsu-wishbone
+[info]   --lsu-l1-axi4
+[info]   --lsu-l1-wishbone
+[info]   --fetch-l1
+[info]   --lsu-l1
+[info]   --fetch-l1-sets <value>
+[info]   --fetch-l1-ways <value>
+[info]   --fetch-l1-refill-count <value>
+[info]   --fetch-l1-tags-read-async
+[info]   --fetch-l1-hardware-prefetch <value>
+[info]   --fetch-l1-mem-data-width-min <value>
+[info]   --fetch-reduced-bank
+[info]   --lsu-l1-sets <value>
+[info]   --lsu-l1-ways <value>
+[info]   --lsu-l1-store-buffer-slots <value>
+[info]   --lsu-l1-store-buffer-ops <value>
+[info]   --lsu-l1-tags-read-async
+[info]   --lsu-hardware-prefetch <value>
+[info]   --lsu-software-prefetch
+[info]   --lsu-rpt-block-ahead-max <value>
+[info]   --lsu-l1-refill-count <value>
+[info]   --lsu-l1-writeback-count <value>
+[info]   --lsu-l1-mem-data-width-min <value>
+[info]   --lsu-l1-coherency
+[info]   --with-lsu-bypass
+[info]   --without-lsu-bypass
+[info]   --with-iterative-shift
+[info]   --div-radix <value>
+[info]   --div-impl <value>
+[info]   --div-ipc
+[info]   --fetch-fork-at <value>
+[info]   --lsu-fork-at <value>
+[info]   --lsu-pma-at <value>
+[info]   --debug-privileged
+[info]   --debug-triggers <value>
+[info]   --debug-triggers-lsu
+[info]   --debug-jtag-tap
+[info]   --debug-jtag-instruction
+[info]   --with-boot-mem-init
+[info]   --physical-width <value>
+[info]   --mul-keep-src
+[info]   --mmu-sync-read
+[info]   --pmp-size <value>
+[info]   --pmp-granularity <value>
+[info]   --pmp-tor-disable
+[info]   --with-rdtime
+[info]   --with-sstc
+[info]   --with-cfu
+[info]   --asid-width <value>
+[info]   --gshare-bytes <value>
+[info]   --dual-issue
+[info]   --max-ipc
+[info]   --analyse-path <value>   Print logic paths. ex : --analyse-paths from=myComponent/mySourceSignal,to=myComponent/myDestinationSignal
+[info]   --region <value>         Specify a memory region, for instance : --region base=80000000,size=80000000,main=1,exe=1 --region base=10000000,size=10000000,main=0,exe=0
+[success] Total time: 2 s, completed Feb 9, 2026, 9:57:07 AM

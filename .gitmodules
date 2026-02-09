@@ -3,3 +3,6 @@
 	url = https://github.com/analogdevicesinc/hdl.git
 	branch = hdl_2019_r2
 	update = rebase
+[submodule "hdl_pcw/projects/dexter_apu_vex/VexiiRiscv"]
+	path = hdl_pcw/projects/dexter_apu_vex/VexiiRiscv
+	url = https://github.com/SpinalHDL/VexiiRiscv.git
