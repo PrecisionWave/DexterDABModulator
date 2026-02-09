@@ -509,7 +509,7 @@ module VexiiRiscv (
   wire       [50:0]   _zz_BtbPlugin_logic_mem_port;
   wire       [63:0]   _zz_WhiteboxerPlugin_logic_decodes_0_pc;
   wire       [0:0]    _zz_FetchL1Plugin_pmaBuilder_onTransfers_0_addressHit;
-  wire       [0:0]    _zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_io;
+  wire       [0:0]    _zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_io_1;
   wire       [11:0]   _zz__zz_execute_ctrl1_down_early0_SrcPlugin_SRC2_lane0;
   wire       [11:0]   _zz__zz_execute_ctrl1_down_early0_SrcPlugin_SRC2_lane0_1;
   wire       [31:0]   _zz_execute_ctrl2_down_early0_SrcPlugin_ADD_SUB_lane0;
@@ -2813,10 +2813,10 @@ module VexiiRiscv (
   wire       [15:0]   early0_EnvPlugin_logic_flushPort_payload_uopId;
   wire                early0_EnvPlugin_logic_flushPort_payload_self;
   wire       [31:0]   FetchL1Plugin_pmaBuilder_addressBits;
+  wire                _zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_io;
   wire                FetchL1Plugin_pmaBuilder_onTransfers_0_addressHit;
   wire                FetchL1Plugin_pmaBuilder_onTransfers_0_argsHit;
   wire                FetchL1Plugin_pmaBuilder_onTransfers_0_hit;
-  wire                _zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_fault;
   reg                 DecoderPlugin_logic_forgetPort_valid;
   reg        [31:0]   DecoderPlugin_logic_forgetPort_payload_pcOnLastSlice;
   wire                execute_lane0_ctrls_1_upIsCancel;
@@ -3434,7 +3434,6 @@ module VexiiRiscv (
   wire                LsuPlugin_pmaBuilder_io_onTransfers_0_addressHit;
   wire                LsuPlugin_pmaBuilder_io_onTransfers_0_argsHit;
   wire                LsuPlugin_pmaBuilder_io_onTransfers_0_hit;
-  wire                _zz_LsuPlugin_logic_onPma_io_rsp_fault;
   wire                LearnPlugin_logic_learn_valid;
   wire       [31:0]   LearnPlugin_logic_learn_payload_pcOnLastSlice;
   wire       [31:0]   LearnPlugin_logic_learn_payload_pcTarget;
@@ -4536,8 +4535,8 @@ module VexiiRiscv (
   assign _zz_BtbPlugin_logic_ras_ptr_pop_aheadValue_4 = BtbPlugin_logic_ras_ptr_popIt;
   assign _zz_BtbPlugin_logic_ras_ptr_pop_aheadValue_3 = {1'd0, _zz_BtbPlugin_logic_ras_ptr_pop_aheadValue_4};
   assign _zz_WhiteboxerPlugin_logic_decodes_0_pc = {32'd0, decode_ctrls_0_down_PC_0};
-  assign _zz_FetchL1Plugin_pmaBuilder_onTransfers_0_addressHit = (|((FetchL1Plugin_pmaBuilder_addressBits & 32'h0) == 32'h0));
-  assign _zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_io = (|_zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_fault);
+  assign _zz_FetchL1Plugin_pmaBuilder_onTransfers_0_addressHit = (|_zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_io);
+  assign _zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_io_1 = (|_zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_io);
   assign _zz__zz_execute_ctrl1_down_early0_SrcPlugin_SRC2_lane0 = execute_ctrl1_down_Decode_UOP_lane0[31 : 20];
   assign _zz__zz_execute_ctrl1_down_early0_SrcPlugin_SRC2_lane0_1 = {execute_ctrl1_down_Decode_UOP_lane0[31 : 25],execute_ctrl1_down_Decode_UOP_lane0[11 : 7]};
   assign _zz_execute_ctrl2_down_early0_SrcPlugin_ADD_SUB_lane0 = ($signed(execute_ctrl2_down_early0_SrcPlugin_SRC1_lane0) + $signed(early0_SrcPlugin_logic_addsub_combined_rs2Patched));
@@ -4581,7 +4580,7 @@ module VexiiRiscv (
   assign _zz_LsuPlugin_pmaBuilder_l1_onTransfers_0_addressHit = (|_zz_LsuPlugin_logic_onPma_cached_rsp_io);
   assign _zz_LsuPlugin_logic_onPma_cached_rsp_io_1 = (|_zz_LsuPlugin_logic_onPma_cached_rsp_io);
   assign _zz_LsuPlugin_pmaBuilder_io_onTransfers_0_addressHit = (|((LsuPlugin_pmaBuilder_io_addressBits & 32'h0) == 32'h0));
-  assign _zz_LsuPlugin_logic_onPma_io_rsp_io = (|_zz_LsuPlugin_logic_onPma_io_rsp_fault);
+  assign _zz_LsuPlugin_logic_onPma_io_rsp_io = (|((LsuPlugin_pmaBuilder_io_addressBits & 32'h40000000) == 32'h0));
   assign _zz_decode_ctrls_1_down_RS1_ENABLE_0 = (|{((decode_ctrls_1_down_Decode_INSTRUCTION_0 & 32'h00000044) == 32'h0),{((decode_ctrls_1_down_Decode_INSTRUCTION_0 & 32'h00000018) == 32'h0),{((decode_ctrls_1_down_Decode_INSTRUCTION_0 & 32'h00006004) == 32'h00002000),{((decode_ctrls_1_down_Decode_INSTRUCTION_0 & _zz_decode_ctrls_1_down_RS1_ENABLE_0_1) == 32'h00001000),((decode_ctrls_1_down_Decode_INSTRUCTION_0 & _zz_decode_ctrls_1_down_RS1_ENABLE_0_2) == 32'h00002000)}}}});
   assign _zz_decode_ctrls_1_down_RS1_PHYS_0 = decode_ctrls_1_down_Decode_INSTRUCTION_0[19 : 15];
   assign _zz_decode_ctrls_1_down_RS2_ENABLE_0 = (|{((decode_ctrls_1_down_Decode_INSTRUCTION_0 & 32'h00000034) == 32'h00000020),{((decode_ctrls_1_down_Decode_INSTRUCTION_0 & 32'h02000064) == 32'h02000020),{((decode_ctrls_1_down_Decode_INSTRUCTION_0 & 32'h08000070) == 32'h08000020),{((decode_ctrls_1_down_Decode_INSTRUCTION_0 & _zz_decode_ctrls_1_down_RS2_ENABLE_0_1) == 32'h40000020),{(_zz_decode_ctrls_1_down_RS2_ENABLE_0_2 == _zz_decode_ctrls_1_down_RS2_ENABLE_0_3),{_zz_decode_ctrls_1_down_RS2_ENABLE_0_4,_zz_decode_ctrls_1_down_RS2_ENABLE_0_5}}}}}});
@@ -8145,12 +8144,12 @@ module VexiiRiscv (
   end
 
   assign FetchL1Plugin_pmaBuilder_addressBits = FetchL1Plugin_logic_ctrl_pmaPort_cmd_address;
+  assign _zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_io = ((FetchL1Plugin_pmaBuilder_addressBits & 32'h0) == 32'h0);
   assign FetchL1Plugin_pmaBuilder_onTransfers_0_addressHit = _zz_FetchL1Plugin_pmaBuilder_onTransfers_0_addressHit[0];
   assign FetchL1Plugin_pmaBuilder_onTransfers_0_argsHit = (|1'b1);
   assign FetchL1Plugin_pmaBuilder_onTransfers_0_hit = (FetchL1Plugin_pmaBuilder_onTransfers_0_argsHit && FetchL1Plugin_pmaBuilder_onTransfers_0_addressHit);
-  assign _zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_fault = ((FetchL1Plugin_pmaBuilder_addressBits & 32'h80000000) == 32'h80000000);
-  assign FetchL1Plugin_logic_ctrl_pmaPort_rsp_fault = (! ((|{_zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_fault,((FetchL1Plugin_pmaBuilder_addressBits & 32'hf0000000) == 32'h10000000)}) && (|FetchL1Plugin_pmaBuilder_onTransfers_0_hit)));
-  assign FetchL1Plugin_logic_ctrl_pmaPort_rsp_io = (! _zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_io[0]);
+  assign FetchL1Plugin_logic_ctrl_pmaPort_rsp_fault = (! ((|((FetchL1Plugin_pmaBuilder_addressBits & 32'hc0000000) == 32'h0)) && (|FetchL1Plugin_pmaBuilder_onTransfers_0_hit)));
+  assign FetchL1Plugin_logic_ctrl_pmaPort_rsp_io = (! _zz_FetchL1Plugin_logic_ctrl_pmaPort_rsp_io_1[0]);
   assign FetchL1Axi4Plugin_logic_axi_ar_valid = FetchL1Plugin_logic_bus_cmd_valid;
   assign FetchL1Axi4Plugin_logic_axi_ar_payload_addr = FetchL1Plugin_logic_bus_cmd_payload_address;
   assign FetchL1Axi4Plugin_logic_axi_ar_payload_prot = 3'b110;
@@ -9690,15 +9689,14 @@ module VexiiRiscv (
   assign LsuPlugin_pmaBuilder_l1_onTransfers_0_addressHit = _zz_LsuPlugin_pmaBuilder_l1_onTransfers_0_addressHit[0];
   assign LsuPlugin_pmaBuilder_l1_onTransfers_0_argsHit = (|((LsuPlugin_pmaBuilder_l1_argsBits & 1'b0) == 1'b0));
   assign LsuPlugin_pmaBuilder_l1_onTransfers_0_hit = (LsuPlugin_pmaBuilder_l1_onTransfers_0_argsHit && LsuPlugin_pmaBuilder_l1_onTransfers_0_addressHit);
-  assign LsuPlugin_logic_onPma_cached_rsp_fault = (! ((|((LsuPlugin_pmaBuilder_l1_addressBits & 32'h80000000) == 32'h80000000)) && (|LsuPlugin_pmaBuilder_l1_onTransfers_0_hit)));
+  assign LsuPlugin_logic_onPma_cached_rsp_fault = (! ((|((LsuPlugin_pmaBuilder_l1_addressBits & 32'hc0000000) == 32'h0)) && (|LsuPlugin_pmaBuilder_l1_onTransfers_0_hit)));
   assign LsuPlugin_logic_onPma_cached_rsp_io = (! _zz_LsuPlugin_logic_onPma_cached_rsp_io_1[0]);
   assign LsuPlugin_pmaBuilder_io_addressBits = LsuPlugin_logic_onPma_io_cmd_address;
   assign LsuPlugin_pmaBuilder_io_argsBits = {LsuPlugin_logic_onPma_io_cmd_size,LsuPlugin_logic_onPma_io_cmd_op};
   assign LsuPlugin_pmaBuilder_io_onTransfers_0_addressHit = _zz_LsuPlugin_pmaBuilder_io_onTransfers_0_addressHit[0];
   assign LsuPlugin_pmaBuilder_io_onTransfers_0_argsHit = (|((LsuPlugin_pmaBuilder_io_argsBits & 3'b000) == 3'b000));
   assign LsuPlugin_pmaBuilder_io_onTransfers_0_hit = (LsuPlugin_pmaBuilder_io_onTransfers_0_argsHit && LsuPlugin_pmaBuilder_io_onTransfers_0_addressHit);
-  assign _zz_LsuPlugin_logic_onPma_io_rsp_fault = ((LsuPlugin_pmaBuilder_io_addressBits & 32'h80000000) == 32'h80000000);
-  assign LsuPlugin_logic_onPma_io_rsp_fault = (! ((|{_zz_LsuPlugin_logic_onPma_io_rsp_fault,((LsuPlugin_pmaBuilder_io_addressBits & 32'hf0000000) == 32'h10000000)}) && (|LsuPlugin_pmaBuilder_io_onTransfers_0_hit)));
+  assign LsuPlugin_logic_onPma_io_rsp_fault = (! ((|{((LsuPlugin_pmaBuilder_io_addressBits & 32'hc0000000) == 32'h0),((LsuPlugin_pmaBuilder_io_addressBits & 32'hf0000000) == 32'h40000000)}) && (|LsuPlugin_pmaBuilder_io_onTransfers_0_hit)));
   assign LsuPlugin_logic_onPma_io_rsp_io = (! _zz_LsuPlugin_logic_onPma_io_rsp_io[0]);
   assign execute_ctrl2_COMPLETED_lane0_bypass = (execute_ctrl2_up_COMPLETED_lane0 || execute_ctrl2_down_COMPLETION_AT_2_lane0);
   assign execute_ctrl4_COMPLETED_lane0_bypass = (execute_ctrl4_up_COMPLETED_lane0 || execute_ctrl4_down_COMPLETION_AT_4_lane0);
@@ -12899,7 +12897,7 @@ module VexiiRiscv (
       PcPlugin_logic_harts_0_self_id <= 10'h0;
       PcPlugin_logic_harts_0_self_increment <= 1'b0;
       PcPlugin_logic_harts_0_self_fault <= 1'b0;
-      PcPlugin_logic_harts_0_self_state <= 32'h80000000;
+      PcPlugin_logic_harts_0_self_state <= 32'h20000000;
       PcPlugin_logic_harts_0_holdReg <= 1'b1;
       CsrAccessPlugin_logic_fsm_inject_unfreeze <= 1'b0;
       CsrAccessPlugin_logic_fsm_inject_flushReg <= 1'b0;

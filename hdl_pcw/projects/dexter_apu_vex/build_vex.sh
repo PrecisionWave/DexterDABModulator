@@ -23,6 +23,9 @@ sbt "Test/runMain vexiiriscv.Generate \
     --fetch-axi4 \
     --lsu-l1 --lsu-l1-ways=2 --lsu-l1-axi4 \
     --lsu-axi4 \
+    --region base=00000000,size=40000000,main=1,exe=1 \
+    --region base=40000000,size=10000000,main=0,exe=0 \
+    --reset-vector 0x20000000 \
     --debug-jtag-tap \
     "
 
