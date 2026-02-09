@@ -93,6 +93,23 @@ extern char* g_dump_file;
 #define R_RISCV_SUB_ULEB128 61
 #endif  // R_RISCV_NONE
 
+static bool check_alignment(uint32_t offset, int alignment, struct memory_map_entry* mme_offset)
+{
+    if (((offset & (alignment - 1))) != 0) {
+        fprintf(
+            stderr,
+            "%s: Relocation of unaligned data requested for: %s @ %04x\n",
+            g_elf_ignore_unaligned ? "Critical" : "Error",
+            mme_offset->name,
+            offset);
+
+        if (!g_elf_ignore_unaligned)
+            return false;
+    }
+
+    return true;
+}
+
 //  https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-elf.adoc
 // ## Relocations
 //
@@ -239,9 +256,136 @@ extern char* g_dump_file;
 //  HI20            (symbol_address + 0x800) >> 12
 //  LO12	        symbol_address
 
+static inline uint32_t replace_imm(
+    uint32_t* instr,
+    const uint32_t instr_bit_hi,
+    const uint32_t instr_bit_lo,
+    const uint32_t imm,
+    const uint32_t imm_bit_hi,
+    const uint32_t imm_bit_lo)
+{
+    assert(imm_bit_hi < 32);
+    assert(imm_bit_lo < 32);
+    assert(imm_bit_lo <= imm_bit_hi);
+    assert(instr_bit_hi < 32);
+    assert(instr_bit_lo < 32);
+    assert(instr_bit_lo <= instr_bit_hi);
+    assert((imm_bit_hi - imm_bit_lo) == (instr_bit_hi - instr_bit_lo));
+
+    uint32_t result = *instr;
+    uint32_t bits = imm_bit_hi - imm_bit_lo;
+    uint32_t mask_bits = (1 << bits) - 1;
+    uint32_t imm_masked = (imm >> imm_bit_lo) & mask_bits;
+    result &= ~(mask_bits << instr_bit_lo);
+    result |= imm_masked << instr_bit_lo;
+    *instr = result;
+    return result;
+}
+
+static inline uint32_t extract_imm(
+    const uint32_t instr,
+    const uint32_t instr_bit_hi,
+    const uint32_t instr_bit_lo,
+    const uint32_t imm_bit_hi,
+    const uint32_t imm_bit_lo)
+{
+    assert(imm_bit_hi < 32);
+    assert(imm_bit_lo < 32);
+    assert(imm_bit_lo <= imm_bit_hi);
+    assert(instr_bit_hi < 32);
+    assert(instr_bit_lo < 32);
+    assert(instr_bit_lo <= instr_bit_hi);
+    assert((imm_bit_hi - imm_bit_lo) == (instr_bit_hi - instr_bit_lo));
+
+    uint32_t bits = imm_bit_hi - imm_bit_lo;
+    uint32_t mask_bits = (1 << bits) - 1;
+    return ((instr >> instr_bit_lo) & mask_bits) << imm_bit_lo;
+}
+
+static uint32_t Imm_U_Type(uint32_t instr, uint32_t imm)
+{
+    // U-Type
+    //  - instruction[31:12]= imm[31:12]
+    replace_imm(&instr, 31, 12, imm, 31, 12);
+    return instr;
+}
+
+static uint32_t Get_Imm_U_Type(uint32_t instr)
+{
+    // U-Type
+    //  - imm[31:12] in instruction[31:12]
+    return extract_imm(31, 12, instr, 31, 12);
+}
+
+
+static uint32_t Imm_I_Type(uint32_t instr, uint32_t imm)
+{
+    // I-Type
+    //  - instruction[31:20] = imm[11:0]
+    replace_imm(&instr, 31, 20, imm, 11, 0);
+    return instr;
+}
+
+static uint32_t Get_Imm_I_Type(uint32_t instr)
+{
+    // U-Type
+    //  - imm[31:12] is in instruction[31:12]
+    return extract_imm(31, 12, instr, 31, 12);
+}
+
+static uint32_t Imm_S_Type(uint32_t instr, uint32_t imm)
+{
+    // S-Type:
+    //  - instruction[31:25] = imm[11:5]
+    //  - instruction[11:7]  = imm[ 4:0]
+    replace_imm(&instr, 31, 25, imm, 11, 5);
+    replace_imm(&instr, 11, 7, imm, 4, 0);
+    return instr;
+}
+
+static uint32_t Get_Imm_S_Type(uint32_t instr)
+{
+    // S-Type:
+    //  - instruction[31:25] = imm[11:5]
+    //  - instruction[11:7]  = imm[ 4:0]
+    uint32_t res1 = extract_imm(instr, 31, 25, 11, 5);
+    uint32_t res2 = extract_imm(instr, 11, 7, 4, 0);
+    return res1 | res2;
+}
+
+static uint32_t Imm_J_Type(uint32_t instr, uint32_t imm)
+{
+    // S-Type:
+    //  - instruction[31]    = imm[20]
+    //  - instruction[30:21] = imm[10:1]
+    //  - instruction[20]    = imm[11]
+    //  - instruction[19:12] = imm[19:12]
+    replace_imm(&instr, 31, 31, imm, 20, 20);
+    replace_imm(&instr, 30, 21, imm, 10, 1);
+    replace_imm(&instr, 20, 20, imm, 11, 11);
+    replace_imm(&instr, 19, 12, imm, 19, 12);
+    return instr;
+}
+
+static uint32_t Get_Imm_J_Type(uint32_t instr)
+{
+    // S-Type:
+    //  - instruction[31]    = imm[20]
+    //  - instruction[30:21] = imm[10:1]
+    //  - instruction[20]    = imm[11]
+    //  - instruction[19:12] = imm[19:12]
+    uint32_t res1 = extract_imm(instr, 31, 31, 20, 20);
+    uint32_t res2 = extract_imm(instr, 30, 21, 10, 1);
+    uint32_t res3 = extract_imm(instr, 20, 20, 11, 11);
+    uint32_t res4 = extract_imm(instr, 19, 12, 19, 12);
+    return res1 | res2 | res3 | res4;
+}
+
 bool do_rel_rv(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend)
 {
     struct memory_map_entry* mme_offset = mm_lookup(mm, r_offset);
+    static uint32_t hi20_value = 0;
+    static uint32_t hi20_offset = 0;
 
     // noting to do?
     if (!mme_offset)
@@ -267,18 +411,6 @@ bool do_rel_rv(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, El
         r_offset,
         r_addend);
 
-    if (((offset & 0x3) != 0)) {
-        fprintf(
-            stderr,
-            "%s: Relocation of unaligned data requested for: %s @ %04x",
-            g_elf_ignore_unaligned ? "Critical" : "Error",
-            mme_offset->name,
-            offset);
-
-        if (!g_elf_ignore_unaligned)
-            return false;
-    }
-
     value += r_addend;
     uint32_t old_value;
     uint32_t new_value;
@@ -286,226 +418,265 @@ bool do_rel_rv(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, El
     switch (type) {
         case R_RISCV_NONE:
             // Do nothing
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_NONE\n");
+            return true;
+
+        case R_RISCV_RELAX:
+            // Do nothing
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
+            local_debug(2, "R_RISCV_RELAX\n");
             return true;
 
         case R_RISCV_32:
             // 32-bit relocation
             // word32      S + A
+            if (!check_alignment(offset, 4, mme_offset))
+                return false;
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             iowrite32(mme_offset->cpu_virtual, offset, value);
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_32: %08x -> %08x\n", old_value, value);
             return true;
 
         case R_RISCV_64:
             // 64-bit relocation
             // word64      S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            if (!check_alignment(offset, 8, mme_offset))
+                return false;
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_64\n");
             return false;
 
         case R_RISCV_BRANCH:
             // 12-bit PC-relative branch offset
             // B-Type      S + A - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_BRANCH\n");
             return false;
 
         case R_RISCV_JAL:
             // 20-bit PC-relative jump offset
             // J-Type      S + A - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_JAL\n");
             return false;
 
         case R_RISCV_CALL:
             // Deprecated, please use CALL_PLT instead.
             // U+I-Type    S + A - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_CALL\n");
             return false;
 
         case R_RISCV_CALL_PLT:
             // 32-bit PC-relative function call, macros call, tail (PIC)
             // U+I-Type    S + A - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_CALL_PLT\n");
             return false;
 
         case R_RISCV_GOT_HI20:
             // High 20 bits of 32-bit PC-relative GOT access, %got_pcrel_hi(symbol)
             // U-Type      G + GOT + A - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_GOT_HI20\n");
             return false;
 
         case R_RISCV_PCREL_HI20:
             // High 20 bits of 32-bit PC-relative reference, %pcrel_hi(symbol)
             // U-Type      S + A - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_PCREL_HI20\n");
-            return false;
+            value -= offset;
+            value -= mme_offset->apu_loaded;
+            hi20_value = value;
+            hi20_offset = r_offset;
+
+            old_value = ioread32(mme_offset->cpu_virtual, offset);
+            new_value = Imm_U_Type(old_value, value);
+            iowrite32(mme_offset->cpu_virtual, offset, new_value);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
+            local_debug(2, "R_RISCV_PCREL_HI20 %08x -> %08x\n", old_value, new_value);
+            return true;
 
         case R_RISCV_PCREL_LO12_I:
             // Low 12 bits of a 32-bit PC-relative, %pcrel_lo(address of %pcrel_hi), the addend must be 0
             // I-type      S - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_PCREL_LO12_I\n");
-            return false;
+            if (hi20_offset != symbol->st_value) {
+                fprintf(stderr, "Error: Linked instructions?");
+                return false;
+            }
+            value = hi20_value;
+            local_debug(3, "  Reusing stored address: 0x%08x\n", hi20_value);
+
+            old_value = ioread32(mme_offset->cpu_virtual, offset);
+            new_value = Imm_I_Type(old_value, value);
+            iowrite32(mme_offset->cpu_virtual, offset, new_value);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
+            local_debug(2, "R_RISCV_PCREL_LO12_I: %08x -> %08x\n", old_value, new_value);
+            return true;
 
         case R_RISCV_PCREL_LO12_S:
             // Low 12 bits of a 32-bit PC-relative, %pcrel_lo(address of %pcrel_hi), the addend must be 0
             // S-Type      S - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_PCREL_LO12_S\n");
-            return false;
+            if (hi20_offset != symbol->st_value) {
+                fprintf(stderr, "Error: Linked instructions?");
+                return false;
+            }
+            value = hi20_value;
+            local_debug(3, "  Reusing stored address: 0x%08x\n", hi20_value);
+
+            old_value = ioread32(mme_offset->cpu_virtual, offset);
+            new_value = Imm_S_Type(old_value, value);
+            iowrite32(mme_offset->cpu_virtual, offset, new_value);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
+            local_debug(2, "R_RISCV_PCREL_LO12_S: %08x -> %08x\n", old_value, new_value);
+            return true;
 
         case R_RISCV_HI20:
             // High 20 bits of 32-bit absolute address,  %hi(symbol)
             // U-Type      S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_HI20\n");
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
+            local_debug(2, "R_RISCV_HI20L\n");
             return false;
 
         case R_RISCV_LO12_I:
             // Low 12 bits of 32-bit absolute address, %lo(symbol)
             // I-Type      S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_LO12_I\n");
             return false;
 
         case R_RISCV_LO12_S:
             // Low 12 bits of 32-bit absolute address, %lo(symbol)
             // S-Type      S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_LO12_S\n");
             return false;
 
         case R_RISCV_ADD8:
             // 8-bit label addition
             // word8       V + S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_ADD8\n");
             return false;
 
         case R_RISCV_ADD16:
             // 16-bit label addition
             // word16      V + S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_ADD16\n");
             return false;
 
         case R_RISCV_ADD32:
             // 32-bit label addition
             // word32      V + S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_ADD32\n");
             return false;
 
         case R_RISCV_ADD64:
             // 64-bit label addition
             // word64      V + S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_ADD64\n");
             return false;
 
         case R_RISCV_SUB8:
             // 8-bit label subtraction
             // word8       V - S - A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SUB8\n");
             return false;
 
         case R_RISCV_SUB16:
             // 16-bit label subtraction
             // word16      V - S - A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SUB16\n");
             return false;
 
         case R_RISCV_SUB32:
             // 32-bit label subtraction
             // word32      V - S - A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SUB32\n");
             return false;
 
         case R_RISCV_SUB64:
             // 64-bit label subtraction
             // word64      V - S - A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SUB64\n");
             return false;
 
         case R_RISCV_RVC_BRANCH:
             // 8-bit PC-relative branch offset
             // CB-Type     S + A - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_RVC_BRANCH\n");
             return false;
 
         case R_RISCV_RVC_JUMP:
             // 11-bit PC-relative jump offset
             // CJ-Type     S + A - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_RVC_JUMP\n");
-            return false;
+            old_value = ioread32(mme_offset->cpu_virtual, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
+            local_debug(2, "R_RISCV_RVC_JUMP: %08x (imm = 0x%08x)\n", old_value,  Get_Imm_J_Type(old_value));
+            return true;
 
         case R_RISCV_SUB6:
             // Local label subtraction
             // word6       V - S - A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SUB6\n");
             return false;
 
         case R_RISCV_SET6:
             // Local label assignment
             // word6       S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SET6\n");
             return false;
 
         case R_RISCV_SET8:
             // Local label assignment
             // word8       S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SET8\n");
             return false;
 
         case R_RISCV_SET16:
             // Local label assignment
             // word16      S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SET16\n");
             return false;
 
         case R_RISCV_SET32:
             // Local label assignment
             // word32      S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SET32\n");
             return false;
 
         case R_RISCV_32_PCREL:
             // 32-bit PC relative
             // word32      S + A - P
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_32_PCREL\n");
             return false;
 
         case R_RISCV_SET_ULEB128:
             // Must be placed immediately before a SUB_ULEB128 with the same offset. Local label assignment
             // ULEB128     S + A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SET_ULEB128\n");
             return false;
 
         case R_RISCV_SUB_ULEB128:
             // Must be placed immediately after a SET_ULEB128 with the same offset. Local label subtraction
             // ULEB128     V - S - A
-            local_debug(2, "%s @ %04x:", mme_offset->name, offset);
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SUB_ULEB128\n");
             return false;
 

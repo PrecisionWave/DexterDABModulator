@@ -150,6 +150,9 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
     for (size_t load = 0; load < ehdr->e_phnum; load++) {
         Elf32_Phdr* phdr = (Elf32_Phdr*)(file + ehdr->e_phoff + load * ehdr->e_phentsize);
 
+        if (phdr->p_type != PT_LOAD)
+            continue;
+
         local_debug(
             1,
             "  LOAD off    %08X vaddr %08x paddr %08x, align 2**%d\n",
