@@ -1,25 +1,23 @@
 
-CROSS_CC := /tools/Xilinx/2025.1/gnu/riscv/lin/riscv64-unknown-elf/bin/riscv64-unknown-elf-gcc
-CROSS_AS := /tools/Xilinx/2025.1/gnu/riscv/lin/riscv64-unknown-elf/bin/riscv64-unknown-elf-as
-CROSS_LD := /tools/Xilinx/2025.1/gnu/riscv/lin/riscv64-unknown-elf/bin/riscv64-unknown-elf-ld
-CROSS_OBJCOPY := /tools/Xilinx/2025.1/gnu/riscv/lin/riscv64-unknown-elf/bin/riscv64-unknown-elf-objcopy
+CROSS_PREFIX := /tools/Xilinx/2025.1/gnu/riscv/lin/riscv64-unknown-elf/bin/riscv64-unknown-elf-
 
 .PHONY : clean all
-all : clean main.bin
+all : clean main.bin main.asm
 
 %.o: %.c
-	$(CROSS_CC) -Wall -c -mcmodel=medany $< -o $@ -ffreestanding
+	$(CROSS_PREFIX)gcc -Wall -c -mcmodel=medany $< -o $@ -ffreestanding
 
 %.o: %.S
-	$(CROSS_AS) -c $< -o $@
+	$(CROSS_PREFIX)as -c $< -o $@
 
 main.elf: main.o entry.o xuartlite_l.o
-	$(CROSS_LD) -T linker.ld -nostdlib -o $@ $^
+	$(CROSS_PREFIX)ld -T linker.ld -nostdlib -o $@ $^
 
 main.bin: main.elf
-	$(CROSS_OBJCOPY) -O binary $< $@
+	$(CROSS_PREFIX)objcopy -O binary $< $@
+
+main.asm: main.elf
+	$(CROSS_PREFIX)objdump -D -h -r $< > $@
 
 clean:
 	-@rm *.o
-
-

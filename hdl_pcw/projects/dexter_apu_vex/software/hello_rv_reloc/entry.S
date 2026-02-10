@@ -1,3 +1,11 @@
+.section .vectors.reset, "ax"
+.global _reset
+_reset:
+    lui t0, %hi(_start)
+    addi t0, t0, %lo(_start)
+    jr t0
+
+
 .section .init, "ax"
 .global _start
 

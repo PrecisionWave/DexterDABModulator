@@ -5,9 +5,8 @@ _HEAP_SIZE = DEFINED(_HEAP_SIZE) ? _HEAP_SIZE : 0x800;
 
 MEMORY
 {
-   sram : ORIGIN = 0x20000050, LENGTH = 0x3FB0
+   sram : ORIGIN = 0x20000010, LENGTH = 0x3FF0
    ddr : ORIGIN = 0x100000, LENGTH = 4M
-   reserved : ORIGIN = 0x0, LENGTH = 0x40000
 }
 
 /* Specify the default entry point to the program */
@@ -17,6 +16,10 @@ ENTRY(_start)
 /* Define the sections, and where they are mapped in memory */
 
 SECTIONS {
+
+.vectors.reset 0x20000000 : {
+   KEEP (*(.vectors.reset))
+} 
 
 .text : {
    *(.text)
