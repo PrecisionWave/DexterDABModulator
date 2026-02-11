@@ -23,3 +23,8 @@ load_apu: load_apu.o mmio.o mmap.o memorymap.o load_elf.o load_elf_mb.o load_elf
 load_apu_sim: load_apu.oh mmio.oh mmap.oh memorymap.oh load_elf.oh load_elf_mb.oh load_elf_rv.oh
 	gcc -static -DSIM -o $@ $^
 
+test: load_apu_sim
+	-@./load_apu_sim -f main_10k.elf -vvv -x 10k
+	/tools/Xilinx/2025.1/gnu/riscv/lin/riscv64-unknown-elf/bin/riscv64-unknown-elf-objdump -D -r main_10k.elf > main_10k.asm
+	/tools/Xilinx/2025.1/gnu/riscv/lin/riscv64-unknown-elf/bin/riscv64-unknown-elf-objdump -D -r main_10k.elf --adjust-vma=0x16800000 > main_10k.adj
+	/tools/Xilinx/2025.1/gnu/riscv/lin/riscv64-unknown-elf/bin/riscv64-unknown-elf-objdump -b binary --adjust-vma=0x16900000 -m riscv -D 10k.ELF.DDR.bin > main_10k.dis
