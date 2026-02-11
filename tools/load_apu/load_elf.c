@@ -54,10 +54,10 @@ load_mem(struct memory_map_entry* mme, const off_t offset, const void* data, siz
             int dfd = open(dump_file_name, O_CREAT | O_RDWR | O_TRUNC, 0666);
             if (load_len != write(dfd, (const uint8_t*)(data) + offset, load_len)) {
                 int tmp_errno = errno;
-                fprintf(stderr, "Error: Failed to write %d bytes to file. errno was %d\n", load_len, tmp_errno);
+                fprintf(stderr, "Error: Failed to write %zu bytes to file. errno was %d\n", load_len, tmp_errno);
                 return 10;
             }
-            printf("Wrote %d bytes\n", load_len);
+            printf("Wrote %zu bytes\n", load_len);
             close(dfd);
         }
     }
@@ -205,7 +205,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
         const char* name = lookup_name(names, shdr->sh_name);
         local_debug(
             1,
-            "  %3d %4d %-27s %08x  %08x  %08x  %04x  %04x %04x 2**%u\n",
+            "  %3zu %4u %-27s %08x  %08x  %08x  %04x  %04x %04x 2**%u\n",
             section,
             shdr->sh_type,
             name,
@@ -237,7 +237,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
             if (shdrL->sh_flags & SHF_ALLOC) {
                 local_debug(
                     1,
-                    "  REL in section %2d: flags %04x %s\n",
+                    "  REL in section %2zu: flags %04x %s\n",
                     section,
                     shdr->sh_flags,
                     lookup_name(names, shdr->sh_name));
@@ -256,7 +256,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
                             relocation_error_count++;
                             fprintf(
                                 stderr,
-                                "Relocation failed for symbol %d in section %d (type %d)\n",
+                                "Relocation failed for symbol %zu in section %zu (type %d)\n",
                                 entry,
                                 section,
                                 ELF32_R_TYPE(rel->r_info));
@@ -275,7 +275,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
             if (shdrL->sh_flags & SHF_ALLOC) {
                 local_debug(
                     1,
-                    "  RELA in section %2d: flags %04x %s\n",
+                    "  RELA in section %2zu: flags %04x %s\n",
                     section,
                     shdr->sh_flags,
                     lookup_name(names, shdr->sh_name));
@@ -287,7 +287,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
                             relocation_error_count++;
                             fprintf(
                                 stderr,
-                                "Relocation failed for symbol %d in section %d (type %d)\n",
+                                "Relocation failed for symbol %zu in section %zu (type %d)\n",
                                 entry,
                                 section,
                                 ELF32_R_TYPE(rela->r_info));

@@ -22,6 +22,7 @@ enum register_index {
 };
 
 bool mmap_apu(int fd, enum device_index index, struct memory_map_entry* mme);
+bool mmap_apu_sim(enum device_index index, struct memory_map_entry* mme);
 bool mmap_reg(int fd, enum register_index index, struct memory_map_entry* mme);
 void* mmap_dev(const char* dev, size_t offset, size_t length);
 void* mmap_file(const char* file, size_t* out_length, bool rw);

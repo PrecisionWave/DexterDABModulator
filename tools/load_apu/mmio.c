@@ -5,8 +5,14 @@
 #include <assert.h>
 #include <string.h>
 
-static inline void MEMORY_BARRIER(void) { asm volatile ("dmb 0xf\ndsb " ::: "memory"); }
-
+#ifdef SIM
+static inline void MEMORY_BARRIER(void) {}
+#else
+static inline void MEMORY_BARRIER(void)
+{
+    asm volatile("dmb 0xf\ndsb " ::: "memory");
+}
+#endif
 
 uint32_t ioread32(void* ptr, size_t reg)
 {

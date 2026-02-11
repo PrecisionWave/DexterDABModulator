@@ -1,0 +1,231 @@
+/*
+ * RISC-V relocation types
+ */
+
+#ifndef R_RISCV_NONE
+#define R_RISCV_NONE 0
+#endif // R_RISCV_NONE
+
+#ifndef R_RISCV_32
+#define R_RISCV_32 1
+#endif // R_RISCV_32
+
+#ifndef R_RISCV_64
+#define R_RISCV_64 2
+#endif // R_RISCV_64
+
+#ifndef R_RISCV_RELATIVE
+#define R_RISCV_RELATIVE 3
+#endif // R_RISCV_RELATIVE
+
+#ifndef R_RISCV_COPY
+#define R_RISCV_COPY 4
+#endif // R_RISCV_COPY
+
+#ifndef R_RISCV_JUMP_SLOT
+#define R_RISCV_JUMP_SLOT 5
+#endif // R_RISCV_JUMP_SLOT
+
+#ifndef R_RISCV_TLS_DTPMOD32
+#define R_RISCV_TLS_DTPMOD32 6
+#endif // R_RISCV_TLS_DTPMOD32
+
+#ifndef R_RISCV_TLS_DTPMOD64
+#define R_RISCV_TLS_DTPMOD64 7
+#endif // R_RISCV_TLS_DTPMOD64
+
+#ifndef R_RISCV_TLS_DTPREL32
+#define R_RISCV_TLS_DTPREL32 8
+#endif // R_RISCV_TLS_DTPREL32
+
+#ifndef R_RISCV_TLS_DTPREL64
+#define R_RISCV_TLS_DTPREL64 9
+#endif // R_RISCV_TLS_DTPREL64
+
+#ifndef R_RISCV_TLS_TPREL32
+#define R_RISCV_TLS_TPREL32 10
+#endif // R_RISCV_TLS_TPREL32
+
+#ifndef R_RISCV_TLS_TPREL64
+#define R_RISCV_TLS_TPREL64 11
+#endif // R_RISCV_TLS_TPREL64
+
+#ifndef R_RISCV_IRELATIVE
+#define R_RISCV_IRELATIVE 58
+#endif // R_RISCV_IRELATIVE
+
+#ifndef R_RISCV_BRANCH
+#define R_RISCV_BRANCH 16
+#endif // R_RISCV_BRANCH
+
+#ifndef R_RISCV_JAL
+#define R_RISCV_JAL 17
+#endif // R_RISCV_JAL
+
+#ifndef R_RISCV_CALL
+#define R_RISCV_CALL 18
+#endif // R_RISCV_CALL
+
+#ifndef R_RISCV_CALL_PLT
+#define R_RISCV_CALL_PLT 19
+#endif // R_RISCV_CALL_PLT
+
+#ifndef R_RISCV_GOT_HI20
+#define R_RISCV_GOT_HI20 20
+#endif // R_RISCV_GOT_HI20
+
+#ifndef R_RISCV_TLS_GOT_HI20
+#define R_RISCV_TLS_GOT_HI20 21
+#endif // R_RISCV_TLS_GOT_HI20
+
+#ifndef R_RISCV_TLS_GD_HI20
+#define R_RISCV_TLS_GD_HI20 22
+#endif // R_RISCV_TLS_GD_HI20
+
+#ifndef R_RISCV_PCREL_HI20
+#define R_RISCV_PCREL_HI20 23
+#endif // R_RISCV_PCREL_HI20
+
+#ifndef R_RISCV_PCREL_LO12_I
+#define R_RISCV_PCREL_LO12_I 24
+#endif // R_RISCV_PCREL_LO12_I
+
+#ifndef R_RISCV_PCREL_LO12_S
+#define R_RISCV_PCREL_LO12_S 25
+#endif // R_RISCV_PCREL_LO12_S
+
+#ifndef R_RISCV_HI20
+#define R_RISCV_HI20 26
+#endif // R_RISCV_HI20
+
+#ifndef R_RISCV_LO12_I
+#define R_RISCV_LO12_I 27
+#endif // R_RISCV_LO12_I
+
+#ifndef R_RISCV_LO12_S
+#define R_RISCV_LO12_S 28
+#endif // R_RISCV_LO12_S
+
+#ifndef R_RISCV_TPREL_HI20
+#define R_RISCV_TPREL_HI20 29
+#endif // R_RISCV_TPREL_HI20
+
+#ifndef R_RISCV_TPREL_LO12_I
+#define R_RISCV_TPREL_LO12_I 30
+#endif // R_RISCV_TPREL_LO12_I
+
+#ifndef R_RISCV_TPREL_LO12_S
+#define R_RISCV_TPREL_LO12_S 31
+#endif // R_RISCV_TPREL_LO12_S
+
+#ifndef R_RISCV_TPREL_ADD
+#define R_RISCV_TPREL_ADD 32
+#endif // R_RISCV_TPREL_ADD
+
+#ifndef R_RISCV_ADD8
+#define R_RISCV_ADD8 33
+#endif // R_RISCV_ADD8
+
+#ifndef R_RISCV_ADD16
+#define R_RISCV_ADD16 34
+#endif // R_RISCV_ADD16
+
+#ifndef R_RISCV_ADD32
+#define R_RISCV_ADD32 35
+#endif // R_RISCV_ADD32
+
+#ifndef R_RISCV_ADD64
+#define R_RISCV_ADD64 36
+#endif // R_RISCV_ADD64
+
+#ifndef R_RISCV_SUB8
+#define R_RISCV_SUB8 37
+#endif // R_RISCV_SUB8
+
+#ifndef R_RISCV_SUB16
+#define R_RISCV_SUB16 38
+#endif // R_RISCV_SUB16
+
+#ifndef R_RISCV_SUB32
+#define R_RISCV_SUB32 39
+#endif // R_RISCV_SUB32
+
+#ifndef R_RISCV_SUB64
+#define R_RISCV_SUB64 40
+#endif // R_RISCV_SUB64
+
+#ifndef R_RISCV_GNU_VTINHERIT
+#define R_RISCV_GNU_VTINHERIT 41
+#endif // R_RISCV_GNU_VTINHERIT
+
+#ifndef R_RISCV_GNU_VTENTRY
+#define R_RISCV_GNU_VTENTRY 42
+#endif // R_RISCV_GNU_VTENTRY
+
+#ifndef R_RISCV_ALIGN
+#define R_RISCV_ALIGN 43
+#endif // R_RISCV_ALIGN
+
+#ifndef R_RISCV_RVC_BRANCH
+#define R_RISCV_RVC_BRANCH 44
+#endif // R_RISCV_RVC_BRANCH
+
+#ifndef R_RISCV_RVC_JUMP
+#define R_RISCV_RVC_JUMP 45
+#endif // R_RISCV_RVC_JUMP
+
+#ifndef R_RISCV_GPREL_I
+#define R_RISCV_GPREL_I 47
+#endif // R_RISCV_GPREL_I
+
+#ifndef R_RISCV_GPREL_S
+#define R_RISCV_GPREL_S 48
+#endif // R_RISCV_GPREL_S
+
+#ifndef R_RISCV_TPREL_I
+#define R_RISCV_TPREL_I 49
+#endif // R_RISCV_TPREL_I
+
+#ifndef R_RISCV_TPREL_S
+#define R_RISCV_TPREL_S 50
+#endif // R_RISCV_TPREL_S
+
+#ifndef R_RISCV_RELAX
+#define R_RISCV_RELAX 51
+#endif // R_RISCV_RELAX
+
+#ifndef R_RISCV_SUB6
+#define R_RISCV_SUB6 52
+#endif // R_RISCV_SUB6
+
+#ifndef R_RISCV_SET6
+#define R_RISCV_SET6 53
+#endif // R_RISCV_SET6
+
+#ifndef R_RISCV_SET8
+#define R_RISCV_SET8 54
+#endif // R_RISCV_SET8
+
+#ifndef R_RISCV_SET16
+#define R_RISCV_SET16 55
+#endif // R_RISCV_SET16
+
+#ifndef R_RISCV_SET32
+#define R_RISCV_SET32 56
+#endif // R_RISCV_SET32
+
+#ifndef R_RISCV_32_PCREL
+#define R_RISCV_32_PCREL 57
+#endif // R_RISCV_32_PCREL
+
+#ifndef R_RISCV_PLT32
+#define R_RISCV_PLT32 59
+#endif // R_RISCV_PLT32
+
+#ifndef R_RISCV_SET_ULEB128
+#define R_RISCV_SET_ULEB128 60
+#endif // R_RISCV_SET_ULEB128
+
+#ifndef R_RISCV_SUB_ULEB128
+#define R_RISCV_SUB_ULEB128 61
+#endif // R_RISCV_SUB_ULEB128
