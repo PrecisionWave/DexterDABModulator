@@ -381,19 +381,14 @@ static uint32_t Get_Imm_J_Type(uint32_t instr)
     return res1 | res2 | res3 | res4;
 }
 
-bool do_rel_rv(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend)
+bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela)
 {
-    struct memory_map_entry* mme_offset = mm_lookup(mm, r_offset);
+    Elf32_Sym* symbol = &context->sym[ELF32_R_SYM(rela->r_info)];
     static uint32_t hi20_value = 0;
     static uint32_t hi20_offset = 0;
+    uint32_t offset = rela->r_offset - mme_offset->apu_linked;
 
-    // noting to do?
-    if (!mme_offset)
-        return true;
-
-    uint32_t offset = r_offset - mme_offset->apu_linked;
-
-    struct memory_map_entry* mme_value = mm_lookup(mm, symbol->st_value);
+    struct memory_map_entry* mme_value = mm_lookup(context->mm, symbol->st_value);
     uint32_t value = symbol->st_value;
     if (mme_value) {
         value -= mme_value->apu_linked;
@@ -408,14 +403,14 @@ bool do_rel_rv(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, El
         ELF32_ST_TYPE(symbol->st_info),
         symbol->st_other,
         symbol->st_value,
-        r_offset,
-        r_addend);
+        rela->r_offset,
+        rela->r_addend);
 
-    value += r_addend;
+    value += rela->r_addend;
     uint32_t old_value;
     uint32_t new_value;
 
-    switch (type) {
+    switch (ELF32_R_TYPE(rela->r_info)) {
         case R_RISCV_NONE:
             // Do nothing
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
@@ -489,7 +484,7 @@ bool do_rel_rv(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, El
             value -= offset;
             value -= mme_offset->apu_loaded;
             hi20_value = value;
-            hi20_offset = r_offset;
+            hi20_offset = rela->r_offset;
 
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = Imm_U_Type(old_value, value);
@@ -535,8 +530,12 @@ bool do_rel_rv(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, El
         case R_RISCV_HI20:
             // High 20 bits of 32-bit absolute address,  %hi(symbol)
             // U-Type      S + A
+            old_value = ioread32(mme_offset->cpu_virtual, offset);
+            new_value = Imm_U_Type(old_value, value + (0x800 << 12));
+            iowrite32(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_HI20L\n");
+            local_debug(2, "R_RISCV_HI20: %08x -> %08x\n", old_value, new_value);
             return false;
 
         case R_RISCV_LO12_I:
@@ -621,7 +620,7 @@ bool do_rel_rv(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, El
             // CJ-Type     S + A - P
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_RVC_JUMP: %08x (imm = 0x%08x)\n", old_value,  Get_Imm_J_Type(old_value));
+            local_debug(2, "R_RISCV_RVC_JUMP: %08x (imm = 0x%08x)\n", old_value, Get_Imm_J_Type(old_value));
             return true;
 
         case R_RISCV_SUB6:
@@ -681,7 +680,7 @@ bool do_rel_rv(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, El
             return false;
 
         default:
-            fprintf(stderr, "Unknown relocation type %d\n", type);
+            fprintf(stderr, "Unknown relocation type %d\n", ELF32_R_TYPE(rela->r_info));
             break;
     }
 

@@ -90,8 +90,7 @@ static const char* lookup_name(const char* names, int index)
     return names ? names + index : "?";
 }
 
-static bool
-do_rel_fail(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend)
+static bool do_rel_fail(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela)
 {
     return false;
 }
@@ -225,6 +224,11 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
     printf("Relocating...\n");
     size_t relocation_total_count = 0;
     size_t relocation_error_count = 0;
+    struct relocation_context context = {
+        .mm = mm,
+        .sym = sym,
+        .private = NULL,
+    };
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
 
@@ -240,11 +244,15 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
 
                 for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
                     Elf32_Rel* rel = (Elf32_Rel*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
+                    Elf32_Rela rela = {
+                        .r_offset = rel->r_offset,
+                        .r_info = rel->r_info,
+                        .r_addend = 0,
+                    };
 
                     struct memory_map_entry* mme = mm_lookup(mm, rel->r_offset);
                     if (mme) {
-                        Elf32_Sym* symbol = &sym[ELF32_R_SYM(rel->r_info)];
-                        if (!do_rel(mm, symbol, rel->r_offset, ELF32_R_TYPE(rel->r_info), 0)) {
+                        if (!do_rel(&context, mme, &rela)) {
                             relocation_error_count++;
                             fprintf(
                                 stderr,
@@ -275,8 +283,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
                     Elf32_Rela* rela = (Elf32_Rela*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
                     struct memory_map_entry* mme = mm_lookup(mm, rela->r_offset);
                     if (mme) {
-                        Elf32_Sym* symbol = &sym[ELF32_R_SYM(rela->r_info)];
-                        if (!do_rel(mm, symbol, rela->r_offset, ELF32_R_TYPE(rela->r_info), rela->r_addend)) {
+                        if (!do_rel(&context, mme, rela)) {
                             relocation_error_count++;
                             fprintf(
                                 stderr,

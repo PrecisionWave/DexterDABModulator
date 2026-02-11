@@ -17,9 +17,16 @@ bool load_elf(const char* file, const size_t file_len, struct memory_map* mm);
 bool load_bin(const void* data, const size_t data_len, struct memory_map* mm, const uint32_t address);
 
 // Relocation
-typedef bool (*do_rel_t)(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend);
-bool do_rel_mb(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend);
-bool do_rel_rv(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend);
+
+struct relocation_context {
+    struct memory_map* mm;
+    Elf32_Sym* sym;
+    void* private;
+};
+
+typedef bool (*do_rel_t)(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela);
+bool do_rel_mb(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela);
+bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela);
 
 #ifdef __cplusplus
 }
