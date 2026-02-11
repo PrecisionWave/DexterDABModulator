@@ -217,32 +217,33 @@ int main(int argc, char** argv)
             download_success = load_bin(fptr, flen, &mm, ELF_FILE_SRAM_BASE);
         }
 
-        if (download_success) {
-            apply_apu_ldr_header(mm_lookup(&mm, ELF_FILE_SRAM_BASE), mm_lookup(&mm, ELF_FILE_DDR_BASE));
-            apply_apu_ldr_header(mm_lookup(&mm, ELF_FILE_DDR_BASE), mm_lookup(&mm, ELF_FILE_DDR_BASE));
+        apply_apu_ldr_header(mm_lookup(&mm, ELF_FILE_SRAM_BASE), mm_lookup(&mm, ELF_FILE_DDR_BASE));
+        apply_apu_ldr_header(mm_lookup(&mm, ELF_FILE_DDR_BASE), mm_lookup(&mm, ELF_FILE_DDR_BASE));
+
+        if (g_dump_file) {
+            for (size_t i = 0; i < mm.count; i++) {
+                char dump_file_name[1024];
+                memset(dump_file_name, 0, sizeof(dump_file_name));
+                snprintf(dump_file_name, sizeof(dump_file_name) - 1, "%s.%s", g_dump_file, mm.entries[i].name);
+                printf("Dumping %s to %s...\n", mm.entries[i].name, dump_file_name);
+                int dfd = open(dump_file_name, O_CREAT | O_RDWR | O_TRUNC, 0666);
+                if (mm.entries[i].length != write(dfd, mm.entries[i].cpu_virtual, mm.entries[i].length)) {
+                    int tmp_errno = errno;
+                    fprintf(
+                        stderr,
+                        "Error: Failed to write %d bytes to file. errno was %d\n",
+                        mm.entries[i].length,
+                        tmp_errno);
+                    return 10;
+                }
+                printf("Wrote %d bytes\n", mm.entries[i].length);
+                close(dfd);
+            }
         }
 
         if (!download_success) {
             fprintf(stderr, "Error: Download failed!\n");
             return 5;
-        }
-    }
-
-    if (g_dump_file) {
-        for (size_t i = 0; i < mm.count; i++) {
-            char dump_file_name[1024];
-            memset(dump_file_name, 0, sizeof(dump_file_name));
-            snprintf(dump_file_name, sizeof(dump_file_name) - 1, "%s.%s", g_dump_file, mm.entries[i].name);
-            printf("Dumping %s to %s...\n", mm.entries[i].name, dump_file_name);
-            int dfd = open(dump_file_name, O_CREAT | O_RDWR | O_TRUNC, 0666);
-            if (mm.entries[i].length != write(dfd, mm.entries[i].cpu_virtual, mm.entries[i].length)) {
-                int tmp_errno = errno;
-                fprintf(
-                    stderr, "Error: Failed to write %d bytes to file. errno was %d\n", mm.entries[i].length, tmp_errno);
-                return 10;
-            }
-            printf("Wrote %d bytes\n", mm.entries[i].length);
-            close(dfd);
         }
     }
 
