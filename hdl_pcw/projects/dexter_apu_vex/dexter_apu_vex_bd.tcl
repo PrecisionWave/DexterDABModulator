@@ -616,8 +616,15 @@ proc create_hier_cell_accel { parentCell nameHier } {
   # Create instance: mb_axi_cache, and set properties
   set mb_axi_cache [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 mb_axi_cache ]
   set_property -dict [ list \
+   CONFIG.ENABLE_ADVANCED_OPTIONS {1} \
+   CONFIG.M00_HAS_DATA_FIFO {1} \
+   CONFIG.M01_HAS_DATA_FIFO {2} \
    CONFIG.NUM_MI {2} \
    CONFIG.NUM_SI {2} \
+   CONFIG.S00_HAS_DATA_FIFO {2} \
+   CONFIG.S01_HAS_DATA_FIFO {2} \
+   CONFIG.STRATEGY {2} \
+   CONFIG.XBAR_DATA_WIDTH {128} \
  ] $mb_axi_cache
 
   # Create instance: mb_axi_intc, and set properties

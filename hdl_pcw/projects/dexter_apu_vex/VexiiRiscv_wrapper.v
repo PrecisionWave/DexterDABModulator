@@ -168,6 +168,16 @@ module VexiiRiscv_wrapper (
     input wire reset
 );
 
+    // Fixes to access Zynq DRR via HPx ports
+    // Or you get DECERR or SLVERR responses
+    assign LsuL1Axi4Plugin_logic_axi_aw_payload_cache   = 4'b0011;
+    assign LsuL1Axi4Plugin_logic_axi_ar_payload_cache   = 4'b0011;
+    assign FetchL1Axi4Plugin_logic_axi_ar_payload_cache = 4'b0011;
+
+    assign LsuL1Axi4Plugin_logic_axi_aw_payload_prot   = 3'b000;
+    assign LsuL1Axi4Plugin_logic_axi_ar_payload_prot   = 3'b000;
+    assign FetchL1Axi4Plugin_logic_axi_ar_payload_prot = 3'b000;
+
     VexiiRiscv cpu (
         .EmbeddedRiscvJtag_logic_jtag_tms(EmbeddedRiscvJtag_logic_jtag_tms),
         .EmbeddedRiscvJtag_logic_jtag_tdi(EmbeddedRiscvJtag_logic_jtag_tdi),
@@ -184,8 +194,8 @@ module VexiiRiscv_wrapper (
         .LsuL1Axi4Plugin_logic_axi_aw_payload_len(LsuL1Axi4Plugin_logic_axi_aw_payload_len),
         .LsuL1Axi4Plugin_logic_axi_aw_payload_size(LsuL1Axi4Plugin_logic_axi_aw_payload_size),
         .LsuL1Axi4Plugin_logic_axi_aw_payload_burst(LsuL1Axi4Plugin_logic_axi_aw_payload_burst),
-        .LsuL1Axi4Plugin_logic_axi_aw_payload_cache(LsuL1Axi4Plugin_logic_axi_aw_payload_cache),
-        .LsuL1Axi4Plugin_logic_axi_aw_payload_prot(LsuL1Axi4Plugin_logic_axi_aw_payload_prot),
+        .LsuL1Axi4Plugin_logic_axi_aw_payload_cache(),
+        .LsuL1Axi4Plugin_logic_axi_aw_payload_prot(),
         .LsuL1Axi4Plugin_logic_axi_w_valid(LsuL1Axi4Plugin_logic_axi_w_valid),
         .LsuL1Axi4Plugin_logic_axi_w_ready(LsuL1Axi4Plugin_logic_axi_w_ready),
         .LsuL1Axi4Plugin_logic_axi_w_payload_data(LsuL1Axi4Plugin_logic_axi_w_payload_data),
@@ -200,8 +210,8 @@ module VexiiRiscv_wrapper (
         .LsuL1Axi4Plugin_logic_axi_ar_payload_len(LsuL1Axi4Plugin_logic_axi_ar_payload_len),
         .LsuL1Axi4Plugin_logic_axi_ar_payload_size(LsuL1Axi4Plugin_logic_axi_ar_payload_size),
         .LsuL1Axi4Plugin_logic_axi_ar_payload_burst(LsuL1Axi4Plugin_logic_axi_ar_payload_burst),
-        .LsuL1Axi4Plugin_logic_axi_ar_payload_cache(LsuL1Axi4Plugin_logic_axi_ar_payload_cache),
-        .LsuL1Axi4Plugin_logic_axi_ar_payload_prot(LsuL1Axi4Plugin_logic_axi_ar_payload_prot),
+        .LsuL1Axi4Plugin_logic_axi_ar_payload_cache(),
+        .LsuL1Axi4Plugin_logic_axi_ar_payload_prot(),
         .LsuL1Axi4Plugin_logic_axi_r_valid(LsuL1Axi4Plugin_logic_axi_r_valid),
         .LsuL1Axi4Plugin_logic_axi_r_ready(LsuL1Axi4Plugin_logic_axi_r_ready),
         .LsuL1Axi4Plugin_logic_axi_r_payload_data(LsuL1Axi4Plugin_logic_axi_r_payload_data),
@@ -213,8 +223,8 @@ module VexiiRiscv_wrapper (
         .FetchL1Axi4Plugin_logic_axi_ar_payload_len(FetchL1Axi4Plugin_logic_axi_ar_payload_len),
         .FetchL1Axi4Plugin_logic_axi_ar_payload_size(FetchL1Axi4Plugin_logic_axi_ar_payload_size),
         .FetchL1Axi4Plugin_logic_axi_ar_payload_burst(FetchL1Axi4Plugin_logic_axi_ar_payload_burst),
-        .FetchL1Axi4Plugin_logic_axi_ar_payload_cache(FetchL1Axi4Plugin_logic_axi_ar_payload_cache),
-        .FetchL1Axi4Plugin_logic_axi_ar_payload_prot(FetchL1Axi4Plugin_logic_axi_ar_payload_prot),
+        .FetchL1Axi4Plugin_logic_axi_ar_payload_cache(),
+        .FetchL1Axi4Plugin_logic_axi_ar_payload_prot(),
         .FetchL1Axi4Plugin_logic_axi_r_valid(FetchL1Axi4Plugin_logic_axi_r_valid),
         .FetchL1Axi4Plugin_logic_axi_r_ready(FetchL1Axi4Plugin_logic_axi_r_ready),
         .FetchL1Axi4Plugin_logic_axi_r_payload_data(FetchL1Axi4Plugin_logic_axi_r_payload_data),
