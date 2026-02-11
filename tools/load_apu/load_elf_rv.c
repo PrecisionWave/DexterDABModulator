@@ -617,6 +617,8 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_ADD32:
             // 32-bit label addition
             // word32      V + S + A
+            fprintf(stderr, "Warning: Yolo R_RISCV_ADD32 @ %s:%04x\n", mme_offset->name, offset);
+
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = old_value + symbol->st_value + rela->r_addend;
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
@@ -650,6 +652,8 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_SUB32:
             // 32-bit label subtraction
             // word32      V - S - A
+            fprintf(stderr, "Warning: Yolo R_RISCV_SUB32 @ %s:%04x\n", mme_offset->name, offset);
+
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = old_value - symbol->st_value - rela->r_addend;
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
@@ -755,6 +759,8 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_32_PCREL:
             // 32-bit PC relative
             // word32      S + A - P
+            fprintf(stderr, "Warning: Yolo R_RISCV_32_PCREL @ %s:%04x\n", mme_offset->name, offset);
+
             value -= mme_offset->apu_loaded;
             value -= offset;
 
