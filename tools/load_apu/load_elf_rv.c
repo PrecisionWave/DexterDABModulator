@@ -535,7 +535,8 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             priv->offset = rela->r_offset;
 
             old_value = ioread32(mme_offset->cpu_virtual, offset);
-            new_value = Imm_U_Type(old_value, value);
+            // See notes on "Absolute Addresses" above
+            new_value = Imm_U_Type(old_value, value + 0x800);
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
@@ -582,7 +583,8 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             // High 20 bits of 32-bit absolute address,  %hi(symbol)
             // U-Type      S + A
             old_value = ioread32(mme_offset->cpu_virtual, offset);
-            new_value = Imm_U_Type(old_value, value);
+            // See notes on "Absolute Addresses" above
+            new_value = Imm_U_Type(old_value, value + 0x800);
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
