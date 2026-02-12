@@ -398,9 +398,10 @@ static uint32_t Get_Imm_B_Type(uint32_t instr)
 }
 
 struct riscv_context {
-    uint32_t pcrel_value;
-    uint32_t pcrel_offset;
+    uint32_t value;
+    uint32_t offset;
 };
+
 
 bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela)
 {
@@ -434,51 +435,57 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
     value += rela->r_addend;
 
     uint32_t old_value;
-    uint16_t old_value16;
     uint32_t new_value;
-    uint16_t new_value16;
 
     switch (ELF32_R_TYPE(rela->r_info)) {
         case R_RISCV_NONE:
             // Do nothing
+            priv->value += rela->r_addend;
+            local_debug(3, "  priv->value is %08x\n", priv->value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_NONE\n");
+            local_debug(2, "R_RISCV_NONE: addend: %u\n", rela->r_addend);
             return true;
 
         case R_RISCV_RELAX:
             // Do nothing
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_RELAX\n");
+            local_debug(2, "R_RISCV_RELAX: addend: %u\n", rela->r_addend);
             return true;
 
         case R_RISCV_32:
             // 32-bit relocation
             // word32      S + A
-            if (!check_alignment(offset, 4, mme_offset))
-                return false;
             old_value = ioread32(mme_offset->cpu_virtual, offset);
-            iowrite32(mme_offset->cpu_virtual, offset, value);
+            new_value = value;
+            iowrite32(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_32: %08x -> %08x\n", old_value, value);
+            local_debug(2, "R_RISCV_32: %08x -> %08x\n", old_value, new_value);
             return true;
 
         case R_RISCV_64:
             // 64-bit relocation
             // word64      S + A
-            if (!check_alignment(offset, 8, mme_offset))
-                return false;
+            old_value = ioread32(mme_offset->cpu_virtual, offset);
+            new_value = value;
+            iowrite32(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_64\n");
-            return false;
+            local_debug(2, "R_RISCV_64: %08x -> %08x\n", old_value, new_value);
+            fprintf(stderr, "Warning: R_RISCV_64: Partial apply of 64-Bit value!\n");
+            return true;
 
         case R_RISCV_BRANCH:
             // 12-bit PC-relative branch offset
             // B-Type      S + A - P
             value -= offset;
             value -= mme_offset->apu_loaded;
+
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = Imm_B_Type(old_value, value);
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_BRANCH: PC + %x: %08x -> %08x\n", value, old_value, new_value);
             return true;
@@ -488,9 +495,11 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             // J-Type      S + A - P
             value -= offset;
             value -= mme_offset->apu_loaded;
+
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = Imm_J_Type(old_value, value);
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_JAL: PC + %x: %08x -> %08x\n", value, old_value, new_value);
             return true;
@@ -522,8 +531,8 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             value -= offset;
             value -= mme_offset->apu_loaded;
 
-            priv->pcrel_value = value;
-            priv->pcrel_offset = rela->r_offset;
+            priv->value = value;
+            priv->offset = rela->r_offset;
 
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = Imm_U_Type(old_value, value);
@@ -536,16 +545,17 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_PCREL_LO12_I:
             // Low 12 bits of a 32-bit PC-relative, %pcrel_lo(address of %pcrel_hi), the addend must be 0
             // I-type      S - P
-            if (priv->pcrel_offset != symbol->st_value) {
+            if (priv->offset != symbol->st_value) {
                 fprintf(stderr, "Error: R_RISCV_PCREL_LO12_I: Unexpected linked instruction\n");
                 return false;
             }
-            value = priv->pcrel_value;
+            value = priv->value;
             local_debug(3, "  Reusing stored address: 0x%08x\n", value);
 
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = Imm_I_Type(old_value, value);
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_PCREL_LO12_I: PC + 0x%x: %08x -> %08x\n", value, old_value, new_value);
             return true;
@@ -553,16 +563,17 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_PCREL_LO12_S:
             // Low 12 bits of a 32-bit PC-relative, %pcrel_lo(address of %pcrel_hi), the addend must be 0
             // S-Type      S - P
-            if (priv->pcrel_offset != symbol->st_value) {
+            if (priv->offset != symbol->st_value) {
                 fprintf(stderr, "Error: R_RISCV_PCREL_LO12_S: Unexpected linked instruction\n");
                 return false;
             }
-            value = priv->pcrel_value;
+            value = priv->value;
             local_debug(3, "  Reusing stored address: 0x%08x\n", value);
 
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = Imm_S_Type(old_value, value);
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_PCREL_LO12_S: PC + 0x%x: %08x -> %08x\n", value, old_value, new_value);
             return true;
@@ -617,8 +628,6 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_ADD32:
             // 32-bit label addition
             // word32      V + S + A
-            fprintf(stderr, "Warning: Yolo R_RISCV_ADD32 @ %s:%04x\n", mme_offset->name, offset);
-
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = old_value + symbol->st_value + rela->r_addend;
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
@@ -626,6 +635,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(
                 2, "R_RISCV_ADD32: %08x + %08x + %x = %08x\n", old_value, symbol->st_value, rela->r_addend, new_value);
+            fprintf(stderr, "Warning: Yolo R_RISCV_ADD32 @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
         case R_RISCV_ADD64:
@@ -652,7 +662,6 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_SUB32:
             // 32-bit label subtraction
             // word32      V - S - A
-            fprintf(stderr, "Warning: Yolo R_RISCV_SUB32 @ %s:%04x\n", mme_offset->name, offset);
 
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = old_value - symbol->st_value - rela->r_addend;
@@ -661,6 +670,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(
                 2, "R_RISCV_SUB32: %08x - %08x - %x -> %08x\n", old_value, symbol->st_value, rela->r_addend, new_value);
+            fprintf(stderr, "Warning: Yolo R_RISCV_SUB32 @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
         case R_RISCV_SUB64:
@@ -681,16 +691,17 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
                 return false;
             }
 
-            old_value16 = ioread16(mme_offset->cpu_virtual, offset);
-            new_value16 = Offset_CJ_Type(old_value16, value & 0x3ff);
-            iowrite16(mme_offset->cpu_virtual, offset, new_value16);
+            old_value = ioread16(mme_offset->cpu_virtual, offset);
+            new_value = Offset_CJ_Type(old_value, value & 0x3ff);
+            iowrite16(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_RVC_BRANCH: PC + 0x%03x %04x -> %04x\n", value, old_value16, new_value16);
+            local_debug(2, "R_RISCV_RVC_BRANCH: PC + 0x%03x %04x -> %04x\n", value, old_value, new_value);
             local_debug(
                 3,
                 "  old offset: %03x, new offset: %03x\n",
-                Get_Offset_CJ_Type(old_value16),
-                Get_Offset_CJ_Type(new_value16));
+                Get_Offset_CJ_Type(old_value),
+                Get_Offset_CJ_Type(new_value));
             return true;
 
         case R_RISCV_RVC_JUMP:
@@ -704,16 +715,17 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
                 return false;
             }
 
-            old_value16 = ioread16(mme_offset->cpu_virtual, offset);
-            new_value16 = Offset_CJ_Type(old_value16, value & 0x3ff);
-            iowrite16(mme_offset->cpu_virtual, offset, new_value16);
+            old_value = ioread16(mme_offset->cpu_virtual, offset);
+            new_value = Offset_CJ_Type(old_value, value & 0x3ff);
+            iowrite16(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_RVC_JUMP: PC + 0x%03x %04x -> %04x\n", value, old_value16, new_value16);
+            local_debug(2, "R_RISCV_RVC_JUMP: PC + 0x%03x %04x -> %04x\n", value, old_value, new_value);
             local_debug(
                 3,
                 "  old offset: %03x, new offset: %03x\n",
-                Get_Offset_CJ_Type(old_value16),
-                Get_Offset_CJ_Type(new_value16));
+                Get_Offset_CJ_Type(old_value),
+                Get_Offset_CJ_Type(new_value));
             return true;
 
         case R_RISCV_GPREL_I:
@@ -752,27 +764,31 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_SET32:
             // Local label assignment
             // word32      S + A
+            old_value = ioread32(mme_offset->cpu_virtual, offset);
+            new_value = symbol->st_value - rela->r_addend;
+            iowrite32(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_SET32\n");
+            local_debug(2, "R_RISCV_SET32: %08x -> %08x\n", old_value, new_value);
+            fprintf(stderr, "Warning: Yolo R_RISCV_SET32 @ %s:%04x\n", mme_offset->name, offset);
             return false;
 
         case R_RISCV_32_PCREL:
             // 32-bit PC relative
             // word32      S + A - P
-            fprintf(stderr, "Warning: Yolo R_RISCV_32_PCREL @ %s:%04x\n", mme_offset->name, offset);
-
             value -= mme_offset->apu_loaded;
             value -= offset;
-
+            
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = value;
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
-
-            priv->pcrel_value = new_value;
-            priv->pcrel_offset = rela->r_offset;
-
+            
+            priv->value = new_value;
+            priv->offset = rela->r_offset;
+            
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_32_PCREL: %08x -> %08x\n", old_value, new_value);
+            fprintf(stderr, "Warning: Yolo R_RISCV_32_PCREL @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
         case R_RISCV_SET_ULEB128:
