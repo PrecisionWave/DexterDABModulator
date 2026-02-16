@@ -199,7 +199,14 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
     /* relocation */
     local_debug(1, "Sections:\n");
     local_debug(1, "  Idx Type Name                        Size      ADDR      File off  Flags Link Info Align\n");
-    Elf32_Sym* sym = NULL;
+
+    struct relocation_context context = {
+        .mm = mm,
+        .symtab = NULL,
+        .strtab = NULL,
+        .private = NULL,
+    };
+
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
         const char* name = lookup_name(names, shdr->sh_name);
@@ -217,22 +224,21 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
             shdr->sh_info,
             shdr->sh_addralign);
         if (shdr->sh_type == SHT_SYMTAB && strcmp(name, ".symtab") == 0) {
-            sym = (Elf32_Sym*)(file + shdr->sh_offset);
+            context.symtab = (Elf32_Sym*)(file + shdr->sh_offset);
+        }
+        if (shdr->sh_type == SHT_STRTAB && strcmp(name, ".strtab") == 0) {
+            context.strtab = (char*)(file + shdr->sh_offset);
         }
     }
 
     printf("Relocating...\n");
     size_t relocation_total_count = 0;
     size_t relocation_error_count = 0;
-    struct relocation_context context = {
-        .mm = mm,
-        .sym = sym,
-        .private = NULL,
-    };
+
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
 
-        if (sym && shdr->sh_type == SHT_REL) {
+        if (context.symtab && shdr->sh_type == SHT_REL) {
             Elf32_Shdr* shdrL = (Elf32_Shdr*)(file + ehdr->e_shoff + shdr->sh_info * ehdr->e_shentsize);
             if (shdrL->sh_flags & SHF_ALLOC) {
                 local_debug(
@@ -270,7 +276,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
             }
         }
 
-        if (sym && shdr->sh_type == SHT_RELA) {
+        if (context.symtab && shdr->sh_type == SHT_RELA) {
             Elf32_Shdr* shdrL = (Elf32_Shdr*)(file + ehdr->e_shoff + shdr->sh_info * ehdr->e_shentsize);
             if (shdrL->sh_flags & SHF_ALLOC) {
                 local_debug(

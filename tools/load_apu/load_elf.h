@@ -20,7 +20,8 @@ bool load_bin(const void* data, const size_t data_len, struct memory_map* mm, co
 
 struct relocation_context {
     struct memory_map* mm;
-    Elf32_Sym* sym;
+    Elf32_Sym* symtab;
+    char* strtab;
     void* private;
 };
 

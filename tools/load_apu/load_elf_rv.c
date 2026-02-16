@@ -444,7 +444,7 @@ struct riscv_context {
 
 bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela)
 {
-    Elf32_Sym* symbol = &context->sym[ELF32_R_SYM(rela->r_info)];
+    Elf32_Sym* symbol = &context->symtab[ELF32_R_SYM(rela->r_info)];
     uint32_t offset = rela->r_offset - mme_offset->apu_linked;
 
     if (context->private == NULL) {
@@ -462,8 +462,9 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
 
     local_debug(
         2,
-        "%s symbol: bind %d, type %d, other:%d, value: %08x, r_offset: %08x, r_addend: %08x\n",
+        "%s symbol \"%s\": bind %d, type %d, other:%d, value: %08x, r_offset: %08x, r_addend: %08x\n",
         mme_offset != mme_value ? "Foreign" : "Local",
+        &context->strtab[symbol->st_name],
         ELF32_ST_BIND(symbol->st_info),
         ELF32_ST_TYPE(symbol->st_info),
         symbol->st_other,
