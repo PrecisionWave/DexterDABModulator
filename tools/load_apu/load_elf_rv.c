@@ -46,6 +46,10 @@ static bool check_alignment(uint32_t offset, int alignment, struct memory_map_en
     return true;
 }
 
+#define ERROR "\033[31mError\033[0m:"
+#define WARN  "\033[33mWarning\033[0m:"
+#define CYAN(x) "\033[36m" x "\033[0m"
+
 //  https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-elf.adoc
 // ## Relocations
 //
@@ -493,7 +497,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_64: %08x -> %08x\n", old_value, new_value);
-            fprintf(stderr, "Warning: R_RISCV_64: Partial apply of 64-Bit value!\n");
+            fprintf(stderr, WARN "R_RISCV_64: Partial apply of 64-Bit value!\n");
             return true;
 
         case R_RISCV_BRANCH:
@@ -567,7 +571,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             // Low 12 bits of a 32-bit PC-relative, %pcrel_lo(address of %pcrel_hi), the addend must be 0
             // I-type      S - P
             if (priv->offset != symbol->st_value) {
-                fprintf(stderr, "Error: R_RISCV_PCREL_LO12_I: Unexpected linked instruction\n");
+                fprintf(stderr, ERROR "R_RISCV_PCREL_LO12_I: Unexpected linked instruction\n");
                 return false;
             }
             value = priv->value;
@@ -585,7 +589,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             // Low 12 bits of a 32-bit PC-relative, %pcrel_lo(address of %pcrel_hi), the addend must be 0
             // S-Type      S - P
             if (priv->offset != symbol->st_value) {
-                fprintf(stderr, "Error: R_RISCV_PCREL_LO12_S: Unexpected linked instruction\n");
+                fprintf(stderr, ERROR "R_RISCV_PCREL_LO12_S: Unexpected linked instruction\n");
                 return false;
             }
             value = priv->value;
@@ -657,7 +661,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(
                 2, "R_RISCV_ADD32: %08x + %08x + %x = %08x\n", old_value, symbol->st_value, rela->r_addend, new_value);
-            fprintf(stderr, "Warning: Yolo R_RISCV_ADD32 @ %s:%04x\n", mme_offset->name, offset);
+            fprintf(stderr, WARN "Yolo R_RISCV_ADD32 @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
         case R_RISCV_ADD64:
@@ -692,7 +696,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(
                 2, "R_RISCV_SUB32: %08x - %08x - %x -> %08x\n", old_value, symbol->st_value, rela->r_addend, new_value);
-            fprintf(stderr, "Warning: Yolo R_RISCV_SUB32 @ %s:%04x\n", mme_offset->name, offset);
+            fprintf(stderr, WARN "Yolo R_RISCV_SUB32 @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
         case R_RISCV_SUB64:
@@ -709,7 +713,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             value -= offset;
 
             if (value > 0x0ff && value < 0xffffff00) {
-                fprintf(stderr, "Error: R_RISCV_RVC_BRANCH: Target %x does not fit in 11 bits!\n", value);
+                fprintf(stderr, ERROR "R_RISCV_RVC_BRANCH: Target %x does not fit in 8 bits!\n", value);
                 return false;
             }
 
@@ -733,7 +737,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             value -= offset;
 
             if (value > 0x7ff && value < 0xfffff800) {
-                fprintf(stderr, "Error: R_RISCV_RVC_JUMP: Target %x does not fit in 11 bits!\n", value);
+                fprintf(stderr, ERROR "R_RISCV_RVC_JUMP: Target %x does not fit in 12 bits!\n", value);
                 return false;
             }
 
@@ -792,7 +796,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_SET32: %08x -> %08x\n", old_value, new_value);
-            fprintf(stderr, "Warning: Yolo R_RISCV_SET32 @ %s:%04x\n", mme_offset->name, offset);
+            fprintf(stderr, WARN "Yolo R_RISCV_SET32 @ %s:%04x\n", mme_offset->name, offset);
             return false;
 
         case R_RISCV_32_PCREL:
@@ -810,7 +814,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_32_PCREL: %08x -> %08x\n", old_value, new_value);
-            fprintf(stderr, "Warning: Yolo R_RISCV_32_PCREL @ %s:%04x\n", mme_offset->name, offset);
+            fprintf(stderr, WARN "Yolo R_RISCV_32_PCREL @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
         case R_RISCV_SET_ULEB128:
@@ -828,13 +832,13 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             return false;
 
         case 68:
-            fprintf(stderr, "Warning: Skipping undocumented relocation Type 68 @ %s:%04x\n", mme_offset->name, offset);
+            fprintf(stderr, WARN "Skipping undocumented relocation Type 68 @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
         default:
             fprintf(
                 stderr,
-                "Error: Unknown relocation type %d at %s:%04x\n",
+                ERROR "Unknown relocation type %d at %s:%04x\n",
                 ELF32_R_TYPE(rela->r_info),
                 mme_offset->name,
                 offset);
