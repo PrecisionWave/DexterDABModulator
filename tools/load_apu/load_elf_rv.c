@@ -328,7 +328,7 @@ static uint32_t Get_Imm_J_Type(uint32_t instr)
     return res1 | res2 | res3 | res4;
 }
 
-const uint16_t Offset_CJ_Type12(uint16_t cinstr, uint16_t offset)
+const uint16_t Offset_CJ_Type(uint16_t cinstr, uint16_t offset)
 {
     // CJ-Type:
     //  - instruction[12]   = offset[11]
@@ -351,26 +351,6 @@ const uint16_t Offset_CJ_Type12(uint16_t cinstr, uint16_t offset)
     return instr & 0xffff;
 }
 
-const uint16_t Offset_CJ_Type8(uint16_t cinstr, uint16_t offset)
-{
-    // CJ-Type:
-    //  - instruction[11]   = offset[4]
-    //  - instruction[7]    = offset[8]
-    //  - instruction[5]    = offset[6]
-    //  - instruction[4]    = offset[7]
-    //  - instruction[3:1]  = offset[3:1]
-    //  - instruction[0]    = offset[5]
-    uint32_t instr = cinstr;
-    replace_imm(&instr, 11, 11, offset, 4, 4);
-    replace_imm(&instr, 9, 9, offset, 8, 8);
-    replace_imm(&instr, 7, 7, offset, 6, 6);
-    replace_imm(&instr, 6, 6, offset, 7, 7);
-    replace_imm(&instr, 5, 3, offset, 3, 1);
-    replace_imm(&instr, 2, 2, offset, 5, 5);
-    return instr & 0xffff;
-}
-
-
 const uint16_t Get_Offset_CJ_Type(uint16_t cinstr)
 {
     // CJ-Type:
@@ -392,6 +372,41 @@ const uint16_t Get_Offset_CJ_Type(uint16_t cinstr)
     uint32_t res8 = extract_imm(cinstr, 2, 2, 5, 5);
     return (res1 | res2 | res3 | res4 | res5 | res6 | res7 | res8) & 0xffff;
 }
+
+
+const uint16_t Offset_CB_Type(uint16_t cinstr, uint16_t offset)
+{
+    // CB-Type:
+    //  - instruction[12]    = offset[8]
+    //  - instruction[11:10] = offset[4:3]
+    //  - instruction[6:5]   = offset[7:6]
+    //  - instruction[4:3]   = offset[2:1]
+    //  - instruction[2]     = offset[5]
+    uint32_t instr = cinstr;
+    replace_imm(&instr, 12, 12, offset, 8, 8);
+    replace_imm(&instr, 11, 10, offset, 4, 3);
+    replace_imm(&instr, 6, 5, offset, 7, 6);
+    replace_imm(&instr, 4, 3, offset, 2, 1);
+    replace_imm(&instr, 2, 2, offset, 5, 5);
+    return instr & 0xffff;
+}
+
+const uint16_t Get_Offset_CB_Type(uint16_t cinstr)
+{
+    // CB-Type:
+    //  - instruction[12]    = offset[8]
+    //  - instruction[11:10] = offset[4:3]
+    //  - instruction[6:5]   = offset[7:6]
+    //  - instruction[4:3]   = offset[2:1]
+    //  - instruction[2]     = offset[5]
+    uint32_t res1 = extract_imm(cinstr, 12, 12, 8, 8);
+    uint32_t res2 = extract_imm(cinstr, 11, 10, 4, 3);
+    uint32_t res3 = extract_imm(cinstr, 6, 5, 7, 6);
+    uint32_t res4 = extract_imm(cinstr, 4, 3, 2, 1);
+    uint32_t res5 = extract_imm(cinstr, 2, 2, 5, 5);
+    return (res1 | res2 | res3 | res4 | res5) & 0xffff;
+}
+
 
 static uint32_t Imm_B_Type(uint32_t instr, uint32_t imm)
 {
@@ -718,7 +733,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             }
 
             old_value = ioread16(mme_offset->cpu_virtual, offset);
-            new_value = Offset_CJ_Type8(old_value, value);
+            new_value = Offset_CB_Type(old_value, value);
             iowrite16(mme_offset->cpu_virtual, offset, new_value);
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
@@ -726,8 +741,8 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             local_debug(
                 3,
                 "  old offset: %03x, new offset: %03x\n",
-                Get_Offset_CJ_Type(old_value),
-                Get_Offset_CJ_Type(new_value));
+                Get_Offset_CB_Type(old_value),
+                Get_Offset_CB_Type(new_value));
             return true;
 
         case R_RISCV_RVC_JUMP:
@@ -742,7 +757,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             }
 
             old_value = ioread16(mme_offset->cpu_virtual, offset);
-            new_value = Offset_CJ_Type12(old_value, value);
+            new_value = Offset_CJ_Type(old_value, value);
             iowrite16(mme_offset->cpu_virtual, offset, new_value);
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
