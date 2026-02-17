@@ -22,6 +22,18 @@ __loop:
     j __loop
 
 __done:
+.cfi_startproc
+.cfi_undefined ra
+
+    .option push
+    .option norelax
+        la gp, __global_pointer$
+    .option pop
+
+    la sp, _stack
+    add s0, sp, zero
+.cfi_endproc
+
     lui t0, %hi(_start)
     addi t0, t0, %lo(_start)
     jr t0

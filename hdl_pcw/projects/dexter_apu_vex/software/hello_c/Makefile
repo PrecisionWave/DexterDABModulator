@@ -1,7 +1,7 @@
 
 CROSS_PREFIX := riscv-none-elf-
-CROSS_CFLAGS := -march=rv32imc
-CROSS_AFLAGS := -march=rv32imc
+CROSS_CFLAGS := -march=rv32imc --specs=nosys.specs
+CROSS_AFLAGS := -march=rv32imc 
 
 .PHONY : clean all
 all : clean hello_c.elf hello_c.asm

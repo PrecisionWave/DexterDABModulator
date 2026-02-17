@@ -135,6 +135,12 @@ SECTIONS {
    __data_end = .;
 } > ddr
 
+.global (NOLOAD) : {
+    . = ALIGN(8);
+    PROVIDE( __global_pointer$ = . + 0x800 );
+} > ddr
+
+
 .got : {
     *(.got)
     *(.igot)
@@ -217,6 +223,9 @@ _SDA2_BASE_ = __sdata2_start + ((__sbss2_end - __sdata2_start) / 2 );
    _heap_end = .;
 }  > ddr
 
+_end = .;
+end = _end;
+
 .stack (NOLOAD) : {
    _stack_end = .;
    . += _STACK_SIZE;
@@ -225,11 +234,6 @@ _SDA2_BASE_ = __sdata2_start + ((__sbss2_end - __sdata2_start) / 2 );
    __stack = _stack;
 }  > ddr
 
-.global (NOLOAD) : {
-    . = ALIGN(8);
-    PROVIDE( __global_pointer$ = . );
-} > ddr
 
-_end = .;
 }
 
