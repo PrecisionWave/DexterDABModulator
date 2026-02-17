@@ -144,7 +144,6 @@ xilinx.com:ip:processing_system7:5.5\
 xilinx.com:ip:xlslice:1.0\
 xilinx.com:ip:c_counter_binary:12.0\
 xilinx.com:ip:axi_firewall:1.1\
-xilinx.com:ip:bscan_jtag:1.0\
 xilinx.com:ip:axi_uart16550:2.0\
 xilinx.com:ip:axi_bram_ctrl:4.1\
 xilinx.com:ip:axi_intc:4.1\
@@ -535,8 +534,6 @@ proc create_hier_cell_accel { parentCell nameHier } {
   current_bd_instance $hier_obj
 
   # Create interface pins
-  create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:bscan_rtl:1.0 BSCAN
-
   create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 apu2cpu_axi
 
   create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 cpu2apu_axi
@@ -546,6 +543,10 @@ proc create_hier_cell_accel { parentCell nameHier } {
   create_bd_pin -dir O -type intr apu_mbx_irq
   create_bd_pin -dir O -type intr apu_uart_irq
   create_bd_pin -dir I -type rst ext_reset_in
+  create_bd_pin -dir I jtag_tck
+  create_bd_pin -dir I jtag_tdi
+  create_bd_pin -dir O jtag_tdo
+  create_bd_pin -dir I jtag_tms
   create_bd_pin -dir I -type clk sys_clk
   create_bd_pin -dir I -type rst sys_rstn
 
@@ -573,9 +574,6 @@ proc create_hier_cell_accel { parentCell nameHier } {
   set_property -dict [ list \
    CONFIG.FIREWALL_MODE {SI_SIDE} \
  ] $axi_firewall_0
-
-  # Create instance: bscan_jtag_0, and set properties
-  set bscan_jtag_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:bscan_jtag:1.0 bscan_jtag_0 ]
 
   # Create instance: cpu_apuuart, and set properties
   set cpu_apuuart [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_uart16550:2.0 cpu_apuuart ]
@@ -702,7 +700,6 @@ proc create_hier_cell_accel { parentCell nameHier } {
  ] $system_ila_0
 
   # Create interface connections
-  connect_bd_intf_net -intf_net BSCAN_1 [get_bd_intf_pins BSCAN] [get_bd_intf_pins bscan_jtag_0/S_BSCAN]
   connect_bd_intf_net -intf_net S00_AXI_1 [get_bd_intf_pins VexiiRiscv_wrapper_0/LsuL1] [get_bd_intf_pins mb_axi_cache/S00_AXI]
   connect_bd_intf_net -intf_net [get_bd_intf_nets S00_AXI_1] [get_bd_intf_pins VexiiRiscv_wrapper_0/LsuL1] [get_bd_intf_pins system_ila_0/SLOT_0_AXI]
   connect_bd_intf_net -intf_net S01_AXI_1 [get_bd_intf_pins VexiiRiscv_wrapper_0/FetchL1] [get_bd_intf_pins mb_axi_cache/S01_AXI]
@@ -729,17 +726,17 @@ proc create_hier_cell_accel { parentCell nameHier } {
   connect_bd_net -net ARESETN_1 [get_bd_pins mb_axi_cache/ARESETN] [get_bd_pins mb_axi_cache/M00_ARESETN] [get_bd_pins mb_axi_cache/M01_ARESETN] [get_bd_pins mb_axi_cache/S00_ARESETN] [get_bd_pins mb_axi_cache/S01_ARESETN] [get_bd_pins mb_axi_per/ARESETN] [get_bd_pins mb_axi_per/M00_ARESETN] [get_bd_pins mb_axi_per/M01_ARESETN] [get_bd_pins mb_axi_per/M02_ARESETN] [get_bd_pins mb_axi_per/M03_ARESETN] [get_bd_pins mb_axi_per/S00_ARESETN] [get_bd_pins mb_rstgen/interconnect_aresetn]
   connect_bd_net -net M03_ARESETN_1 [get_bd_pins sys_rstn] [get_bd_pins axi_firewall_0/aresetn] [get_bd_pins cpu_apuuart/s_axi_aresetn] [get_bd_pins cpu_cpu2apu_axi/ARESETN] [get_bd_pins cpu_cpu2apu_axi/M00_ARESETN] [get_bd_pins cpu_cpu2apu_axi/M01_ARESETN] [get_bd_pins cpu_cpu2apu_axi/M02_ARESETN] [get_bd_pins cpu_cpu2apu_axi/M03_ARESETN] [get_bd_pins cpu_cpu2apu_axi/M04_ARESETN] [get_bd_pins cpu_cpu2apu_axi/S00_ARESETN] [get_bd_pins cpu_mb_control/s_axi_aresetn] [get_bd_pins cpu_shared_bram_ctrl/s_axi_aresetn] [get_bd_pins shared_mailbox/S0_AXI_ARESETN] [get_bd_pins system_ila_0/resetn]
   connect_bd_net -net Net [get_bd_pins VexiiRiscv_wrapper_0/reset] [get_bd_pins apu_tsc/SCLR] [get_bd_pins mb_axi_intc/processor_rst] [get_bd_pins mb_rstgen/mb_reset] [get_bd_pins system_ila_0/probe0]
-  connect_bd_net -net VexiiRiscv_wrapper_0_EmbeddedRiscvJtag_logic_jtag_tdo [get_bd_pins VexiiRiscv_wrapper_0/EmbeddedRiscvJtag_logic_jtag_tdo] [get_bd_pins bscan_jtag_0/JTAG_TDO]
+  connect_bd_net -net VexiiRiscv_wrapper_0_EmbeddedRiscvJtag_logic_jtag_tdo [get_bd_pins jtag_tdo] [get_bd_pins VexiiRiscv_wrapper_0/EmbeddedRiscvJtag_logic_jtag_tdo]
   connect_bd_net -net VexiiRiscv_wrapper_0_EmbeddedRiscvJtag_logic_ndmreset [get_bd_pins VexiiRiscv_wrapper_0/EmbeddedRiscvJtag_logic_ndmreset] [get_bd_pins mb_rstgen/mb_debug_sys_rst] [get_bd_pins system_ila_0/probe2]
   connect_bd_net -net apu_tsc_Q [get_bd_pins VexiiRiscv_wrapper_0/PrivilegedPlugin_logic_rdtime] [get_bd_pins apu_tsc/Q]
   connect_bd_net -net axi_gpio_0_gpio2_io_o [get_bd_pins cpu_mb_control/gpio2_io_o] [get_bd_pins mb_rstgen/aux_reset_in] [get_bd_pins system_ila_0/probe1]
   connect_bd_net -net axi_timer_0_interrupt [get_bd_pins mb_axi_timer/interrupt] [get_bd_pins mb_int_concat/In2]
   connect_bd_net -net axi_uart16550_0_ip2intc_irpt [get_bd_pins apu_uart_irq] [get_bd_pins cpu_apuuart/ip2intc_irpt]
   connect_bd_net -net axi_uart16550_0_sout [get_bd_pins cpu_apuuart/sout] [get_bd_pins mb_uartlite/rx]
-  connect_bd_net -net bscan_jtag_0_JTAG_TCK [get_bd_pins VexiiRiscv_wrapper_0/EmbeddedRiscvJtag_logic_jtag_tck] [get_bd_pins bscan_jtag_0/JTAG_TCK]
-  connect_bd_net -net bscan_jtag_0_JTAG_TDI [get_bd_pins VexiiRiscv_wrapper_0/EmbeddedRiscvJtag_logic_jtag_tdi] [get_bd_pins bscan_jtag_0/JTAG_TDI]
-  connect_bd_net -net bscan_jtag_0_JTAG_TMS [get_bd_pins VexiiRiscv_wrapper_0/EmbeddedRiscvJtag_logic_jtag_tms] [get_bd_pins bscan_jtag_0/JTAG_TMS]
   connect_bd_net -net ext_reset_in_1 [get_bd_pins ext_reset_in] [get_bd_pins mb_rstgen/ext_reset_in]
+  connect_bd_net -net jtag_tck_1 [get_bd_pins jtag_tck] [get_bd_pins VexiiRiscv_wrapper_0/EmbeddedRiscvJtag_logic_jtag_tck]
+  connect_bd_net -net jtag_tdi_1 [get_bd_pins jtag_tdi] [get_bd_pins VexiiRiscv_wrapper_0/EmbeddedRiscvJtag_logic_jtag_tdi]
+  connect_bd_net -net jtag_tms_1 [get_bd_pins jtag_tms] [get_bd_pins VexiiRiscv_wrapper_0/EmbeddedRiscvJtag_logic_jtag_tms]
   connect_bd_net -net mailbox_0_Interrupt_0 [get_bd_pins apu_mbx_irq] [get_bd_pins shared_mailbox/Interrupt_0]
   connect_bd_net -net mailbox_0_Interrupt_1 [get_bd_pins mb_int_concat/In0] [get_bd_pins shared_mailbox/Interrupt_1]
   connect_bd_net -net mb_axi_intc_irq [get_bd_pins VexiiRiscv_wrapper_0/PrivilegedPlugin_logic_harts_0_int_m_external] [get_bd_pins mb_axi_intc/irq]
@@ -1748,6 +1745,54 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   # Create instance: vcc, and set properties
   set vcc [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 vcc ]
 
+  # Create instance: xlconcat_bit3, and set properties
+  set xlconcat_bit3 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 xlconcat_bit3 ]
+
+  # Create instance: xlslice_0, and set properties
+  set xlslice_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_0 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {62} \
+   CONFIG.DIN_TO {60} \
+   CONFIG.DIN_WIDTH {64} \
+   CONFIG.DOUT_WIDTH {3} \
+ ] $xlslice_0
+
+  # Create instance: xlslice_1, and set properties
+  set xlslice_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_1 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {62} \
+   CONFIG.DIN_TO {0} \
+   CONFIG.DIN_WIDTH {64} \
+   CONFIG.DOUT_WIDTH {63} \
+ ] $xlslice_1
+
+  # Create instance: xlslice_bit0, and set properties
+  set xlslice_bit0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_bit0 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {0} \
+   CONFIG.DIN_TO {0} \
+   CONFIG.DIN_WIDTH {3} \
+   CONFIG.DOUT_WIDTH {1} \
+ ] $xlslice_bit0
+
+  # Create instance: xlslice_bit1, and set properties
+  set xlslice_bit1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_bit1 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {1} \
+   CONFIG.DIN_TO {1} \
+   CONFIG.DIN_WIDTH {3} \
+   CONFIG.DOUT_WIDTH {1} \
+ ] $xlslice_bit1
+
+  # Create instance: xlslice_bit2, and set properties
+  set xlslice_bit2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_bit2 ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {2} \
+   CONFIG.DIN_TO {2} \
+   CONFIG.DIN_WIDTH {3} \
+   CONFIG.DOUT_WIDTH {1} \
+ ] $xlslice_bit2
+
   # Create instance: xlslice_i0, and set properties
   set xlslice_i0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_i0 ]
   set_property -dict [ list \
@@ -1783,7 +1828,6 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   connect_bd_intf_net -intf_net axi_dmac_0_m_src_axi [get_bd_intf_pins axi_dmac_0/m_src_axi] [get_bd_intf_pins axi_mem_intercon/S00_AXI]
   connect_bd_intf_net -intf_net axi_dmac_1_m_src_axi [get_bd_intf_pins axi_dmac_1/m_src_axi] [get_bd_intf_pins axi_mem_intercon/S01_AXI]
   connect_bd_intf_net -intf_net axi_mem_intercon_M00_AXI [get_bd_intf_pins axi_mem_intercon/M00_AXI] [get_bd_intf_pins sys_ps7/S_AXI_HP1]
-  connect_bd_intf_net -intf_net debug_bridge_0_m0_bscan [get_bd_intf_pins accel/BSCAN] [get_bd_intf_pins debug_bridge_0/m0_bscan]
   connect_bd_intf_net -intf_net debug_bridge_0_m1_bscan [get_bd_intf_pins debug_bridge_0/m1_bscan] [get_bd_intf_pins debug_bridge_1/S_BSCAN]
   connect_bd_intf_net -intf_net sys_ps7_DDR [get_bd_intf_ports ddr] [get_bd_intf_pins sys_ps7/DDR]
   connect_bd_intf_net -intf_net sys_ps7_FIXED_IO [get_bd_intf_ports fixed_io] [get_bd_intf_pins sys_ps7/FIXED_IO]
@@ -1799,6 +1843,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   # Create port connections
   connect_bd_net -net accel_Interrupt_0 [get_bd_pins accel/apu_mbx_irq] [get_bd_pins sys_concat_intc/In2]
   connect_bd_net -net accel_interrupt [get_bd_pins accel/apu_uart_irq] [get_bd_pins sys_concat_intc/In4]
+  connect_bd_net -net accel_jtag_tdo [get_bd_pins accel/jtag_tdo] [get_bd_pins xlconcat_bit3/In0]
   connect_bd_net -net adc_clk_in_n [get_bd_ports adc_clk_in_n] [get_bd_pins adc_if/adc_clk_in_n]
   connect_bd_net -net adc_clk_in_p [get_bd_ports adc_clk_in_p] [get_bd_pins adc_if/adc_clk_in_p]
   connect_bd_net -net adc_d_1 [get_bd_ports adc_d] [get_bd_pins adc_if/din]
@@ -1823,7 +1868,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   connect_bd_net -net dexter_dsp_tx_1_valid_out [get_bd_pins dexter_dsp_tx_1/valid_out] [get_bd_pins duc_if/valid]
   connect_bd_net -net ext_pps_in_0_1 [get_bd_ports ext_pps_in] [get_bd_pins dexter_dsp_tx_1/ext_pps_in]
   connect_bd_net -net gnd_dout [get_bd_pins gnd/dout] [get_bd_pins sys_concat_intc/In3] [get_bd_pins sys_concat_intc/In5] [get_bd_pins sys_concat_intc/In6] [get_bd_pins sys_concat_intc/In7] [get_bd_pins sys_concat_intc/In8] [get_bd_pins sys_concat_intc/In9] [get_bd_pins sys_concat_intc/In10] [get_bd_pins sys_concat_intc/In11] [get_bd_pins sys_concat_intc/In12] [get_bd_pins sys_concat_intc/In13] [get_bd_pins sys_concat_intc/In14] [get_bd_pins sys_concat_intc/In15]
-  connect_bd_net -net gpio_i_1 [get_bd_ports gpio_i] [get_bd_pins sys_ps7/GPIO_I]
+  connect_bd_net -net gpio_i_1 [get_bd_ports gpio_i] [get_bd_pins xlslice_1/Din]
   connect_bd_net -net gpio_io_i_0_1 [get_bd_ports axss_reg] [get_bd_pins axss_gpio/gpio_io_i]
   connect_bd_net -net gps_pps_in_0_1 [get_bd_ports gps_pps_in] [get_bd_pins dexter_dsp_tx_1/gps_pps_in]
   connect_bd_net -net i2c1_scl_i_1 [get_bd_ports i2c1_scl_i] [get_bd_pins sys_ps7/I2C1_SCL_I]
@@ -1838,7 +1883,7 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   connect_bd_net -net sys_cpu_reset [get_bd_pins sys_rstgen/peripheral_reset]
   connect_bd_net -net sys_logic_inv_Res [get_bd_pins sys_logic_inv/Res] [get_bd_pins sys_ps7/USB0_VBUS_PWRFAULT]
   connect_bd_net -net sys_ps7_FCLK_RESET0_N [get_bd_pins accel/ext_reset_in] [get_bd_pins adc_if/ext_reset_in] [get_bd_pins rst_164M/ext_reset_in] [get_bd_pins sys_ps7/FCLK_RESET0_N] [get_bd_pins sys_rstgen/ext_reset_in]
-  connect_bd_net -net sys_ps7_GPIO_O [get_bd_ports gpio_o] [get_bd_pins sys_ps7/GPIO_O]
+  connect_bd_net -net sys_ps7_GPIO_O [get_bd_ports gpio_o] [get_bd_pins sys_ps7/GPIO_O] [get_bd_pins xlslice_0/Din]
   connect_bd_net -net sys_ps7_GPIO_T [get_bd_ports gpio_t] [get_bd_pins sys_ps7/GPIO_T]
   connect_bd_net -net sys_ps7_I2C1_SCL_O [get_bd_ports i2c1_scl_o] [get_bd_pins sys_ps7/I2C1_SCL_O]
   connect_bd_net -net sys_ps7_I2C1_SCL_T [get_bd_ports i2c1_scl_t] [get_bd_pins sys_ps7/I2C1_SCL_T]
@@ -1851,9 +1896,15 @@ Flash#Quad SPI Flash#GPIO#Quad SPI Flash#GPIO#GPIO#GPIO#GPIO#GPIO#I2C 0#I2C\
   connect_bd_net -net sys_ps7_SPI0_SS_O [get_bd_ports spi0_csn_0] [get_bd_pins sys_ps7/SPI0_SS_O]
   connect_bd_net -net sys_rstgen_peripheral_aresetn [get_bd_ports sys_cpu_resetn] [get_bd_pins accel/sys_rstn] [get_bd_pins axi_dmac_0/m_src_axi_aresetn] [get_bd_pins axi_dmac_0/s_axi_aresetn] [get_bd_pins axi_dmac_1/m_src_axi_aresetn] [get_bd_pins axi_dmac_1/s_axi_aresetn] [get_bd_pins axi_mem_intercon/ARESETN] [get_bd_pins axi_mem_intercon/M00_ARESETN] [get_bd_pins axi_mem_intercon/S00_ARESETN] [get_bd_pins axi_mem_intercon/S01_ARESETN] [get_bd_pins axss_gpio/s_axi_aresetn] [get_bd_pins debug_bridge_0/s_axi_aresetn] [get_bd_pins sys_ps7_axi_periph/ARESETN] [get_bd_pins sys_ps7_axi_periph/M00_ARESETN] [get_bd_pins sys_ps7_axi_periph/M02_ARESETN] [get_bd_pins sys_ps7_axi_periph/M03_ARESETN] [get_bd_pins sys_ps7_axi_periph/M04_ARESETN] [get_bd_pins sys_ps7_axi_periph/M05_ARESETN] [get_bd_pins sys_ps7_axi_periph/S00_ARESETN] [get_bd_pins sys_rstgen/peripheral_aresetn]
   connect_bd_net -net vcc_dout [get_bd_pins sys_ps7/SPI0_SS_I] [get_bd_pins vcc/dout]
+  connect_bd_net -net xlconcat_0_dout [get_bd_pins sys_ps7/GPIO_I] [get_bd_pins xlconcat_bit3/dout]
+  connect_bd_net -net xlslice_0_Dout [get_bd_pins xlslice_0/Dout] [get_bd_pins xlslice_bit0/Din] [get_bd_pins xlslice_bit1/Din] [get_bd_pins xlslice_bit2/Din]
+  connect_bd_net -net xlslice_1_Dout [get_bd_pins xlconcat_bit3/In1] [get_bd_pins xlslice_1/Dout]
   connect_bd_net -net xlslice_2_Dout [get_bd_ports duc_i] [get_bd_pins duc_if/duc_i]
   connect_bd_net -net xlslice_3_Dout [get_bd_ports duc_q] [get_bd_pins duc_if/duc_q]
   connect_bd_net -net xlslice_4_Dout [get_bd_ports duc_tx_en] [get_bd_pins duc_if/duc_tx_en]
+  connect_bd_net -net xlslice_bit0_Dout [get_bd_pins accel/jtag_tck] [get_bd_pins xlslice_bit0/Dout]
+  connect_bd_net -net xlslice_bit1_Dout [get_bd_pins accel/jtag_tms] [get_bd_pins xlslice_bit1/Dout]
+  connect_bd_net -net xlslice_bit2_Dout [get_bd_pins accel/jtag_tdi] [get_bd_pins xlslice_bit2/Dout]
   connect_bd_net -net xlslice_i0_Dout [get_bd_pins dexter_dsp_tx_1/bb_i_in0] [get_bd_pins xlslice_i0/Dout]
   connect_bd_net -net xlslice_i1_Dout [get_bd_pins dexter_dsp_tx_1/bb_i_in1] [get_bd_pins xlslice_i1/Dout]
   connect_bd_net -net xlslice_q0_Dout [get_bd_pins dexter_dsp_tx_1/bb_q_in0] [get_bd_pins xlslice_q0/Dout]
