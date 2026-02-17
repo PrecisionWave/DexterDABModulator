@@ -47,7 +47,7 @@ static bool check_alignment(uint32_t offset, int alignment, struct memory_map_en
 }
 
 #define ERROR "\033[31mError\033[0m: "
-#define WARN  "\033[33mWarning\033[0m: "
+#define WARN "\033[33mWarning\033[0m: "
 #define CYAN(x) "\033[36m" x "\033[0m"
 
 //  https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-elf.adoc
@@ -560,15 +560,15 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             local_debug(2, CYAN("%s @ %04x: "), mme_offset->name, offset);
             local_debug(2, "R_RISCV_CALL_PLT: PC + 0x%x: ", value);
 
-            old_value = ioread32(mme_offset->cpu_virtual, offset+0);
+            old_value = ioread32(mme_offset->cpu_virtual, offset + 0);
             new_value = Imm_U_Type(old_value, value + 0x800);
-            iowrite32(mme_offset->cpu_virtual, offset+0, new_value);
+            iowrite32(mme_offset->cpu_virtual, offset + 0, new_value);
 
             local_debug(2, "+0: %08x -> %08x, ", old_value, new_value);
 
-            old_value = ioread32(mme_offset->cpu_virtual, offset+4);
+            old_value = ioread32(mme_offset->cpu_virtual, offset + 4);
             new_value = Imm_I_Type(old_value, value);
-            iowrite32(mme_offset->cpu_virtual, offset+4, new_value);
+            iowrite32(mme_offset->cpu_virtual, offset + 4, new_value);
             local_debug(2, "+4: %08x -> %08x\n", old_value, new_value);
 
             return false;
@@ -691,8 +691,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(
-                2, "R_RISCV_ADD32: %08x + %08x = %08x\n", old_value, value, new_value);
+            local_debug(2, "R_RISCV_ADD32: %08x + %08x = %08x\n", old_value, value, new_value);
             fprintf(stderr, WARN "Yolo R_RISCV_ADD32 @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
@@ -726,8 +725,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(
-                2, "R_RISCV_SUB32: %08x - %08x -> %08x\n", old_value, value, new_value);
+            local_debug(2, "R_RISCV_SUB32: %08x - %08x -> %08x\n", old_value, value, new_value);
             fprintf(stderr, WARN "Yolo R_RISCV_SUB32 @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
@@ -836,14 +834,14 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             // word32      S + A - P
             value -= mme_offset->apu_loaded;
             value -= offset;
-            
+
             old_value = ioread32(mme_offset->cpu_virtual, offset);
             new_value = value;
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
-            
+
             priv->value = new_value;
             priv->offset = rela->r_offset;
-            
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_32_PCREL: %08x -> %08x\n", old_value, new_value);
             fprintf(stderr, WARN "Yolo R_RISCV_32_PCREL @ %s:%04x\n", mme_offset->name, offset);
@@ -864,7 +862,13 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             return false;
 
         case 68:
-            fprintf(stderr, WARN "Skipping undocumented relocation Type 68 @ %s:%04x\n", mme_offset->name, offset);
+        case 69:
+            fprintf(
+                stderr,
+                WARN "Skipping undocumented relocation Type %d @ %s:%04x\n",
+                ELF32_R_TYPE(rela->r_info),
+                mme_offset->name,
+                offset);
             return true;
 
         default:
