@@ -27,6 +27,39 @@ __reset:
     j   1b
 .cfi_endproc
 
+.macro UartLite_Wait_TransmitNotFull UART_BASE, TEMP_REG
+1:
+    lw      \TEMP_REG, 0x8(\UART_BASE)      ; /* XUL_STATUS_REG_OFFSET = 8*/
+    andi    \TEMP_REG, \TEMP_REG, 0x08      ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
+    bnez    \TEMP_REG, 1b
+.endm
+
+.macro UartLite_TransmitChar UART_BASE, TEMP_REG, CHAR
+    UartLite_Wait_TransmitNotFull \UART_BASE \TEMP_REG
+    li      \TEMP_REG, \CHAR
+    sw      \TEMP_REG, 4(\UART_BASE)        ; /* XUL_TX_FIFO_OFFSET = 4 */
+.endm
+
+.macro UartLite_TransmitString UART_BASE, TEMP_REG, MSG
+1:
+    UartLite_Wait_TransmitNotFull \UART_BASE \TEMP_REG
+
+    lbu     \TEMP_REG, 0(\MSG)
+    beqz    \TEMP_REG, 2f
+
+    sw      \TEMP_REG, 4( \UART_BASE)       ; /* XUL_TX_FIFO_OFFSET = 4 */
+
+    addi    \MSG, \MSG, 1
+    j 1b
+2:
+.endm
+
+.macro UartLite_TransmitHex UART_BASE, VAL_REG, HEXTAB
+    add     \VAL_REG, \HEXTAB, \VAL_REG
+    lbu     \VAL_REG, 0(\VAL_REG)
+    sw      \VAL_REG, 4(\UART_BASE)        ; /* XUL_TX_FIFO_OFFSET = 4 */
+.endm
+
 .global trap_handler
 trap_handler:
         # Trap handler preamble (save registers).
@@ -45,106 +78,51 @@ trap_handler:
         lui a3, %hi(msg_exc)
         addi a3, a3, %lo(msg_exc)
 
-1:
-        lw a4, 0x8(a2)      ; /* XUL_STATUS_REG_OFFSET = 8*/
-        andi a4, a4, 0x08   ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
-        bnez a4, 1b
+        UartLite_TransmitString a2, a4, a3
 
-        lbu a4, 0(a3)
-        beqz a4, 2f
-
-        sw a4, 4(a2)        ; /* XUL_TX_FIFO_OFFSET = 4 */
-
-        addi a3, a3, 1
-        j 1b
-
-2:
         lui a3, %hi(msg_hex)
         addi a3, a3, %lo(msg_hex)
 
-1:
-        lw a4, 0x8(a2)      ; /* XUL_STATUS_REG_OFFSET = 8*/
-        andi a4, a4, 0x08   ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
-        bnez a4, 1b
-
+        UartLite_Wait_TransmitNotFull a2, a4
         srli a4, a1, 24
         andi a4, a4, 0xf
-        add a4, a3, a4
-        lbu a4, 0(a4)
-        sw a4, 4(a2)        ; /* XUL_TX_FIFO_OFFSET = 4 */
+        UartLite_TransmitHex a2, a4, a3
 
-1:
-        lw a4, 0x8(a2)      ; /* XUL_STATUS_REG_OFFSET = 8*/
-        andi a4, a4, 0x08   ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
-        bnez a4, 1b
-
+        UartLite_Wait_TransmitNotFull a2, a4
         srli a4, a1, 20
         andi a4, a4, 0xf
-        add  a4, a3, a4
-        lbu a4, 0(a4)
-        sw a4, 4(a2)        ; /* XUL_TX_FIFO_OFFSET = 4 */
-1:
-        lw a4, 0x8(a2)      ; /* XUL_STATUS_REG_OFFSET = 8*/
-        andi a4, a4, 0x08   ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
-        bnez a4, 1b
+        UartLite_TransmitHex a2, a4, a3
 
+        UartLite_Wait_TransmitNotFull a2, a4
         srli a4, a1, 16
         andi a4, a4, 0xf
-        add  a4, a3, a4
-        lbu a4, 0(a4)
-        sw a4, 4(a2)        ; /* XUL_TX_FIFO_OFFSET = 4 */
-1:
-        lw a4, 0x8(a2)      ; /* XUL_STATUS_REG_OFFSET = 8*/
-        andi a4, a4, 0x08   ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
-        bnez a4, 1b
+        UartLite_TransmitHex a2, a4, a3
 
+        UartLite_Wait_TransmitNotFull a2, a4
         srli a4, a1, 12
         andi a4, a4, 0xf
-        add  a4, a3, a4
-        lbu a4, 0(a4)
-        sw a4, 4(a2)        ; /* XUL_TX_FIFO_OFFSET = 4 */
-1:
-        lw a4, 0x8(a2)      ; /* XUL_STATUS_REG_OFFSET = 8*/
-        andi a4, a4, 0x08   ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
-        bnez a4, 1b
+        UartLite_TransmitHex a2, a4, a3
 
+        UartLite_Wait_TransmitNotFull a2, a4
         srli a4, a1, 8
         andi a4, a4, 0xf
-        add  a4, a3, a4
-        lbu a4, 0(a4)
-        sw a4, 4(a2)        ; /* XUL_TX_FIFO_OFFSET = 4 */
-1:
-        lw a4, 0x8(a2)      ; /* XUL_STATUS_REG_OFFSET = 8*/
-        andi a4, a4, 0x08   ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
-        bnez a4, 1b
+        UartLite_TransmitHex a2, a4, a3
 
+        UartLite_Wait_TransmitNotFull a2, a4
         srli a4, a1, 4
         andi a4, a4, 0xf
-        add  a4, a3, a4
-        lbu a4, 0(a4)
-        sw a4, 4(a2)        ; /* XUL_TX_FIFO_OFFSET = 4 */
-1:
-        lw a4, 0x8(a2)      ; /* XUL_STATUS_REG_OFFSET = 8*/
-        andi a4, a4, 0x08   ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
-        bnez a4, 1b
+        UartLite_TransmitHex a2, a4, a3
 
+        UartLite_Wait_TransmitNotFull a2, a4
         addi a4, a1, 0
         andi a4, a4, 0xf
-        add  a4, a3, a4
-        lbu a4, 0(a4)
-        sw a4, 4(a2)        ; /* XUL_TX_FIFO_OFFSET = 4 */
-1:
-        lw a4, 0x8(a2)      ; /* XUL_STATUS_REG_OFFSET = 8*/
-        andi a4, a4, 0x08   ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
-        bnez a4, 1b
-        li a4, '\r'
-        sw a4, 4(a2)        ; /* XUL_TX_FIFO_OFFSET = 4 */
-1:
-        lw a4, 0x8(a2)      ; /* XUL_STATUS_REG_OFFSET = 8*/
-        andi a4, a4, 0x08   ; /* XUL_SR_TX_FIFO_FULL  = 0x08 */
-        bnez a4, 1b
-        li a4, '\n'
-        sw a4, 4(a2)        ; /* XUL_TX_FIFO_OFFSET = 4 */
+        UartLite_TransmitHex a2, a4, a3
+
+        UartLite_Wait_TransmitNotFull a2, a4
+        UartLite_TransmitChar a2, a4, '\r'
+
+        UartLite_Wait_TransmitNotFull a2, a4
+        UartLite_TransmitChar a2, a4, '\n'
 3:
         j 3b
 trap_handler_restore_state:
