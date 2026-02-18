@@ -554,8 +554,8 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_CALL_PLT:
             // 32-bit PC-relative function call, macros call, tail (PIC)
             // U+I-Type    S + A - P
-            // value -= offset;
-            // value -= mme_offset->apu_loaded;
+            value -= offset;
+            value -= mme_offset->apu_loaded;
 
             local_debug(2, CYAN("%s @ %04x: "), mme_offset->name, offset);
             local_debug(2, "R_RISCV_CALL_PLT: PC + 0x%x: ", value);
@@ -685,14 +685,19 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_ADD32:
             // 32-bit label addition
             // word32      V + S + A
+            if (priv->offset != rela->r_offset) {
+                priv->value = 0;
+                priv->offset = rela->r_offset;
+            }
 
-            old_value = ioread32(mme_offset->cpu_virtual, offset);
+            old_value = priv->value;
             new_value = old_value + value;
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
+            priv->value = new_value;
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_ADD32: %08x + %08x = %08x\n", old_value, value, new_value);
-            fprintf(stderr, WARN "Yolo R_RISCV_ADD32 @ %s:%04x\n", mme_offset->name, offset);
+            // fprintf(stderr, WARN "Yolo R_RISCV_ADD32 @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
         case R_RISCV_ADD64:
@@ -720,13 +725,18 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             // 32-bit label subtraction
             // word32      V - S - A
 
-            old_value = ioread32(mme_offset->cpu_virtual, offset);
-            new_value = old_value - value;
+            if (priv->offset != rela->r_offset) {
+                priv->value = 0;
+                priv->offset = rela->r_offset;
+            }
+
+            old_value = priv->value;
+            new_value = priv->value - value;
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_SUB32: %08x - %08x -> %08x\n", old_value, value, new_value);
-            fprintf(stderr, WARN "Yolo R_RISCV_SUB32 @ %s:%04x\n", mme_offset->name, offset);
+            local_debug(2, "R_RISCV_SUB32: %08x - %08x = %08x\n", old_value, value, new_value);
+            // fprintf(stderr, WARN "Yolo R_RISCV_SUB32 @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
         case R_RISCV_SUB64:
@@ -806,28 +816,40 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
         case R_RISCV_SET8:
             // Local label assignment
             // word8       S + A
+            priv->offset = rela->r_offset;
+            new_value = priv->value & 0xff;
+            priv->value = new_value;
+            iowrite8(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_SET8\n");
-            return false;
+            local_debug(2, "R_RISCV_SET8: %02x\n", new_value);
+            return true;
 
         case R_RISCV_SET16:
             // Local label assignment
             // word16      S + A
+            priv->offset = rela->r_offset;
+            new_value = priv->value & 0xffff;
+            priv->value = new_value;
+            iowrite16(mme_offset->cpu_virtual, offset, new_value);
+
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_SET16\n");
-            return false;
+            local_debug(2, "R_RISCV_SET16: %04x\n", new_value);
+            fprintf(stderr, WARN "Yolo R_RISCV_SET16 @ %s:%04x\n", mme_offset->name, offset);
+            return true;
 
         case R_RISCV_SET32:
             // Local label assignment
             // word32      S + A
-            old_value = ioread32(mme_offset->cpu_virtual, offset);
-            new_value = symbol->st_value - rela->r_addend;
+            priv->offset = rela->r_offset;
+            new_value = priv->value;
+            priv->value = new_value;
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_SET32: %08x -> %08x\n", old_value, new_value);
+            local_debug(2, "R_RISCV_SET32: %08x\n", old_value, new_value);
             fprintf(stderr, WARN "Yolo R_RISCV_SET32 @ %s:%04x\n", mme_offset->name, offset);
-            return false;
+            return true;
 
         case R_RISCV_32_PCREL:
             // 32-bit PC relative
@@ -844,7 +866,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
             local_debug(2, "R_RISCV_32_PCREL: %08x -> %08x\n", old_value, new_value);
-            fprintf(stderr, WARN "Yolo R_RISCV_32_PCREL @ %s:%04x\n", mme_offset->name, offset);
+            //fprintf(stderr, WARN "Yolo R_RISCV_32_PCREL @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
         case R_RISCV_SET_ULEB128:

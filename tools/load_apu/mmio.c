@@ -46,6 +46,22 @@ void iowrite16(void* ptr, size_t reg, uint16_t data)
     MEMORY_BARRIER();
 }
 
+uint16_t ioread8(void* ptr, size_t reg)
+{
+    uint8_t* p8 = (uint8_t*)(ptr) + reg;
+    MEMORY_BARRIER();
+    uint8_t value;
+    memcpy(&value, p8, sizeof(value));
+    return value;
+}
+
+void iowrite8(void* ptr, size_t reg, uint8_t data)
+{
+    uint8_t* p8 = (uint8_t*)(ptr) + reg;
+    memcpy(p8, &data, sizeof(data));
+    MEMORY_BARRIER();
+}
+
 void iomemset(void* ptr, size_t reg, uint8_t pattern, size_t length)
 {
     volatile uint8_t* p8 = (volatile uint8_t*)(ptr) + reg;

@@ -32,3 +32,7 @@ test: load_apu_sim load_apu
 	$(CROSS_RV)objcopy main_10k.elf --adjust-vma=0x16800000 -O binary --remove-section vectors.reset main_10k.bin
 	$(CROSS_RV)objdump -b binary --adjust-vma 0x16900000 -m riscv -D main_10k.bin > main_10k.adj
 	$(CROSS_RV)objdump -b binary --adjust-vma=0x16900000 -m riscv -D 10k.DDR > main_10k.dis
+
+test2:
+	$(CROSS_RV)objdump -b binary --adjust-vma 0x16900000 -m riscv -D reloc_10.DDR > reloc_10.asm
+	$(CROSS_RV)objdump -b binary --adjust-vma=0x16900000 -m riscv -D reloc_169.DDR > reloc_169.asm
