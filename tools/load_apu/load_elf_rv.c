@@ -571,7 +571,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             iowrite32(mme_offset->cpu_virtual, offset + 4, new_value);
             local_debug(2, "+4: %08x -> %08x\n", old_value, new_value);
 
-            return false;
+            return true;
 
         case R_RISCV_GOT_HI20:
             // High 20 bits of 32-bit PC-relative GOT access, %got_pcrel_hi(symbol)
