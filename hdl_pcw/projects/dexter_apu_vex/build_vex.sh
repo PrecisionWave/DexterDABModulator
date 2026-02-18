@@ -27,6 +27,7 @@ sbt "Test/runMain vexiiriscv.Generate \
     --region base=40000000,size=10000000,main=0,exe=0 \
     --reset-vector 0x20000000 \
     --debug-jtag-tap \
+    --pmp-size 16 \
     "
 
 cp VexiiRiscv.v ../
