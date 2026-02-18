@@ -861,14 +861,22 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             local_debug(2, "R_RISCV_SUB_ULEB128\n");
             return false;
 
+        // From binutils include/elf/riscv.h
+        /* Internal relocations used exclusively by the relaxation pass. */
+        // R_RISCV_DELETE            (R_RISCV_max)          66
+        // R_RISCV_DELETE_AND_RELAX  (R_RISCV_max + 1)      67
+        // R_RISCV_RVC_LUI           (R_RISCV_max + 2)      68
+        // R_RISCV_GPREL_I           (R_RISCV_max + 3)      69
+        // R_RISCV_GPREL_S           (R_RISCV_max + 4)      70
+        // R_RISCV_TPREL_I           (R_RISCV_max + 5)      71
+        // R_RISCV_TPREL_S           (R_RISCV_max + 6)      72
+        case 66:
+        case 67:
         case 68:
         case 69:
-            fprintf(
-                stderr,
-                WARN "Skipping undocumented relocation Type %d @ %s:%04x\n",
-                ELF32_R_TYPE(rela->r_info),
-                mme_offset->name,
-                offset);
+        case 70:
+        case 71:
+        case 72:
             return true;
 
         default:
