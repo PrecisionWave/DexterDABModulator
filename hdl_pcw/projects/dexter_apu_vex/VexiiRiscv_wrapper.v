@@ -19,6 +19,8 @@ module VexiiRiscv_wrapper (
     input  wire        LsuL1Axi4Plugin_logic_axi_aw_ready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 AWADDR" *)
     output wire [31:0] LsuL1Axi4Plugin_logic_axi_aw_payload_addr,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 AWID" *)
+    output wire [2:0]    LsuL1Axi4Plugin_logic_axi_aw_payload_id,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 AWLEN" *)
     output wire [ 7:0] LsuL1Axi4Plugin_logic_axi_aw_payload_len,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 AWSIZE" *)
@@ -35,9 +37,9 @@ module VexiiRiscv_wrapper (
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 WREADY" *)
     input  wire        LsuL1Axi4Plugin_logic_axi_w_ready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 WDATA" *)
-    output wire [31:0] LsuL1Axi4Plugin_logic_axi_w_payload_data,
+    output wire [63:0] LsuL1Axi4Plugin_logic_axi_w_payload_data,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 WSTRB" *)
-    output wire [ 3:0] LsuL1Axi4Plugin_logic_axi_w_payload_strb,
+    output wire [ 7:0] LsuL1Axi4Plugin_logic_axi_w_payload_strb,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 WLAST" *)
     output wire        LsuL1Axi4Plugin_logic_axi_w_payload_last,
 
@@ -45,6 +47,8 @@ module VexiiRiscv_wrapper (
     input  wire        LsuL1Axi4Plugin_logic_axi_b_valid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 BREADY" *)
     output wire        LsuL1Axi4Plugin_logic_axi_b_ready,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 BID" *)
+    input  wire [2:0]    LsuL1Axi4Plugin_logic_axi_b_payload_id,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 BRESP" *)
     input  wire [ 1:0] LsuL1Axi4Plugin_logic_axi_b_payload_resp,
 
@@ -54,6 +58,8 @@ module VexiiRiscv_wrapper (
     input  wire        LsuL1Axi4Plugin_logic_axi_ar_ready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 ARADDR" *)
     output wire [31:0] LsuL1Axi4Plugin_logic_axi_ar_payload_addr,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 ARID" *)
+    output wire [2:0]    LsuL1Axi4Plugin_logic_axi_ar_payload_id,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 ARLEN" *)
     output wire [ 7:0] LsuL1Axi4Plugin_logic_axi_ar_payload_len,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 ARSIZE" *)
@@ -70,7 +76,9 @@ module VexiiRiscv_wrapper (
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 RREADY" *)
     output wire        LsuL1Axi4Plugin_logic_axi_r_ready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 RDATA" *)
-    input  wire [31:0] LsuL1Axi4Plugin_logic_axi_r_payload_data,
+    input  wire [63:0] LsuL1Axi4Plugin_logic_axi_r_payload_data,
+    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 RID" *)
+    input  wire [2:0]    LsuL1Axi4Plugin_logic_axi_r_payload_id,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 RRESP" *)
     input  wire [ 1:0] LsuL1Axi4Plugin_logic_axi_r_payload_resp,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 LsuL1 RLAST" *)
@@ -191,6 +199,7 @@ module VexiiRiscv_wrapper (
         .LsuL1Axi4Plugin_logic_axi_aw_valid(LsuL1Axi4Plugin_logic_axi_aw_valid),
         .LsuL1Axi4Plugin_logic_axi_aw_ready(LsuL1Axi4Plugin_logic_axi_aw_ready),
         .LsuL1Axi4Plugin_logic_axi_aw_payload_addr(LsuL1Axi4Plugin_logic_axi_aw_payload_addr),
+        .LsuL1Axi4Plugin_logic_axi_aw_payload_id(LsuL1Axi4Plugin_logic_axi_aw_payload_id),
         .LsuL1Axi4Plugin_logic_axi_aw_payload_len(LsuL1Axi4Plugin_logic_axi_aw_payload_len),
         .LsuL1Axi4Plugin_logic_axi_aw_payload_size(LsuL1Axi4Plugin_logic_axi_aw_payload_size),
         .LsuL1Axi4Plugin_logic_axi_aw_payload_burst(LsuL1Axi4Plugin_logic_axi_aw_payload_burst),
@@ -203,10 +212,12 @@ module VexiiRiscv_wrapper (
         .LsuL1Axi4Plugin_logic_axi_w_payload_last(LsuL1Axi4Plugin_logic_axi_w_payload_last),
         .LsuL1Axi4Plugin_logic_axi_b_valid(LsuL1Axi4Plugin_logic_axi_b_valid),
         .LsuL1Axi4Plugin_logic_axi_b_ready(LsuL1Axi4Plugin_logic_axi_b_ready),
+        .LsuL1Axi4Plugin_logic_axi_b_payload_id(LsuL1Axi4Plugin_logic_axi_b_payload_id),
         .LsuL1Axi4Plugin_logic_axi_b_payload_resp(LsuL1Axi4Plugin_logic_axi_b_payload_resp),
         .LsuL1Axi4Plugin_logic_axi_ar_valid(LsuL1Axi4Plugin_logic_axi_ar_valid),
         .LsuL1Axi4Plugin_logic_axi_ar_ready(LsuL1Axi4Plugin_logic_axi_ar_ready),
         .LsuL1Axi4Plugin_logic_axi_ar_payload_addr(LsuL1Axi4Plugin_logic_axi_ar_payload_addr),
+        .LsuL1Axi4Plugin_logic_axi_ar_payload_id(LsuL1Axi4Plugin_logic_axi_ar_payload_id),
         .LsuL1Axi4Plugin_logic_axi_ar_payload_len(LsuL1Axi4Plugin_logic_axi_ar_payload_len),
         .LsuL1Axi4Plugin_logic_axi_ar_payload_size(LsuL1Axi4Plugin_logic_axi_ar_payload_size),
         .LsuL1Axi4Plugin_logic_axi_ar_payload_burst(LsuL1Axi4Plugin_logic_axi_ar_payload_burst),
@@ -215,6 +226,7 @@ module VexiiRiscv_wrapper (
         .LsuL1Axi4Plugin_logic_axi_r_valid(LsuL1Axi4Plugin_logic_axi_r_valid),
         .LsuL1Axi4Plugin_logic_axi_r_ready(LsuL1Axi4Plugin_logic_axi_r_ready),
         .LsuL1Axi4Plugin_logic_axi_r_payload_data(LsuL1Axi4Plugin_logic_axi_r_payload_data),
+        .LsuL1Axi4Plugin_logic_axi_r_payload_id(LsuL1Axi4Plugin_logic_axi_r_payload_id),
         .LsuL1Axi4Plugin_logic_axi_r_payload_resp(LsuL1Axi4Plugin_logic_axi_r_payload_resp),
         .LsuL1Axi4Plugin_logic_axi_r_payload_last(LsuL1Axi4Plugin_logic_axi_r_payload_last),
         .FetchL1Axi4Plugin_logic_axi_ar_valid(FetchL1Axi4Plugin_logic_axi_ar_valid),

@@ -29,6 +29,7 @@ sbt "Test/runMain vexiiriscv.Generate \
     --debug-jtag-tap \
     --pmp-size 16 \
     --with-rdtime \
+    --max-ipc \
     "
 
 cp VexiiRiscv.v ../
