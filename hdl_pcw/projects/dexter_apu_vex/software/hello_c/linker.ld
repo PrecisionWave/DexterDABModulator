@@ -215,6 +215,14 @@ _SDA2_BASE_ = __sdata2_start + ((__sbss2_end - __sdata2_start) / 2 );
 
 /* Generate Stack and Heap definitions */
 
+.stack (NOLOAD) : {
+   _stack_end = .;
+   . += _STACK_SIZE;
+   . = ALIGN(8);
+   _stack = .;
+   __stack = _stack;
+}  > ddr
+
 .heap (NOLOAD) : {
    . = ALIGN(8);
    _heap = .;
@@ -225,14 +233,6 @@ _SDA2_BASE_ = __sdata2_start + ((__sbss2_end - __sdata2_start) / 2 );
 
 _end = .;
 end = _end;
-
-.stack (NOLOAD) : {
-   _stack_end = .;
-   . += _STACK_SIZE;
-   . = ALIGN(8);
-   _stack = .;
-   __stack = _stack;
-}  > ddr
 
 
 }
