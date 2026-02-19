@@ -28,6 +28,7 @@ sbt "Test/runMain vexiiriscv.Generate \
     --reset-vector 0x20000000 \
     --debug-jtag-tap \
     --pmp-size 16 \
+    --with-rdtime \
     "
 
 cp VexiiRiscv.v ../
