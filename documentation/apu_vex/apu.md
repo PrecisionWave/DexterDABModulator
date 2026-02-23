@@ -3,10 +3,10 @@
 Custom VexiiRiscv core built from [VexiiRiscv](https://github.com/SpinalHDL/VexiiRiscv).
 
 ## System overview
-![s](./diagrams/apu_v5.png)
+![s](./diagrams/apu_rv.png)
 
 Implementation details:
-- [Block Design](./apu_v5.pdf)
+- [Block Design](./accel.pdf)
 
 ### VexiiRiscv core
 
