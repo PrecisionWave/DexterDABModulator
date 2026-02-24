@@ -80,17 +80,12 @@ extern char* g_dump_file;
 //  P   The section offset or address of the storage unit being relocated, computed using r_offset.
 //  S   The value of the symbol whose index resides in the relocation entry.
 
-bool do_rel_mb(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend)
+bool do_rel_mb(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela)
 {
-    struct memory_map_entry* mme_offset = mm_lookup(mm, r_offset);
+    Elf32_Sym* symbol = &context->symtab[ELF32_R_SYM(rela->r_info)];
+    uint32_t offset = rela->r_offset - mme_offset->apu_linked;
 
-    // noting to do?
-    if (!mme_offset)
-        return true;
-
-    uint32_t offset = r_offset - mme_offset->apu_linked;
-
-    struct memory_map_entry* mme_value = mm_lookup(mm, symbol->st_value);
+    struct memory_map_entry* mme_value = mm_lookup(context->mm, symbol->st_value);
     uint32_t value = symbol->st_value;
     if (mme_value) {
         value -= mme_value->apu_linked;
@@ -99,14 +94,15 @@ bool do_rel_mb(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, El
 
     local_debug(
         2,
-        "%s symbol: bind %d, type %d, other:%d, value: %08x, r_offset: %08x, r_addend: %08x\n",
+        "%s symbol \"%s\": bind %d, type %d, other:%d, value: %08x, r_offset: %08x, r_addend: %08x\n",
         mme_offset != mme_value ? "Foreign" : "Local",
+        &context->strtab[symbol->st_name],
         ELF32_ST_BIND(symbol->st_info),
         ELF32_ST_TYPE(symbol->st_info),
         symbol->st_other,
         symbol->st_value,
-        r_offset,
-        r_addend);
+        rela->r_offset,
+        rela->r_addend);
 
     if (((offset & 0x3) != 0)) {
         fprintf(
@@ -120,11 +116,11 @@ bool do_rel_mb(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, El
             return false;
     }
 
-    value += r_addend;
+    value += rela->r_addend;
     uint32_t old_value;
     uint32_t new_value;
 
-    switch (type) {
+    switch (ELF32_R_TYPE(rela->r_info)) {
         case R_MICROBLAZE_32:
             // A standard 32 bit relocation.    (S + A)
             old_value = ioread32(mme_offset->cpu_virtual, offset);
@@ -227,7 +223,7 @@ bool do_rel_mb(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, El
             return true;
 
         default:
-            fprintf(stderr, "Unknown relocation type %d\n", type);
+            fprintf(stderr, "Unknown relocation type %d\n", ELF32_R_TYPE(rela->r_info));
             break;
     }
 

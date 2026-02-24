@@ -5,22 +5,60 @@
 #include <assert.h>
 #include <string.h>
 
-static inline void MEMORY_BARRIER(void) { asm volatile ("dmb 0xf\ndsb " ::: "memory"); }
-
+#ifdef SIM
+static inline void MEMORY_BARRIER(void) {}
+#else
+static inline void MEMORY_BARRIER(void)
+{
+    asm volatile("dmb 0xf\ndsb " ::: "memory");
+}
+#endif
 
 uint32_t ioread32(void* ptr, size_t reg)
 {
     uint8_t* p8 = (uint8_t*)(ptr) + reg;
     MEMORY_BARRIER();
     uint32_t value;
-    memcpy(&value, p8, 4);
+    memcpy(&value, p8, sizeof(value));
     return value;
 }
 
 void iowrite32(void* ptr, size_t reg, uint32_t data)
 {
     uint8_t* p8 = (uint8_t*)(ptr) + reg;
-    memcpy(p8, &data, 4);
+    memcpy(p8, &data, sizeof(data));
+    MEMORY_BARRIER();
+}
+
+uint16_t ioread16(void* ptr, size_t reg)
+{
+    uint8_t* p8 = (uint8_t*)(ptr) + reg;
+    MEMORY_BARRIER();
+    uint16_t value;
+    memcpy(&value, p8, sizeof(value));
+    return value;
+}
+
+void iowrite16(void* ptr, size_t reg, uint16_t data)
+{
+    uint8_t* p8 = (uint8_t*)(ptr) + reg;
+    memcpy(p8, &data, sizeof(data));
+    MEMORY_BARRIER();
+}
+
+uint16_t ioread8(void* ptr, size_t reg)
+{
+    uint8_t* p8 = (uint8_t*)(ptr) + reg;
+    MEMORY_BARRIER();
+    uint8_t value;
+    memcpy(&value, p8, sizeof(value));
+    return value;
+}
+
+void iowrite8(void* ptr, size_t reg, uint8_t data)
+{
+    uint8_t* p8 = (uint8_t*)(ptr) + reg;
+    memcpy(p8, &data, sizeof(data));
     MEMORY_BARRIER();
 }
 

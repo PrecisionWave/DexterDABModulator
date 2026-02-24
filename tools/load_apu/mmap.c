@@ -33,8 +33,20 @@ static void mmap_cleanup(void)
 {
     struct mmap* item = mmap_list;
     while (item != NULL) {
-        // printf("Unmaping %p (%zu)\n", item->ptr, item->length);
         munmap(item->ptr, item->length);
+        struct mmap* next = item->next;
+        free(item);
+        item = next;
+    }
+}
+
+static struct mmap* simmem_list = NULL;
+
+static void simmem_cleanup(void)
+{
+    struct mmap* item = simmem_list;
+    while (item != NULL) {
+        free(item->ptr);
         struct mmap* next = item->next;
         free(item);
         item = next;
@@ -100,6 +112,45 @@ bool mmap_apu(int fd, enum device_index index, struct memory_map_entry* mme)
 
     return true;
 }
+
+bool mmap_apu_sim(enum device_index index, struct memory_map_entry* mme)
+{
+    assert(mme != NULL);
+
+    switch (index) {
+        case APU_DEVICE_SRAM:
+            mme->length = 16 * 1024;
+            mme->cpu_virtual = calloc(mme->length, 1);
+            mme->apu_loaded = 0x20000000U;
+            break;
+
+        case APU_DEVICE_DDR:
+            mme->length = 4 * 1024 * 1024;
+            mme->cpu_virtual = calloc(mme->length, 1);
+            mme->apu_loaded = 0x16900000U;
+            break;
+
+        default:
+            return NULL;
+    }
+
+    if (mme->cpu_virtual == MAP_FAILED) {
+        return false;
+    }
+
+    if (simmem_list == NULL) {
+        atexit(simmem_cleanup);
+    }
+
+    struct mmap* next = simmem_list;
+    mmap_list = malloc(sizeof(struct mmap));
+    mmap_list->next = next;
+    mmap_list->ptr = mme->cpu_virtual;
+    mmap_list->length = mme->length;
+
+    return true;
+}
+
 
 bool mmap_reg(int fd, enum register_index index, struct memory_map_entry* mme)
 {

@@ -54,10 +54,10 @@ load_mem(struct memory_map_entry* mme, const off_t offset, const void* data, siz
             int dfd = open(dump_file_name, O_CREAT | O_RDWR | O_TRUNC, 0666);
             if (load_len != write(dfd, (const uint8_t*)(data) + offset, load_len)) {
                 int tmp_errno = errno;
-                fprintf(stderr, "Error: Failed to write %d bytes to file. errno was %d\n", load_len, tmp_errno);
+                fprintf(stderr, "Error: Failed to write %zu bytes to file. errno was %d\n", load_len, tmp_errno);
                 return 10;
             }
-            printf("Wrote %d bytes\n", load_len);
+            printf("Wrote %zu bytes\n", load_len);
             close(dfd);
         }
     }
@@ -90,8 +90,7 @@ static const char* lookup_name(const char* names, int index)
     return names ? names + index : "?";
 }
 
-static bool
-do_rel_fail(struct memory_map* mm, Elf32_Sym* symbol, Elf32_Addr r_offset, Elf32_Word type, Elf32_Sword r_addend)
+static bool do_rel_fail(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela)
 {
     return false;
 }
@@ -150,6 +149,9 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
     for (size_t load = 0; load < ehdr->e_phnum; load++) {
         Elf32_Phdr* phdr = (Elf32_Phdr*)(file + ehdr->e_phoff + load * ehdr->e_phentsize);
 
+        if (phdr->p_type != PT_LOAD)
+            continue;
+
         local_debug(
             1,
             "  LOAD off    %08X vaddr %08x paddr %08x, align 2**%d\n",
@@ -197,13 +199,20 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
     /* relocation */
     local_debug(1, "Sections:\n");
     local_debug(1, "  Idx Type Name                        Size      ADDR      File off  Flags Link Info Align\n");
-    Elf32_Sym* sym = NULL;
+
+    struct relocation_context context = {
+        .mm = mm,
+        .symtab = NULL,
+        .strtab = NULL,
+        .private = NULL,
+    };
+
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
         const char* name = lookup_name(names, shdr->sh_name);
         local_debug(
             1,
-            "  %3d %4d %-27s %08x  %08x  %08x  %04x  %04x %04x 2**%u\n",
+            "  %3zu %4u %-27s %08x  %08x  %08x  %04x  %04x %04x 2**%u\n",
             section,
             shdr->sh_type,
             name,
@@ -215,37 +224,45 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
             shdr->sh_info,
             shdr->sh_addralign);
         if (shdr->sh_type == SHT_SYMTAB && strcmp(name, ".symtab") == 0) {
-            sym = (Elf32_Sym*)(file + shdr->sh_offset);
+            context.symtab = (Elf32_Sym*)(file + shdr->sh_offset);
+        }
+        if (shdr->sh_type == SHT_STRTAB && strcmp(name, ".strtab") == 0) {
+            context.strtab = (char*)(file + shdr->sh_offset);
         }
     }
 
     printf("Relocating...\n");
     size_t relocation_total_count = 0;
     size_t relocation_error_count = 0;
+
     for (size_t section = 0; section < ehdr->e_shnum; section++) {
         Elf32_Shdr* shdr = (Elf32_Shdr*)(file + ehdr->e_shoff + section * ehdr->e_shentsize);
 
-        if (sym && shdr->sh_type == SHT_REL) {
+        if (context.symtab && shdr->sh_type == SHT_REL) {
             Elf32_Shdr* shdrL = (Elf32_Shdr*)(file + ehdr->e_shoff + shdr->sh_info * ehdr->e_shentsize);
             if (shdrL->sh_flags & SHF_ALLOC) {
                 local_debug(
                     1,
-                    "  REL in section %2d: flags %04x %s\n",
+                    "  REL in section %2zu: flags %04x %s\n",
                     section,
                     shdr->sh_flags,
                     lookup_name(names, shdr->sh_name));
 
                 for (size_t entry = 0; entry < shdr->sh_size / shdr->sh_entsize; entry++) {
                     Elf32_Rel* rel = (Elf32_Rel*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
+                    Elf32_Rela rela = {
+                        .r_offset = rel->r_offset,
+                        .r_info = rel->r_info,
+                        .r_addend = 0,
+                    };
 
                     struct memory_map_entry* mme = mm_lookup(mm, rel->r_offset);
                     if (mme) {
-                        Elf32_Sym* symbol = &sym[ELF32_R_SYM(rel->r_info)];
-                        if (!do_rel(mm, symbol, rel->r_offset, ELF32_R_TYPE(rel->r_info), 0)) {
+                        if (!do_rel(&context, mme, &rela)) {
                             relocation_error_count++;
                             fprintf(
                                 stderr,
-                                "Relocation failed for symbol %d in section %d (type %d)\n",
+                                "Relocation failed for symbol %zu in section %zu (type %d)\n",
                                 entry,
                                 section,
                                 ELF32_R_TYPE(rel->r_info));
@@ -259,12 +276,12 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
             }
         }
 
-        if (sym && shdr->sh_type == SHT_RELA) {
+        if (context.symtab && shdr->sh_type == SHT_RELA) {
             Elf32_Shdr* shdrL = (Elf32_Shdr*)(file + ehdr->e_shoff + shdr->sh_info * ehdr->e_shentsize);
             if (shdrL->sh_flags & SHF_ALLOC) {
                 local_debug(
                     1,
-                    "  RELA in section %2d: flags %04x %s\n",
+                    "  RELA in section %2zu: flags %04x %s\n",
                     section,
                     shdr->sh_flags,
                     lookup_name(names, shdr->sh_name));
@@ -272,12 +289,11 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
                     Elf32_Rela* rela = (Elf32_Rela*)(file + shdr->sh_offset + entry * shdr->sh_entsize);
                     struct memory_map_entry* mme = mm_lookup(mm, rela->r_offset);
                     if (mme) {
-                        Elf32_Sym* symbol = &sym[ELF32_R_SYM(rela->r_info)];
-                        if (!do_rel(mm, symbol, rela->r_offset, ELF32_R_TYPE(rela->r_info), rela->r_addend)) {
+                        if (!do_rel(&context, mme, rela)) {
                             relocation_error_count++;
                             fprintf(
                                 stderr,
-                                "Relocation failed for symbol %d in section %d (type %d)\n",
+                                "Relocation failed for symbol %zu in section %zu (type %d)\n",
                                 entry,
                                 section,
                                 ELF32_R_TYPE(rela->r_info));

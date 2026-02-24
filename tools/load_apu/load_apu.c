@@ -77,15 +77,21 @@ bool g_elf_ignore_unaligned = false;
 void usage(const char* progname)
 {
     fprintf(stderr, "usage: %s [-d /dev/apuX] [-r] [-f file] [-x dumpfile] [-a] [-S] [-U]\n", progname);
+#ifndef SIM
     fprintf(stderr, "  -d /dev/apu0     Device to use\n");
+#endif
     fprintf(stderr, "  -f file.elf      Download elf file\n");
     fprintf(stderr, "  -f file.bin      Download bin file\n");
+#ifndef SIM
     fprintf(stderr, "  -r               Perform APU reset (implied by -f)\n");
+#endif
     fprintf(stderr, "  -v               Increase debug level\n");
     fprintf(stderr, "  -a               Force elf relocation\n");
     fprintf(stderr, "  -x basename      Dump RAM contents after download\n");
     fprintf(stderr, "  -U               allow Unaligned relocations\n");
+#ifndef SIM
     fprintf(stderr, "  -s <address>     Set CPU start address\n");
+#endif
 }
 
 struct APU_LDR {
@@ -101,7 +107,7 @@ void apply_apu_ldr_header(struct memory_map_entry* mme, struct memory_map_entry*
     uint64_t ldr_complete = 0x10ad123456789abcULL;
     for (size_t i = 0; i < mme->length - sizeof(struct APU_LDR); i++) {
         if (memcmp(mme->cpu_virtual + i, &ldr_signature, sizeof(ldr_signature)) == 0) {
-            printf("APU_LDR signature found at %s:%04x\n", mme->name, i);
+            printf("APU_LDR signature found at %s:%04zx\n", mme->name, i);
             memcpy(mme->cpu_virtual + i, &ldr_complete, sizeof(ldr_complete));
             memcpy(mme->cpu_virtual + i + 8, &mme_ddr->apu_loaded, 4);
             memcpy(mme->cpu_virtual + i + 12, &mme_ddr->length, 4);
@@ -116,12 +122,13 @@ int main(int argc, char** argv)
     int c;
     opterr = 0;
     bool do_reset = false;
-    const char* download_file = NULL;
+    bool do_sim = false;
     const char* dev = "/dev/apu0";
+    const char* download_file = NULL;
     uint32_t start_address = 0;
-    printf("Page size: %zu bytes\n", getpagesize());
+    printf("Page size: %d bytes\n", getpagesize());
 
-    while ((c = getopt(argc, argv, "d:rf:vx:as:U")) != -1) {
+    while ((c = getopt(argc, argv, "d:rf:vx:as:US")) != -1) {
         switch (c) {
             case 'd':
                 dev = optarg;
@@ -148,11 +155,20 @@ int main(int argc, char** argv)
             case 'U':
                 g_elf_ignore_unaligned = true;
                 break;
+            case 'S':
+                do_sim = true;
+                break;
             case '?':
                 usage(argv[0]);
                 return 1;
         }
     }
+
+#ifdef SIM
+    do_sim = true;
+    do_reset = false;
+    dev = "/dev/null";
+#endif
 
     if (!download_file && !do_reset) {
         usage(argv[0]);
@@ -166,7 +182,12 @@ int main(int argc, char** argv)
     }
 
     for (size_t i = 0; i < mm.count; i++) {
-        if (!mmap_apu(fd, mm.entries[i].index, &mm.entries[i])) {
+        if (do_sim && !mmap_apu_sim(mm.entries[i].index, &mm.entries[i])) {
+            fprintf(stderr, "Error: malloc of APU %s failed! errno %d\n", mm.entries[i].name, errno);
+            return 3;
+        }
+
+        if (!do_sim && !mmap_apu(fd, mm.entries[i].index, &mm.entries[i])) {
             fprintf(stderr, "Error: MMAP of APU %s failed! errno %d\n", mm.entries[i].name, errno);
             return 3;
         }
@@ -174,7 +195,9 @@ int main(int argc, char** argv)
 
     if (do_reset || start_address > 0) {
         printf("Assert APU Reset\n");
-        apu_reset(fd, true);
+        if (!do_sim) {
+            apu_reset(fd, true);
+        }
     }
 
     if (download_file) {
@@ -194,9 +217,28 @@ int main(int argc, char** argv)
             download_success = load_bin(fptr, flen, &mm, ELF_FILE_SRAM_BASE);
         }
 
-        if (download_success) {
-            apply_apu_ldr_header(mm_lookup(&mm, ELF_FILE_SRAM_BASE), mm_lookup(&mm, ELF_FILE_DDR_BASE));
-            apply_apu_ldr_header(mm_lookup(&mm, ELF_FILE_DDR_BASE), mm_lookup(&mm, ELF_FILE_DDR_BASE));
+        apply_apu_ldr_header(mm_lookup(&mm, ELF_FILE_SRAM_BASE), mm_lookup(&mm, ELF_FILE_DDR_BASE));
+        apply_apu_ldr_header(mm_lookup(&mm, ELF_FILE_DDR_BASE), mm_lookup(&mm, ELF_FILE_DDR_BASE));
+
+        if (g_dump_file) {
+            for (size_t i = 0; i < mm.count; i++) {
+                char dump_file_name[1024];
+                memset(dump_file_name, 0, sizeof(dump_file_name));
+                snprintf(dump_file_name, sizeof(dump_file_name) - 1, "%s.%s", g_dump_file, mm.entries[i].name);
+                printf("Dumping %s to %s...\n", mm.entries[i].name, dump_file_name);
+                int dfd = open(dump_file_name, O_CREAT | O_RDWR | O_TRUNC, 0666);
+                if (mm.entries[i].length != write(dfd, mm.entries[i].cpu_virtual, mm.entries[i].length)) {
+                    int tmp_errno = errno;
+                    fprintf(
+                        stderr,
+                        "Error: Failed to write %d bytes to file. errno was %d\n",
+                        mm.entries[i].length,
+                        tmp_errno);
+                    return 10;
+                }
+                printf("Wrote %d bytes\n", mm.entries[i].length);
+                close(dfd);
+            }
         }
 
         if (!download_success) {
@@ -205,27 +247,11 @@ int main(int argc, char** argv)
         }
     }
 
-    if (g_dump_file) {
-        for (size_t i = 0; i < mm.count; i++) {
-            char dump_file_name[1024];
-            memset(dump_file_name, 0, sizeof(dump_file_name));
-            snprintf(dump_file_name, sizeof(dump_file_name) - 1, "%s.%s", g_dump_file, mm.entries[i].name);
-            printf("Dumping %s to %s...\n", mm.entries[i].name, dump_file_name);
-            int dfd = open(dump_file_name, O_CREAT | O_RDWR | O_TRUNC, 0666);
-            if (mm.entries[i].length != write(dfd, mm.entries[i].cpu_virtual, mm.entries[i].length)) {
-                int tmp_errno = errno;
-                fprintf(
-                    stderr, "Error: Failed to write %d bytes to file. errno was %d\n", mm.entries[i].length, tmp_errno);
-                return 10;
-            }
-            printf("Wrote %d bytes\n", mm.entries[i].length);
-            close(dfd);
-        }
-    }
-
     if (do_reset || start_address > 0) {
         printf("Release APU Reset\n");
-        apu_start(fd, start_address);
+        if (!do_sim) {
+            apu_start(fd, start_address);
+        }
     }
 
     return 0;
