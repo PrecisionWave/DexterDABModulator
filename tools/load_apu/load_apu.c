@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     bool do_sim = false;
     const char* dev = "/dev/apu0";
     const char* download_file = NULL;
-    uint32_t start_address = 0;
+    uint32_t start_address = 2; /* 2 = wakeup for MB */
     printf("Page size: %d bytes\n", getpagesize());
 
     while ((c = getopt(argc, argv, "d:rf:vx:as:US")) != -1) {
