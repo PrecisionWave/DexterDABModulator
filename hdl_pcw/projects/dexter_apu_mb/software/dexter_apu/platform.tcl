@@ -92,3 +92,28 @@ platform active {dexter_apu}
 platform config -updatehw {/home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu/dexter_apu.xsa}
 platform clean
 platform generate
+platform active {dexter_apu}
+platform config -updatehw {/home/badc0ded/DexterDABModulator/hdl_pcw/projects/dexter_apu_mb/dexter_apu_mb.xsa}
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+bsp reload
+bsp config extra_compiler_flags "-g -ffunction-sections -fdata-sections -Wall -Wextra -fno-tree-loop-distribute-patterns"
+bsp write
+platform clean
+platform generate

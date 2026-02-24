@@ -72,4 +72,7 @@ source ../pcw_create_project.tcl
 
 add_files -fileset utils_1 -norecurse post_bitstream.tcl
 
+set_property STEPS.WRITE_BITSTREAM.TCL.POST [ get_files post_bitstream.tcl -of [get_fileset utils_1] ] [get_runs impl_1]
+set_property STEPS.WRITE_BITSTREAM.TCL.POST [ get_files post_bitstream.tcl -of [get_fileset utils_1] ] [get_runs impl_2]
+
 puts "Project creation finished!"

@@ -5,3 +5,5 @@ RemoteSystemsTempFiles
 *.log
 
 **/accel_microblaze_0/libsrc/standalone_v7_5/src/arm/**
+
+ps7_init.tcl
