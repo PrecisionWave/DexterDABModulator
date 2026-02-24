@@ -46,7 +46,7 @@ void iowrite16(void* ptr, size_t reg, uint16_t data)
     MEMORY_BARRIER();
 }
 
-uint16_t ioread8(void* ptr, size_t reg)
+uint8_t ioread8(void* ptr, size_t reg)
 {
     uint8_t* p8 = (uint8_t*)(ptr) + reg;
     MEMORY_BARRIER();
