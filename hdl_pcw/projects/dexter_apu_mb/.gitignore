@@ -2,8 +2,8 @@ vivado*.jou
 vivado*.log
 vivado*.str
 NONE
-dexter_apu
-dexter_apu_backup*
+dexter_apu_mb
+dexter_apu_mb_backup*
 vitis*.str
 *.log
 .Xil

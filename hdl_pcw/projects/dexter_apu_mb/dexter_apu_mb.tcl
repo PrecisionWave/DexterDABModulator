@@ -55,9 +55,9 @@
 #*****************************************************************************************
 
 # Set the project details
-set pcw_proj_name   "dexter_apu"
+set pcw_proj_name   "dexter_apu_mb"
 set pcw_fpga_parts  [list xc7z020clg400-2 xc7z010clg400-2]
-set pcw_bd_script   dexter_apu_bd.tcl
+set pcw_bd_script   dexter_apu_mb_bd.tcl
 set pcw_xdc_file    system_constr.xdc
 set adi_library     ../../../hdl_adi/library
 set pcw_library     ../../library
