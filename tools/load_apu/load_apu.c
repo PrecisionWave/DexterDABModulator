@@ -54,7 +54,7 @@ void apu_start(int fd, uint32_t start_address)
 static const char ELF_SIGNATURE[] = {0x7f, 'E', 'L', 'F'};
 
 static struct memory_map mm = {
-    .count = 2,
+    .count = 3,
     .entries =
         {
             {
@@ -66,6 +66,11 @@ static struct memory_map mm = {
                 .name = "DDR",
                 .index = APU_DEVICE_DDR,
                 .apu_linked = ELF_FILE_DDR_BASE,
+            },
+            {
+                .name = "ATCM",
+                .index = APU_DEVICE_ATCM,
+                .apu_linked = ELF_FILE_ATCM_BASE,
             },
         },
 };

@@ -14,6 +14,7 @@ extern "C" {
 enum device_index {
     APU_DEVICE_SRAM,
     APU_DEVICE_DDR,
+    APU_DEVICE_ATCM,
 };
 
 enum register_index {

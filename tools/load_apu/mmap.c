@@ -85,6 +85,12 @@ bool mmap_apu(int fd, enum device_index index, struct memory_map_entry* mme)
             map_offset = DEXTER_APU_MMAP_DDR * page_size;
             break;
 
+        case APU_DEVICE_ATCM:
+            map_length = 64 * 1024;
+            physical = 0xffe00000U;
+            map_offset = DEXTER_APU_MMAP_SRAM * page_size;
+            break;
+
         default:
             return NULL;
     }
@@ -128,6 +134,12 @@ bool mmap_apu_sim(enum device_index index, struct memory_map_entry* mme)
             mme->length = 4 * 1024 * 1024;
             mme->cpu_virtual = calloc(mme->length, 1);
             mme->apu_loaded = 0x16900000U;
+            break;
+
+        case APU_DEVICE_ATCM:
+            mme->length = 64 * 1024;
+            mme->cpu_virtual = calloc(mme->length, 1);
+            mme->apu_loaded = 0x00000000U;
             break;
 
         default:

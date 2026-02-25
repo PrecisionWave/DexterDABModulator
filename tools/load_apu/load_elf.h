@@ -28,6 +28,7 @@ struct relocation_context {
 typedef bool (*do_rel_t)(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela);
 bool do_rel_mb(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela);
 bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela);
+bool do_rel_r5(struct relocation_context* context, struct memory_map_entry* mme_offset, Elf32_Rela* rela);
 
 #ifdef __cplusplus
 }

@@ -121,7 +121,8 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
     // Microblaze
     if (ehdr->e_machine == EM_MICROBLAZE) {
         if (ehdr->e_ident[EI_CLASS] != ELFCLASS32) {
-            fprintf(stderr, "Warning: Not 32-Bit ELF. Untested!");
+            fprintf(stderr, "Error: Not 32-Bit ELF!");
+            return false;
         }
 
         do_rel = do_rel_mb;
@@ -130,10 +131,21 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
     // RISC-V
     if (ehdr->e_machine == EM_RISCV) {
         if (ehdr->e_ident[EI_CLASS] != ELFCLASS32) {
-            fprintf(stderr, "Warning: Not 32-Bit ELF. Untested!");
+            fprintf(stderr, "Error: Not 32-Bit ELF!");
+            return false;
         }
 
         do_rel = do_rel_rv;
+    }
+
+    // RPU ARM-R5
+    if (ehdr->e_machine == EM_ARM) {
+        if (ehdr->e_ident[EI_CLASS] != ELFCLASS32) {
+            fprintf(stderr, "Error: Not 32-Bit ELF!");
+            return false;
+        }
+
+        do_rel = do_rel_r5;
     }
 
     printf("Zeroing memory...\n");

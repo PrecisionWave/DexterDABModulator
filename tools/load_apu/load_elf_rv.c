@@ -847,7 +847,7 @@ bool do_rel_rv(struct relocation_context* context, struct memory_map_entry* mme_
             iowrite32(mme_offset->cpu_virtual, offset, new_value);
 
             local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
-            local_debug(2, "R_RISCV_SET32: %08x\n", old_value, new_value);
+            local_debug(2, "R_RISCV_SET32: %08x\n", new_value);
             fprintf(stderr, WARN "Yolo R_RISCV_SET32 @ %s:%04x\n", mme_offset->name, offset);
             return true;
 
