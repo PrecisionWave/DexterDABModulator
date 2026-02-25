@@ -1,6 +1,7 @@
 
 CROSS_ARM := ../../bsp_pcw/bin/arm-none-linux-gnueabi-static/bin/arm-none-linux-gnueabi-
 CROSS_RV := ../../hdl_pcw/projects/dexter_apu_vex/software/xpacks/.bin/riscv-none-elf-
+CROSS_R5 := armr5-none-eabi-
 
 SRCS := load_apu.c \
 		mmio.c \
@@ -47,4 +48,8 @@ test_rv2:
 	$(CROSS_RV)objdump -b binary --adjust-vma=0x16900000 -m riscv -D reloc_169.DDR > reloc_169.asm
 
 test_r5: load_apu_sim load_apu
-	-@./load_apu_sim -f fdk.elf -vvv -x fdk_r5
+	-@./load_apu_sim -f hello_r5_10k.elf -vvv -x r5
+	$(CROSS_R5)objdump -D -r hello_r5_10k.elf > r5.asm
+	$(CROSS_R5)objcopy hello_r5_169.elf -O binary --remove-section .vectors r5.bin
+	$(CROSS_R5)objdump -b binary --adjust-vma 0x16900000 -m cortex-r5 -D r5.bin > r5.adj
+	$(CROSS_R5)objdump -b binary --adjust-vma=0x16900000 -m cortex-r5 -D r5.DDR > r5.dis

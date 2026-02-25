@@ -68,6 +68,36 @@ bool do_rel_r5(struct relocation_context* context, struct memory_map_entry* mme_
             local_debug(2, "R_ARM_NONE: addend: %u\n", rela->r_addend);
             return true;
 
+        case R_ARM_ABS32:
+            // 32-bit absolute
+            // word32      S + A - P
+            old_value = ioread32(mme_offset->cpu_virtual, offset);
+            new_value = old_value;
+            if (mme_value) {
+                new_value -= mme_value->apu_linked;
+                new_value += mme_value->apu_loaded;
+            }
+            iowrite32(mme_offset->cpu_virtual, offset, new_value);
+
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
+            local_debug(2, "R_ARM_ABS32: %08x -> %08x\n", old_value, new_value);
+            return true;
+
+        case R_ARM_PREL31:
+            old_value = ioread32(mme_offset->cpu_virtual, offset);
+            
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
+            local_debug(2, "R_ARM_PREL31: %08x -> ??\n", old_value);
+            return false;
+
+        case R_ARM_CALL:
+            old_value = ioread32(mme_offset->cpu_virtual, offset);
+
+            local_debug(2, "%s @ %04x: ", mme_offset->name, offset);
+            local_debug(2, "R_ARM_CALL: %08x -> ??\n", old_value);
+            return false;
+
+
         default:
             fprintf(
                 stderr,
