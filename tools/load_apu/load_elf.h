@@ -49,7 +49,7 @@ static inline uint32_t replace_imm(
 
     uint32_t result = *instr;
     uint32_t bits = imm_bit_hi - imm_bit_lo;
-    uint32_t mask_bits = (1 << bits) - 1;
+    uint32_t mask_bits = (1 << (bits + 1)) - 1;
     uint32_t imm_masked = (imm >> imm_bit_lo) & mask_bits;
     result &= ~(mask_bits << instr_bit_lo);
     result |= imm_masked << instr_bit_lo;
@@ -73,7 +73,7 @@ static inline uint32_t extract_imm(
     assert((imm_bit_hi - imm_bit_lo) == (instr_bit_hi - instr_bit_lo));
 
     uint32_t bits = imm_bit_hi - imm_bit_lo;
-    uint32_t mask_bits = (1 << bits) - 1;
+    uint32_t mask_bits = (1 << (bits + 1)) - 1;
     return ((instr >> instr_bit_lo) & mask_bits) << imm_bit_lo;
 }
 
