@@ -203,52 +203,6 @@ static bool check_alignment(uint32_t offset, int alignment, struct memory_map_en
 //  LO12	        symbol_address
 
 
-static inline uint32_t replace_imm(
-    uint32_t* instr,
-    const uint32_t instr_bit_hi,
-    const uint32_t instr_bit_lo,
-    const uint32_t imm,
-    const uint32_t imm_bit_hi,
-    const uint32_t imm_bit_lo)
-{
-    assert(imm_bit_hi < 32);
-    assert(imm_bit_lo < 32);
-    assert(imm_bit_lo <= imm_bit_hi);
-    assert(instr_bit_hi < 32);
-    assert(instr_bit_lo < 32);
-    assert(instr_bit_lo <= instr_bit_hi);
-    assert((imm_bit_hi - imm_bit_lo) == (instr_bit_hi - instr_bit_lo));
-
-    uint32_t result = *instr;
-    uint32_t bits = imm_bit_hi - imm_bit_lo;
-    uint32_t mask_bits = (1 << bits) - 1;
-    uint32_t imm_masked = (imm >> imm_bit_lo) & mask_bits;
-    result &= ~(mask_bits << instr_bit_lo);
-    result |= imm_masked << instr_bit_lo;
-    *instr = result;
-    return result;
-}
-
-static inline uint32_t extract_imm(
-    const uint32_t instr,
-    const uint32_t instr_bit_hi,
-    const uint32_t instr_bit_lo,
-    const uint32_t imm_bit_hi,
-    const uint32_t imm_bit_lo)
-{
-    assert(imm_bit_hi < 32);
-    assert(imm_bit_lo < 32);
-    assert(imm_bit_lo <= imm_bit_hi);
-    assert(instr_bit_hi < 32);
-    assert(instr_bit_lo < 32);
-    assert(instr_bit_lo <= instr_bit_hi);
-    assert((imm_bit_hi - imm_bit_lo) == (instr_bit_hi - instr_bit_lo));
-
-    uint32_t bits = imm_bit_hi - imm_bit_lo;
-    uint32_t mask_bits = (1 << bits) - 1;
-    return ((instr >> instr_bit_lo) & mask_bits) << imm_bit_lo;
-}
-
 static uint32_t Imm_U_Type(uint32_t instr, uint32_t imm)
 {
     // U-Type
@@ -257,27 +211,12 @@ static uint32_t Imm_U_Type(uint32_t instr, uint32_t imm)
     return instr;
 }
 
-static uint32_t Get_Imm_U_Type(uint32_t instr)
-{
-    // U-Type
-    //  - imm[31:12] in instruction[31:12]
-    return extract_imm(31, 12, instr, 31, 12);
-}
-
-
 static uint32_t Imm_I_Type(uint32_t instr, uint32_t imm)
 {
     // I-Type
     //  - instruction[31:20] = imm[11:0]
     replace_imm(&instr, 31, 20, imm, 11, 0);
     return instr;
-}
-
-static uint32_t Get_Imm_I_Type(uint32_t instr)
-{
-    // U-Type
-    //  - imm[31:12] is in instruction[31:12]
-    return extract_imm(31, 12, instr, 31, 12);
 }
 
 static uint32_t Imm_S_Type(uint32_t instr, uint32_t imm)
@@ -288,16 +227,6 @@ static uint32_t Imm_S_Type(uint32_t instr, uint32_t imm)
     replace_imm(&instr, 31, 25, imm, 11, 5);
     replace_imm(&instr, 11, 7, imm, 4, 0);
     return instr;
-}
-
-static uint32_t Get_Imm_S_Type(uint32_t instr)
-{
-    // S-Type:
-    //  - instruction[31:25] = imm[11:5]
-    //  - instruction[11:7]  = imm[ 4:0]
-    uint32_t res1 = extract_imm(instr, 31, 25, 11, 5);
-    uint32_t res2 = extract_imm(instr, 11, 7, 4, 0);
-    return res1 | res2;
 }
 
 static uint32_t Imm_J_Type(uint32_t instr, uint32_t imm)
@@ -312,20 +241,6 @@ static uint32_t Imm_J_Type(uint32_t instr, uint32_t imm)
     replace_imm(&instr, 20, 20, imm, 11, 11);
     replace_imm(&instr, 19, 12, imm, 19, 12);
     return instr;
-}
-
-static uint32_t Get_Imm_J_Type(uint32_t instr)
-{
-    // J-Type:
-    //  - instruction[31]    = imm[20]
-    //  - instruction[30:21] = imm[10:1]
-    //  - instruction[20]    = imm[11]
-    //  - instruction[19:12] = imm[19:12]
-    uint32_t res1 = extract_imm(instr, 31, 31, 20, 20);
-    uint32_t res2 = extract_imm(instr, 30, 21, 10, 1);
-    uint32_t res3 = extract_imm(instr, 20, 20, 11, 11);
-    uint32_t res4 = extract_imm(instr, 19, 12, 19, 12);
-    return res1 | res2 | res3 | res4;
 }
 
 const uint16_t Offset_CJ_Type(uint16_t cinstr, uint16_t offset)
@@ -422,19 +337,6 @@ static uint32_t Imm_B_Type(uint32_t instr, uint32_t imm)
     return instr;
 }
 
-static uint32_t Get_Imm_B_Type(uint32_t instr)
-{
-    // B-Type:
-    // instruction[31]    = imm[12]
-    // instruction[30:25] = imm[10:5]
-    // instruction[11:8]  = imm[4:1]
-    // instruction[7]     = imm[11]
-    uint32_t res1 = extract_imm(instr, 31, 31, 12, 12);
-    uint32_t res2 = extract_imm(instr, 30, 25, 10, 5);
-    uint32_t res3 = extract_imm(instr, 11, 8, 4, 1);
-    uint32_t res4 = extract_imm(instr, 7, 7, 11, 11);
-    return res1 | res2 | res3 | res4;
-}
 
 struct riscv_context {
     uint32_t value;
