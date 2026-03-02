@@ -1,6 +1,6 @@
 
-#CROSS_CC := ../../bsp_pcw/bin/arm-none-linux-gnueabi-static/bin/arm-none-linux-gnueabi-gcc
-CROSS_CC := /usr/bin/arm-none-linux-gnueabihf-gcc
+CROSS_CC := ../../bsp_pcw/bin/arm-none-linux-gnueabi-static/bin/arm-none-linux-gnueabi-gcc
+#CROSS_CC := /usr/bin/arm-none-linux-gnueabihf-gcc
 
 .PHONY : all
 all: mbox kr_hash mmaptest

@@ -65,6 +65,7 @@ bool mmap_apu(int fd, enum device_index index, struct memory_map_entry* mme)
     int err;
     switch (index) {
         case APU_DEVICE_SRAM:
+        case APU_DEVICE_ATCM:
             if ((err = ioctl(fd, DEXTER_APU_IOCTL_GET_SRAM_SIZE, &map_length))) {
                 fprintf(stderr, "Error: DEXTER_APU_IOCTL_GET_SRAM_SIZE failed with err = %d!\n", err);
                 return NULL;
@@ -83,12 +84,6 @@ bool mmap_apu(int fd, enum device_index index, struct memory_map_entry* mme)
                 return NULL;
             }
             map_offset = DEXTER_APU_MMAP_DDR * page_size;
-            break;
-
-        case APU_DEVICE_ATCM:
-            map_length = 64 * 1024;
-            physical = 0xffe00000U;
-            map_offset = DEXTER_APU_MMAP_SRAM * page_size;
             break;
 
         default:
@@ -173,13 +168,8 @@ bool mmap_reg(int fd, enum register_index index, struct memory_map_entry* mme)
     uint32_t map_length = 0;
     uint32_t map_offset = 0;
     switch (index) {
-        case APU_REGISTERS:
-            map_offset = DEXTER_APU_MMAP_REGS * page_size;
-            map_length = 0x30000;
-            break;
-
-        case APU_REGISTERS2:
-            map_offset = DEXTER_APU_MMAP_REGS2 * page_size;
+        case APU_MBOX:
+            map_offset = DEXTER_APU_MMAP_MBOX * page_size;
             map_length = 0x10000;
             break;
 

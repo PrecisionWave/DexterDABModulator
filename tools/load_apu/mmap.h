@@ -18,8 +18,7 @@ enum device_index {
 };
 
 enum register_index {
-    APU_REGISTERS,
-    APU_REGISTERS2,
+    APU_MBOX,
 };
 
 bool mmap_apu(int fd, enum device_index index, struct memory_map_entry* mme);

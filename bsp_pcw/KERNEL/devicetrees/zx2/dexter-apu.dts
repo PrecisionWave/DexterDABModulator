@@ -14,7 +14,7 @@
  * 61  IRQ_F2P[0]       29      axi_dmac_0
  * 62  IRQ_F2P[1]       30      axi_dmac_1
  * 63  IRQ_F2P[2]       31      apu_mbx
- * 64  IRQ_F2P[3]       32      apu2cpu and cpu2apu dma
+ * 64  IRQ_F2P[3]
  * 65  IRQ_F2P[4]       33      apu_uart
  * 66  IRQ_F2P[5]
  * 67  IRQ_F2P[6]
@@ -124,61 +124,12 @@
 			clock-names = "dac_clk";
 		};
 
-
-		apu1_apu2cpu_dma: apu2cpu_dmac@44030000 {
-			compatible = "adi,axi-dmac-1.00.a";
-			reg = <0x44030000 0x10000>;
-			#dma-cells = <1>;
-			interrupts = <0 32 IRQ_TYPE_LEVEL_HIGH>;
-			interrupt-parent = <&intc>;
-			clocks = <&clkc 16>;
-
-			adi,channels {
-				#size-cells = <0>;
-				#address-cells = <1>;
-
-				dma-channel@0 {
-					reg = <0>;
-					adi,source-bus-width = <32>;
-					adi,source-bus-type = <1>;
-					adi,destination-bus-width = <32>;
-					adi,destination-bus-type = <0>;
-				};
-			};
-		};
-
-		apu0_cpu2apu_dma: cpu2apu_dmac@44040000 {
-			compatible = "adi,axi-dmac-1.00.a";
-			reg = <0x44040000 0x10000>;
-			#dma-cells = <1>;
-			interrupts = <0 32 IRQ_TYPE_LEVEL_HIGH>;
-			interrupt-parent = <&intc>;
-			clocks = <&clkc 16>;
-
-			adi,channels {
-				#size-cells = <0>;
-				#address-cells = <1>;
-
-				dma-channel@0 {
-					reg = <0>;
-					adi,source-bus-width = <32>;
-					adi,source-bus-type = <0>;
-					adi,destination-bus-width = <32>;
-					adi,destination-bus-type = <1>;
-				};
-			};
-		};
-
 		apu0@44000000 {
 			status = "okay";
 			compatible = "pcw,dexter-apu";
-			reg = <0x44000000 0x30000>;
-			interrupts = <0 31 IRQ_TYPE_LEVEL_HIGH>;
-			interrupt-parent = <&intc>;
-
+			reg-names = "sram", "gpio", "mbox";
+			reg = <0x44000000 0x4000>, <0x44010000 0x10000>, <0x44020000 0x10000>;
 			clocks = <&clkc 16>;
-			dmas = <&apu0_cpu2apu_dma 0>, <&apu1_apu2cpu_dma 0>;
-			dma-names = "tx", "rx";
 		};
 
 		apu0_uart@44050000 {

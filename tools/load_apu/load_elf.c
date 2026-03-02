@@ -152,6 +152,7 @@ bool load_elf(const char* file, size_t file_len, struct memory_map* mm)
     for (size_t i = 0; i < mm->count; i++) {
         struct memory_map_entry* e = &mm->entries[i];
         printf("  %-8s 0x%08x - %08x\n", e->name, e->apu_loaded, e->apu_loaded + e->length - 1);
+        fflush(stdout);
         iomemset(e->cpu_virtual, 0, 0, e->length);
     }
 

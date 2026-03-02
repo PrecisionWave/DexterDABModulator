@@ -23,17 +23,17 @@ clean:
 
 # Zynq loader
 %.o: %.c
-	$(CROSS_ARM)gcc -c -Wall -march=armv7 -o $@ $<
+	$(CROSS_ARM)gcc -c -Wall -march=armv7 -g3 -o $@ $<
 
 load_apu: $(SRCS:.c=.o)
-	$(CROSS_ARM)gcc -static -o $@ $^
+	$(CROSS_ARM)gcc -static -g3 -o $@ $^
 
 # Host simulation
 %.oh: %.c
-	gcc -c -Wall -DSIM -o $@ $<
+	gcc -c -Wall -DSIM -g3 -o $@ $<
 
 load_apu_sim: $(SRCS:.c=.oh)
-	gcc -static -DSIM -o $@ $^
+	gcc -static -DSIM -g3 -o $@ $^
 
 # test 
 test_rv1: load_apu_sim load_apu

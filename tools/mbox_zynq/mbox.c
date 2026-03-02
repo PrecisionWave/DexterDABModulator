@@ -147,8 +147,7 @@ int main(int argc, char** argv)
     bool do_read = false;
     bool do_write = false;
     const char* mmap_dev = "/dev/apu0";
-    off_t mbox_offset = 0x20000U;
-    off_t mmap_offset = 0U;
+    off_t mmap_offset = 4*4096;
     size_t page_size = getpagesize();
     printf("Page size:  %zu bytes\n", page_size);
 
@@ -157,8 +156,7 @@ int main(int argc, char** argv)
             case 'd':
                 mmap_dev = optarg;
                 if (strcmp(optarg, "/dev/mem") == 0) {
-                    mmap_offset = 0x44000000U;
-                    mbox_offset = 0x20000U;
+                    mmap_offset = 0x44020000U;
                 }
                 break;
             case 'f':
@@ -172,9 +170,6 @@ int main(int argc, char** argv)
                 break;
             case 'o':
                 mmap_offset = strtoul(optarg, NULL, 0);
-                break;
-            case 'a':
-                mbox_offset = strtoul(optarg, NULL, 0);
                 break;
             case '?':
                 fprintf(stderr, "usage: %s [-d /dev/apuX] -rwf [-o mmap offset] [-a mbox offset]\n", *argv);
@@ -194,7 +189,6 @@ int main(int argc, char** argv)
 
     printf("Device:     %s\n", mmap_dev);
     printf("Map offset: 0x%08lx\n", mmap_offset);
-    printf("Mbox reg:   0x%08lx\n", mbox_offset);
 
     if (!do_flush && !do_read && !do_write) { 
         printf("Warning: Using default action \"RW\"\n");
@@ -208,7 +202,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    size_t mmap_size = ((mbox_offset + page_size) / page_size) * page_size;
+    size_t mmap_size = 0x1000U;
     printf("Map size:   %zu bytes (%zu pages)\n", mmap_size, mmap_size / page_size);
 
     void* ptr = mmap(NULL, mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_uio, mmap_offset & ~(mmap_size - 1));
@@ -219,7 +213,7 @@ int main(int argc, char** argv)
 
     printf("MMap to virtual address %p\n", ptr);
 
-    mbox_t mbox = (mbox_t)(ptr + mbox_offset);
+    mbox_t mbox = (mbox_t)(ptr);
 
     printf("Mbox at virtual address %p\n", mbox);
 
